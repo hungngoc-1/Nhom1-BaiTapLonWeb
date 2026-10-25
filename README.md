@@ -35,3 +35,29 @@ Tất cả các form đều có input ẩn `csrf_token` và kiểm tra `hash_equ
 **c. Form Ghi Điện/Nước**
 - `elec_new`, `water_new`: Bắt buộc là số nguyên >= 0.
 - **Nghiệp vụ:** Chỉ số mới không được nhỏ hơn chỉ số của kỳ trước. Không nhập trùng kỳ.
+### 4. Mô tả Cơ sở dữ liệu
+Hệ thống sử dụng CSDL MySQL, được chuẩn hóa thành 7 bảng với **Engine InnoDB** để hỗ trợ khóa ngoại và đảm bảo tính toàn vẹn tham chiếu. Các ràng buộc `UNIQUE` được áp dụng chặt chẽ để chống trùng lặp dữ liệu:
+
+* **users**: Quản lý tài khoản đăng nhập và phân quyền 3 vai trò (admin, landlord, tenant). Có ràng buộc `UNIQUE` trên `username` và `email`.
+* **rooms**: Quản lý danh sách và trạng thái phòng (available/rented). Có ràng buộc `UNIQUE` trên `room_number`.
+* **services**: Cấu hình các danh mục dịch vụ phát sinh (Điện, Nước, Rác, Internet...) và đơn giá.
+* **contracts**: Quản lý hợp đồng thuê phòng, liên kết khách thuê với phòng.
+* **utilities_readings**: Lưu lịch sử chỉ số điện nước. Khóa phức hợp `UNIQUE(room_id, month_year)` đảm bảo mỗi phòng chỉ có tối đa một bộ chỉ số trong một tháng.
+* **invoices**: Lưu tổng quát hóa đơn theo kỳ và trạng thái thanh toán. Khóa `UNIQUE(room_id, month_year)` giúp ngăn chặn lập trùng hóa đơn.
+* **invoice_details**: Bảng lưu chi tiết hóa đơn (tiền phòng, điện, nước). Lưu cứng đơn giá tại thời điểm lập (`applied_price`), giúp tổng tiền hóa đơn cũ không bị thay đổi nếu admin cập nhật bảng giá dịch vụ sau này.
+
+### 5. Ảnh sơ đồ ERD
+*(Sơ đồ quan hệ thực thể của cơ sở dữ liệu)*
+![Sơ đồ ERD]<img width="1280" height="637" alt="image" src="https://github.com/user-attachments/assets/3bd1b7cf-e51a-42c8-8ad1-5e48d8a44762" />
+
+### 6. Hướng dẫn chạy script cài đặt Database
+Thực hiện các bước sau trên **phpMyAdmin** để khởi tạo cơ sở dữ liệu và nạp dữ liệu mẫu:
+
+1. Mở phpMyAdmin (ví dụ: `http://localhost/phpmyadmin`). Không cần tạo database thủ công.
+2. Mở tab **Import (Nhập)** ở thanh menu phía trên.
+3. Nhấn **Choose File (Chọn tệp)**, trỏ tới file `database/schema.sql` trong thư mục dự án.
+4. Kéo xuống dưới cùng nhấn **Go (Thực hiện)**. Script sẽ tự động tạo database `quan_ly_nha_tro` và khởi tạo cấu trúc 7 bảng.
+5. Lặp lại thao tác: Vào tab **Import (Nhập)**, tải lên file `database/seed.sql` và nhấn **Go**. Script sẽ nạp dữ liệu mẫu (tài khoản, phòng, hợp đồng, hóa đơn) để sẵn sàng test hệ thống.
+6. Cấu hình kết nối PDO trong file config của dự án (nếu cần):
+   - Database name: `quan_ly_nha_tro`
+   - Encoding: `utf8mb4`
