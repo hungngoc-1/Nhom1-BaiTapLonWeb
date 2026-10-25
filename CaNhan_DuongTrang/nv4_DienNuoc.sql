@@ -1,4 +1,5 @@
 
+
 -- 1. Xem lịch sử ghi điện nước chi tiết (Bảng đầy đủ 7 cột: gồm trạng thái phòng, chỉ số cũ và mới)
 SELECT r.room_number, r.status, u.month_year, u.electric_old, u.electric_new, u.water_old, u.water_new 
 FROM utilities_readings u 
