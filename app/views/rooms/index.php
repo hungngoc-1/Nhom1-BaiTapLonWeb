@@ -1,5 +1,5 @@
 <?php
-// 1. DỮ LIỆU MẪU (Sau này Người 3 chỉ cần truyền biến $rooms từ Controller sang và xóa đoạn mẫu này)
+// 1. DỮ LiỆU MẪU (Sau này Người 3 chỉ cần truyền biến $rooms từ Controller sang và xóa đoạn mẫu này)
 if (!isset($rooms)) {
     $rooms = [
         ['id' => 1, 'room_number' => 'P101', 'area' => 20, 'price' => 2500000, 'max_occupants' => 2, 'status' => 'trong', 'note' => 'Có ban công, điều hòa'],
