@@ -30,6 +30,11 @@ switch ($route) {
         $dashboardController->index();
         break;
 
+    case 'overview':
+        $dashboardController = new DashboardController();
+        $dashboardController->overview();
+        break;
+
     case 'login':
     case 'auth/login':
         $authController = new AuthController();
