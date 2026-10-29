@@ -20,6 +20,8 @@ if ($route === 'auth/logout') {
 // Nạp các Controller cần thiết
 require_once __DIR__ . '/app/Controllers/DashboardController.php';
 require_once __DIR__ . '/app/Controllers/AuthController.php';
+// ĐÃ THÊM DÒNG NÀY ĐỂ GỌI ROOM CONTROLLER:
+require_once __DIR__ . '/app/Controllers/RoomController.php'; 
 
 // ==========================================
 // 2. BỘ ĐIỀU HƯỚNG CÁC TRANG (ROUTER)
@@ -46,10 +48,13 @@ switch ($route) {
         $authController->login();
         break;
 
-    // --- CÁC TRANG MENU CHƯA CÓ CONTROLLER VÀ VIEW CHÍNH THỨC (HIỂN THỊ TẠM) ---
+    // --- TRANG QUẢN LÝ PHÒNG TRỌ ĐÃ KẾT NỐI ---
     case 'rooms':
-        showPlaceholder('Quản lý Phòng trọ');
+        $roomController = new RoomController();
+        $roomController->index();
         break;
+
+    // --- CÁC TRANG MENU CHƯA CÓ CONTROLLER VÀ VIEW CHÍNH THỨC (HIỂN THỊ TẠM) ---
     case 'tenants':
         showPlaceholder('Quản lý Khách thuê');
         break;
