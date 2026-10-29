@@ -47,21 +47,41 @@ switch ($route) {
         $authController->login();
         break;
 
-    // --- ĐIỀU HƯỚNG CHUẨN MÔ HÌNH MVC CHO TRANG ĐIỆN NƯỚC ---
-    case 'utilities':
-        $utilitiesController = new UtilitiesController();
-        $utilitiesController->index();
+    // --- CÁC TRANG MENU CHƯA CÓ CONTROLLER VÀ VIEW CHÍNH THỨC (HIỂN THỊ TẠM) ---
+    case 'rooms':
+        $roomController = new RoomController();
+        $roomController->index();
         break;
 
-    // --- CÁC TRANG MENU CHƯA CÓ CONTROLLER VÀ VIEW CHÍNH THỨC ---
-    case 'rooms':
-        showPlaceholder('Quản lý Phòng trọ');
-        break;
+    // --- CÁC TRANG MENU CHƯA CÓ CONTROLLER VÀ VIEW CHÍNH THỨC (HIỂN THỊ TẠM) ---
     case 'tenants':
         showPlaceholder('Quản lý Khách thuê');
         break;
+        
+    // ==========================================
+    // PHÂN HỆ QUẢN LÝ HỢP ĐỒNG
+    // ==========================================
     case 'contracts':
-        showPlaceholder('Quản lý Hợp đồng');
+        $contractController = new ContractController();
+        $contractController->index();
+        break;
+        
+    case 'contracts/store': // Xử lý khi form Thêm mới submit
+        $contractController = new ContractController();
+        $contractController->store();
+        break;
+        
+    case 'contracts/edit': // Xử lý khi bấm nút Sửa
+        $contractController = new ContractController();
+        $contractController->edit();
+        break;
+        
+    case 'contracts/delete': // Xử lý khi bấm nút Xóa
+        $contractController = new ContractController();
+        $contractController->delete();
+        break;
+    case 'utilities':
+        showPlaceholder('Điện Nước');
         break;
     case 'invoices':
         showPlaceholder('Hóa đơn & Thu tiền');

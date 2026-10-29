@@ -126,7 +126,12 @@ try {
             <ul class="nav nav-pills me-auto d-none d-lg-flex">
                 <li class="nav-item"><a class="nav-link" href="index.php?route=dashboard"><i class="fa-solid fa-city"></i> Tòa nhà</a></li>
                 <li class="nav-item"><a class="nav-link active" href="index.php?route=overview"><i class="fa-solid fa-chart-pie"></i> Tổng quan</a></li>
-                <li class="nav-item"><a class="nav-link" href="#"><i class="fa-solid fa-door-open"></i> Phòng trọ</a></li>
+                <li class="nav-item"><a class="nav-link" href="index.php?route=rooms"><i class="fa-solid fa-door-open"></i> Phòng trọ</a></li>
+                <li class="nav-item"><a class="nav-link" href="#"><i class="fa-solid fa-users"></i> Khách thuê</a></li>
+                <li class="nav-item"><a class="nav-link" href="#"><i class="fa-solid fa-file-contract"></i> Hợp đồng</a></li>
+                <li class="nav-item"><a class="nav-link" href="#"><i class="fa-solid fa-bolt"></i> Điện Nước</a></li>
+                <li class="nav-item"><a class="nav-link" href="#"><i class="fa-solid fa-file-invoice-dollar"></i> Hóa đơn</a></li>
+                <li class="nav-item"><a class="nav-link" href="#"><i class="fa-solid fa-chart-column"></i> Báo cáo</a></li>
             </ul>
         </div>
     </nav>
@@ -136,7 +141,18 @@ try {
         
         <div class="d-flex justify-content-between align-items-center mb-4">
             <div>
-                <h3 class="fw-bold mb-0 text-dark">Tổng quan Quản lý Nhà trọ</h3>
+                <nav aria-label="breadcrumb">
+                    <ol class="breadcrumb mb-1 text-xs fw-semibold">
+                        <li class="breadcrumb-item"><a href="index.php?route=dashboard" class="text-decoration-none text-teal"><i class="fa-solid fa-house me-1"></i> Hệ thống Quản lý</a></li>
+                        <li class="breadcrumb-item active" aria-current="page">Tổng quan Quản lý Nhà trọ</li>
+                    </ol>
+                </nav>
+                <h3 class="fw-bold mb-0 text-dark">
+                    Tổng quan Quản lý Nhà trọ
+                    <?php if (isset($_GET['building_id']) && $_GET['building_id'] !== 'all'): ?>
+                        <span class="text-teal"> - Tòa <?= htmlspecialchars($_GET['building_id']) ?></span>
+                    <?php endif; ?>
+                </h3>
             </div>
             <div>
                 <button class="btn btn-light border bg-white shadow-sm text-muted rounded-pill px-3 py-2 fw-bold text-xs">
