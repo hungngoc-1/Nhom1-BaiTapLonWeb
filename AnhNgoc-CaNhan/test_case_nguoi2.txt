@@ -1,0 +1,6 @@
+5 TEST CASE KIỂM THỬ CHỨC NĂNG QUẢN LÝ TÀI KHOẢN (CRUD)
+1. [Đúng] Hiển thị danh sách: Trình duyệt tải thành công toàn bộ danh sách người dùng từ cơ sở dữ liệu lên bảng HTML.
+2. [Đúng] Xóa tài khoản thành công: Bấm nút Xóa -> Chọn OK ở hộp thoại xác nhận -> Tài khoản biến mất khỏi giao diện và database.
+3. [Sai] Hủy xóa tài khoản: Bấm nút Xóa -> Chọn Cancel ở hộp thoại xác nhận -> Trạng thái giữ nguyên, không có gì bị xóa.
+4. [Đúng] Bảo mật Form: Thao tác Xóa được thực thi qua phương thức POST thay vì truyền tham số ID trên URL (tránh bị xóa nhầm khi ai đó click nhầm link).
+5. [Đúng] Tách biệt MVC: Code hiển thị giao diện (index.php) hoàn toàn không chứa câu lệnh SQL nào, chỉ sử dụng vòng lặp để in dữ liệu.
