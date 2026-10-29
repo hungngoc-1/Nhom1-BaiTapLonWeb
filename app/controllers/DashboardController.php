@@ -21,6 +21,21 @@ class DashboardController {
         require_once __DIR__ . '/../views/dashboard/index.php';
     }
 
+    // Luồng mới: GET ?route=overview (Hiển thị chi tiết Tòa nhà)
+    public function overview(): void {
+        $building_id = $_GET['building_id'] ?? 'all';
+
+        $keyword = trim($_GET['keyword'] ?? '');
+        $status  = trim($_GET['status'] ?? '');
+
+        $stats         = $this->reportModel->getSummaryStats();
+        $chartData     = $this->reportModel->getMonthlyRevenue();
+        $debtList      = $this->reportModel->getDebtList($keyword, $status);
+        $notifications = $this->reportModel->getNotifications();
+
+        require_once __DIR__ . '/../views/dashboard/overview.php';
+    }
+
     // Hiển thị giao diện Đăng nhập: GET ?route=login
     public function loginView(): void {
         $error = $_GET['error'] ?? '';
