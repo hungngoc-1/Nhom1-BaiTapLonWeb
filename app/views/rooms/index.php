@@ -1,3 +1,15 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quản lý Phòng trọ</title>
+    <!-- Thư viện Bootstrap 5 & Icons giúp làm đẹp giao diện -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+</head>
+<body class="bg-light">
+
 <div class="container-fluid py-4 px-4">
     <div class="d-flex justify-content-between align-items-center mb-4">
         <div>
@@ -37,14 +49,14 @@
                                         </span>
                                     </td>
                                     <td class="text-end pe-4">
-                                        <!-- Các nút điều hướng sang show.php và edit.php -->
+                                        <!-- Các nút điều hướng -->
                                         <a href="index.php?route=rooms_show&id=<?= $room['id'] ?>" class="btn btn-sm btn-outline-info"><i class="bi bi-eye"></i> Xem</a>
                                         <a href="index.php?route=rooms_edit&id=<?= $room['id'] ?>" class="btn btn-sm btn-outline-primary"><i class="bi bi-pencil"></i> Sửa</a>
                                     </td>
                                 </tr>
                             <?php endforeach; ?>
                         <?php else: ?>
-                            <tr><td colspan="5" class="text-center py-4">Không có dữ liệu phòng.</td></tr>
+                            <tr><td colspan="5" class="text-center py-4 text-muted">Không có dữ liệu phòng.</td></tr>
                         <?php endif; ?>
                     </tbody>
                 </table>
@@ -52,3 +64,7 @@
         </div>
     </div>
 </div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
