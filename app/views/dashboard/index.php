@@ -487,6 +487,55 @@
                     </form>
                 </div>
             </div>
+
+            <!-- Tòa C -->
+            <div class="col-12 col-lg-4">
+                <div class="building-card">
+                    <span class="badge-bld">BLD-C</span>
+                    <i class="fa-solid fa-ellipsis-vertical position-absolute text-muted" style="top:25px; right:25px; cursor:pointer;"></i>
+                    <div class="card-illustration"></div>
+                    
+                    <h5 class="fw-bold text-dark mt-3 mb-2">Tòa C - StayMate Horizon</h5>
+                    <div class="text-muted text-xs mb-3"><i class="fa-solid fa-location-dot text-teal me-1"></i> Số 88 Nguyễn Trãi, Quận Thanh Xuân, TP. Hà Nội</div>
+                    
+                    <div class="d-flex justify-content-between text-xs mb-4">
+                        <span class="text-muted"><i class="fa-regular fa-id-badge me-1"></i> Quản lý riêng:</span>
+                        <span class="fw-bold text-dark">Quản lý Tòa C (Lê Hoàng Nam) <span class="text-teal fw-normal">(quanly_c)</span></span>
+                    </div>
+
+                    <div class="row g-2 mb-4">
+                        <div class="col-4">
+                            <div class="stat-box stat-box-total">
+                                <i class="fa-regular fa-building stat-icon mb-1"></i>
+                                <div class="stat-val">10</div>
+                                <div class="stat-label">Tổng</div>
+                            </div>
+                        </div>
+                        <div class="col-4">
+                            <div class="stat-box stat-box-rented">
+                                <i class="fa-solid fa-user-group stat-icon mb-1 text-success"></i>
+                                <div class="stat-val text-success">7</div>
+                                <div class="stat-label">Đang thuê</div>
+                            </div>
+                        </div>
+                        <div class="col-4">
+                            <div class="stat-box stat-box-empty">
+                                <i class="fa-solid fa-house-chimney stat-icon mb-1 text-warning"></i>
+                                <div class="stat-val text-warning">3</div>
+                                <div class="stat-label">Phòng trống</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="d-flex gap-2 mt-auto">
+                        <a href="index.php?route=overview&building_id=C" class="btn btn-card-main text-decoration-none text-center d-flex align-items-center justify-content-center">
+                            <i class="fa-solid fa-arrow-right-to-bracket me-2"></i> Vào quản lý Tòa này
+                        </a>
+                        <button class="btn btn-card-folder"><i class="fa-regular fa-folder-open"></i></button>
+                    </div>
+                </div>
+            </div>
+
         </div>
     </div>
 
