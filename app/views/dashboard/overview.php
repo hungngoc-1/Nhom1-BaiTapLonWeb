@@ -4,320 +4,286 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>StayMate - Tổng quan Tòa nhà</title>
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         :root {
-            --primary-teal: #287A74; 
-            --teal-light: #e6f2f1;
-            --bg-body: #f4f7f6;
+            --primary-teal: #36837c;
+            --primary-hover: #2a6a64;
+            --bg-body: #f4f8f7;
+            --card-radius: 24px;
         }
 
         body {
             background-color: var(--bg-body);
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-family: 'Nunito', sans-serif;
             font-size: 0.9rem;
+            color: #334155;
+            min-height: 100vh;
         }
 
-        /* Navbar Styling */
+        /* Navbar */
         .navbar-custom {
-            background: #ffffff;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
-            padding: 0.5rem 1rem;
+            background-color: #ffffff;
+            padding: 10px 20px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+            border-bottom: 2px solid #e2e8f0;
         }
-
         .brand-logo {
             display: flex;
             align-items: center;
             gap: 10px;
-            font-weight: 700;
-            color: var(--primary-teal);
-            font-size: 1.1rem;
             text-decoration: none;
+            flex-shrink: 0;
         }
-
-        .brand-logo .icon-box {
-            background: var(--primary-teal);
-            color: white;
-            width: 36px;
-            height: 36px;
-            border-radius: 8px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 1.1rem;
-        }
-
-        .nav-pills .nav-link {
-            color: #6c757d;
-            font-weight: 500;
-            padding: 0.5rem 0.8rem;
-            border-radius: 8px;
-            transition: all 0.2s;
-            font-size: 0.85rem;
-        }
-
-        .nav-pills .nav-link:hover {
-            background-color: var(--teal-light);
+        .brand-logo i {
             color: var(--primary-teal);
+            font-size: 2rem;
         }
-
+        .brand-text {
+            color: var(--primary-teal);
+            font-weight: 800;
+            font-size: 1.2rem;
+            line-height: 1.1;
+        }
+        
+        .nav-pills { gap: 2px; }
+        .nav-pills .nav-link {
+            color: #64748b;
+            font-weight: 700;
+            font-size: 0.8rem;
+            padding: 7px 11px;
+            border-radius: 16px;
+            transition: all 0.2s;
+            white-space: nowrap;
+        }
+        .nav-pills .nav-link i { margin-right: 4px; }
+        .nav-pills .nav-link:hover { color: var(--primary-teal); background: #e6f3f1; }
         .nav-pills .nav-link.active {
             background-color: var(--primary-teal);
             color: white;
+            box-shadow: 0 4px 12px rgba(54, 131, 124, 0.3);
         }
+
+        /* CÁC THẺ CARD MÀU SẮC SINH ĐỘNG NỔI KHỐI 3D */
+        .stat-card {
+            border-radius: var(--card-radius);
+            border: 2px solid;
+            padding: 24px;
+            box-shadow: 0 12px 35px rgba(15, 23, 42, 0.08);
+            height: 100%;
+            transition: transform 0.2s;
+        }
+        .stat-card:hover { transform: translateY(-4px); }
+
+        /* Phối màu riêng biệt cho từng thẻ card thống kê */
+        .card-green { background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%); border-color: #86efac; }
+        .card-blue { background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%); border-color: #7dd3fc; }
+        .card-orange { background: linear-gradient(135deg, #fffbeb00 0%, #fef3c7 100%); border-color: #fde047; background-color: #fffdf5; }
+        .card-purple { background: linear-gradient(135deg, #fdf4ff 0%, #fae8ff 100%); border-color: #f0abfc; background-color: #fefbff; }
+
+        /* Khung bảng nội dung */
+        .content-card {
+            background: #ffffff;
+            border-radius: var(--card-radius);
+            border: 2px solid #cbd5e1;
+            box-shadow: 0 12px 35px rgba(15, 23, 42, 0.08);
+            overflow: hidden;
+        }
+
+        .btn-teal-custom {
+            background-color: var(--primary-teal);
+            color: white;
+            border-radius: 16px;
+            font-weight: 700;
+            font-size: 0.85rem;
+            padding: 8px 16px;
+            border: none;
+            box-shadow: 0 4px 12px rgba(54, 131, 124, 0.3);
+            transition: 0.2s;
+        }
+        .btn-teal-custom:hover { background-color: var(--primary-hover); color: white; }
+
+        .text-teal { color: var(--primary-teal) !important; }
+        .text-xs { font-size: 0.8rem; }
     </style>
 </head>
 <body>
 
-    <!-- Header / Navbar Chuẩn StayMate -->
+    <!-- Navbar -->
     <nav class="navbar navbar-expand-lg navbar-custom sticky-top">
-        <div class="container-fluid px-3">
-            <a class="brand-logo me-4" href="index.php?route=dashboard">
-                <div class="icon-box"><i class="fa-solid fa-building-shield"></i></div>
+        <div class="container-fluid px-3 px-xl-4">
+            <a class="brand-logo me-3" href="index.php?route=dashboard">
+                <i class="fa-solid fa-house-chimney"></i>
                 <div>
-                    <div style="line-height: 1.2;">StayMate</div>
-                    <small class="text-muted" style="font-size: 0.65rem; font-weight: normal;">Quản Lý Nhà Trọ</small>
+                    <div class="brand-text">StayMate</div>
+                    <div class="text-muted text-xs">Quản Lý Nhà Trọ</div>
                 </div>
             </a>
 
-            <!-- Menu Tabs -->
-            <ul class="nav nav-pills me-auto d-none d-lg-flex gap-1">
-                <li class="nav-item"><a class="nav-link" href="index.php?route=dashboard"><i class="fa-solid fa-city me-1"></i> Tòa nhà</a></li>
-                <li class="nav-item"><a class="nav-link active" href="index.php?route=overview"><i class="fa-solid fa-chart-pie me-1"></i> Tổng quan</a></li>
-                <li class="nav-item"><a class="nav-link" href="index.php?route=rooms"><i class="fa-solid fa-door-open me-1"></i> Phòng trọ</a></li>
-                <li class="nav-item"><a class="nav-link" href="#"><i class="fa-solid fa-users me-1"></i> Khách thuê</a></li>
-                <li class="nav-item"><a class="nav-link" href="#"><i class="fa-solid fa-file-contract me-1"></i> Hợp đồng</a></li>
-                <li class="nav-item"><a class="nav-link" href="#"><i class="fa-solid fa-bolt me-1"></i> Điện Nước</a></li>
-                <li class="nav-item"><a class="nav-link" href="#"><i class="fa-solid fa-file-invoice-dollar me-1"></i> Hóa đơn & Thu tiền</a></li>
-                <li class="nav-item"><a class="nav-link" href="#"><i class="fa-solid fa-chart-column me-1"></i> Báo cáo</a></li>
+            <ul class="nav nav-pills me-auto d-none d-lg-flex">
+                <li class="nav-item"><a class="nav-link" href="index.php?route=dashboard"><i class="fa-solid fa-city"></i> Tòa nhà</a></li>
+                <li class="nav-item"><a class="nav-link active" href="index.php?route=overview"><i class="fa-solid fa-chart-pie"></i> Tổng quan</a></li>
+                <li class="nav-item"><a class="nav-link" href="index.php?route=rooms"><i class="fa-solid fa-door-open"></i> Phòng trọ</a></li>
+                <li class="nav-item"><a class="nav-link" href="#"><i class="fa-solid fa-users"></i> Khách thuê</a></li>
+                <li class="nav-item"><a class="nav-link" href="#"><i class="fa-solid fa-file-contract"></i> Hợp đồng</a></li>
+                <li class="nav-item"><a class="nav-link" href="#"><i class="fa-solid fa-bolt"></i> Điện Nước</a></li>
+                <li class="nav-item"><a class="nav-link" href="#"><i class="fa-solid fa-file-invoice-dollar"></i> Hóa đơn</a></li>
+                <li class="nav-item"><a class="nav-link" href="#"><i class="fa-solid fa-chart-column"></i> Báo cáo</a></li>
             </ul>
 
-            <!-- Tài khoản Admin -->
             <div class="d-flex align-items-center gap-3">
-                <div class="position-relative cursor-pointer">
-                    <i class="fa-solid fa-bell fs-5 text-secondary"></i>
-                    <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" style="font-size: 0.6rem;">8</span>
+                <div class="position-relative cursor-pointer text-muted">
+                    <i class="fa-solid fa-bell fs-5"></i>
+                    <span class="position-absolute top-0 start-100 translate-middle p-1 bg-danger border border-light rounded-circle"></span>
                 </div>
-                <div class="dropdown">
-                    <a href="#" class="d-flex align-items-center text-decoration-none dropdown-toggle text-dark" data-bs-toggle="dropdown">
-                        <img src="https://ui-avatars.com/api/?name=Admin+StayMate&background=287A74&color=fff" class="rounded-circle me-2" width="35" height="35" alt="Admin">
-                        <div class="text-start d-none d-sm-block">
-                            <div class="fw-bold" style="font-size: 0.8rem;">Quản trị viên Hệ thống</div>
-                            <small class="text-muted" style="font-size: 0.7rem;">Nguyễn Kim Huệ (Admin)</small>
-                        </div>
-                    </a>
+                <div class="dropdown d-flex align-items-center gap-2">
+                    <div class="rounded-circle text-white d-flex align-items-center justify-content-center fw-bold shadow-sm" style="width:38px; height:38px; background-color: var(--primary-teal); font-size: 0.9rem;">AS</div>
+                    <div class="text-start d-none d-sm-block lh-sm">
+                        <div class="fw-bold text-dark" style="font-size: 0.85rem;">Quản trị viên Hệ thống <i class="fa-solid fa-angle-down ms-1 text-muted"></i></div>
+                        <div class="text-muted" style="font-size: 0.75rem;">Nguyễn Kim Huệ (Admin)</div>
+                    </div>
                 </div>
             </div>
         </div>
     </nav>
 
-    <!-- NỘI DUNG TỔNG QUAN -->
-    <div class="container-fluid px-4 my-4">
-        <!-- Tiêu đề trang & Breadcrumb -->
+    <!-- Main Container -->
+    <div class="container-fluid px-4 px-xl-5 py-4">
+        
+        <!-- Tiêu đề & Breadcrumb -->
         <div class="d-flex justify-content-between align-items-center mb-4">
             <div>
                 <nav aria-label="breadcrumb">
-                    <ol class="breadcrumb mb-1" style="font-size: 0.85rem;">
-                        <li class="breadcrumb-item"><a href="index.php?route=dashboard" class="text-decoration-none text-success" style="color: var(--primary-teal) !important;"><i class="fa-solid fa-house me-1"></i> Hệ thống Quản lý</a></li>
+                    <ol class="breadcrumb mb-1 text-xs fw-semibold">
+                        <li class="breadcrumb-item"><a href="index.php?route=dashboard" class="text-decoration-none text-teal"><i class="fa-solid fa-house me-1"></i> Hệ thống Quản lý</a></li>
                         <li class="breadcrumb-item active" aria-current="page">Tổng quan Quản lý Nhà trọ</li>
                     </ol>
                 </nav>
                 <h3 class="fw-bold mb-0 text-dark">
                     Tổng quan Quản lý Nhà trọ
                     <?php if (isset($_GET['building_id']) && $_GET['building_id'] !== 'all'): ?>
-                        <span style="color: var(--primary-teal);"> - Tòa <?= htmlspecialchars($_GET['building_id']) ?></span>
+                        <span class="text-teal"> - Tòa <?= htmlspecialchars($_GET['building_id']) ?></span>
                     <?php endif; ?>
                 </h3>
             </div>
             <div>
-                <button class="btn btn-light border bg-white shadow-sm text-muted">
-                    <i class="fa-regular fa-calendar me-2"></i> Hôm nay, <?= date('d/m/Y') ?>
+                <button class="btn btn-light border bg-white shadow-sm text-muted rounded-pill px-3 py-2 fw-bold text-xs">
+                    <i class="fa-regular fa-calendar me-2 text-teal"></i> Hôm nay, <?= date('d/m/Y') ?>
                 </button>
             </div>
         </div>
 
-        <!-- 4 Thẻ Thống kê -->
-        <div class="row g-3 mb-4">
+        <!-- 4 Thẻ Thống kê Màu Sắc Sinh Động -->
+        <div class="row g-4 mb-4">
+            <!-- Tỷ lệ lấp đầy (Xanh lá) -->
             <div class="col-md-3">
-                <div class="card border-0 shadow-sm h-100 rounded-3 p-3">
-                    <div class="text-muted small fw-bold text-uppercase mb-2">Tỷ lệ lấp đầy</div>
-                    <div class="d-flex justify-content-between align-items-end">
-                        <h3 class="fw-bold mb-0 text-dark"><?= $stats['rented_rooms'] ?? 18 ?> / <?= $stats['total_rooms'] ?? 24 ?> <span class="fs-6 text-muted fw-normal">phòng</span></h3>
-                        <div class="p-2 bg-success bg-opacity-10 text-success rounded"><i class="fa-solid fa-door-closed"></i></div>
+                <div class="stat-card card-green">
+                    <div class="text-success text-xs fw-bold text-uppercase mb-2">Tỷ lệ lấp đầy</div>
+                    <div class="d-flex justify-content-between align-items-end mb-3">
+                        <h3 class="fw-bold mb-0 text-dark">-- / -- <span class="fs-6 text-muted fw-normal">phòng</span></h3>
+                        <div class="p-2 bg-success text-white rounded-circle shadow-sm"><i class="fa-solid fa-door-closed"></i></div>
                     </div>
-                    <div class="mt-3 progress" style="height: 4px;">
-                        <div class="progress-bar bg-success" style="width: 75%"></div>
+                    <div class="progress mb-2 bg-white" style="height: 6px;">
+                        <div class="progress-bar bg-success rounded" style="width: 0%"></div>
                     </div>
-                    <div class="d-flex justify-content-between mt-2 small">
-                        <span class="text-success"><i class="fa-solid fa-circle-check me-1"></i>75% đang thuê</span>
-                        <span class="text-muted">6 trống</span>
+                    <div class="d-flex justify-content-between text-xs fw-bold text-success">
+                        <span><i class="fa-solid fa-circle-check me-1"></i>0% đang thuê</span>
+                        <span class="text-muted">-- trống</span>
                     </div>
                 </div>
             </div>
+
+            <!-- Thực thu (Xanh dương) -->
             <div class="col-md-3">
-                <div class="card border-0 shadow-sm h-100 rounded-3 p-3">
-                    <div class="text-muted small fw-bold text-uppercase mb-2">Thực thu 2026</div>
-                    <div class="d-flex justify-content-between align-items-end">
-                        <h3 class="fw-bold mb-0 text-dark"><?= number_format($stats['monthly_revenue'] ?? 20595000, 0, ',', '.') ?> đ</h3>
-                        <div class="p-2 bg-info bg-opacity-10 text-info rounded"><i class="fa-solid fa-money-bill-wave"></i></div>
+                <div class="stat-card card-blue">
+                    <div class="text-primary text-xs fw-bold text-uppercase mb-2">Thực thu <?= date('Y') ?></div>
+                    <div class="d-flex justify-content-between align-items-end mb-3">
+                        <h3 class="fw-bold mb-0 text-dark">0 đ</h3>
+                        <div class="p-2 bg-primary text-white rounded-circle shadow-sm"><i class="fa-solid fa-money-bill-wave"></i></div>
                     </div>
-                    <hr class="text-muted my-2">
-                    <div class="d-flex justify-content-between mt-1 small">
+                    <hr class="text-muted my-2 opacity-25">
+                    <div class="d-flex justify-content-between text-xs">
                         <span class="text-muted">Tổng phát sinh:</span>
-                        <span class="fw-medium text-dark">29.225.000 đ</span>
+                        <span class="fw-bold text-primary">0 đ</span>
                     </div>
                 </div>
             </div>
+
+            <!-- Công nợ (Cam ấm) -->
             <div class="col-md-3">
-                <div class="card border-0 shadow-sm h-100 rounded-3 p-3">
-                    <div class="text-muted small fw-bold text-uppercase mb-2">Công nợ chưa thu</div>
-                    <div class="d-flex justify-content-between align-items-end">
-                        <h3 class="fw-bold mb-0 text-danger">8.630.000 đ</h3>
-                        <div class="p-2 bg-danger bg-opacity-10 text-danger rounded"><i class="fa-solid fa-circle-exclamation"></i></div>
+                <div class="stat-card card-orange">
+                    <div class="text-warning text-xs fw-bold text-uppercase mb-2" style="color: #b45309 !important;">Công nợ chưa thu</div>
+                    <div class="d-flex justify-content-between align-items-end mb-3">
+                        <h3 class="fw-bold mb-0 text-danger">0 đ</h3>
+                        <div class="p-2 bg-warning text-white rounded-circle shadow-sm"><i class="fa-solid fa-circle-exclamation"></i></div>
                     </div>
-                    <hr class="text-muted my-2">
-                    <div class="d-flex justify-content-between mt-1 small">
-                        <span class="text-danger"><i class="fa-regular fa-clock me-1"></i> Tồn đọng:</span>
-                        <span class="fw-medium text-danger">3 hóa đơn</span>
+                    <hr class="text-muted my-2 opacity-25">
+                    <div class="d-flex justify-content-between text-xs">
+                        <span class="text-danger fw-semibold"><i class="fa-regular fa-clock me-1"></i> Tồn đọng:</span>
+                        <span class="fw-bold text-danger">0 hóa đơn</span>
                     </div>
                 </div>
             </div>
+
+            <!-- Khách & Hợp đồng (Tím nhạt) -->
             <div class="col-md-3">
-                <div class="card border-0 shadow-sm h-100 rounded-3 p-3">
-                    <div class="text-muted small fw-bold text-uppercase mb-2">Khách & Hợp đồng</div>
-                    <div class="d-flex justify-content-between align-items-end">
-                        <h3 class="fw-bold mb-0 text-dark"><?= $stats['total_tenants'] ?? 4 ?> <span class="fs-6 text-muted fw-normal">lưu trú</span></h3>
-                        <div class="p-2 bg-success bg-opacity-10 text-success rounded"><i class="fa-solid fa-users"></i></div>
+                <div class="stat-card card-purple">
+                    <div class="text-xs fw-bold text-uppercase mb-2" style="color: #a21caf !important;">Khách & Hợp đồng</div>
+                    <div class="d-flex justify-content-between align-items-end mb-3">
+                        <h3 class="fw-bold mb-0 text-dark">0 <span class="fs-6 text-muted fw-normal">lưu trú</span></h3>
+                        <div class="p-2 text-white rounded-circle shadow-sm" style="background-color: #c084fc;"><i class="fa-solid fa-users"></i></div>
                     </div>
-                    <hr class="text-muted my-2">
-                    <div class="d-flex justify-content-between mt-1 small">
+                    <hr class="text-muted my-2 opacity-25">
+                    <div class="d-flex justify-content-between text-xs">
                         <span class="text-muted">Hợp đồng hiệu lực:</span>
-                        <span class="fw-medium text-dark">4 hợp đồng</span>
+                        <span class="fw-bold" style="color: #a21caf;">0 hợp đồng</span>
                     </div>
                 </div>
             </div>
         </div>
 
+        <!-- Phần Bảng Khung Trống Chờ Dữ Liệu -->
         <div class="row g-4">
-            <!-- Cột Trái: Bảng Hóa đơn -->
+            <!-- Hóa đơn cần thu nợ -->
             <div class="col-lg-7">
-                <div class="card border-0 shadow-sm rounded-3">
-                    <div class="card-header bg-white border-bottom-0 pt-3 pb-2 d-flex justify-content-between align-items-center">
-                        <h6 class="fw-bold mb-0"><i class="fa-solid fa-file-invoice me-2" style="color: var(--primary-teal);"></i> Hóa đơn Cần Thu Nợ (3)</h6>
-                        <button class="btn btn-sm text-white" style="background-color: var(--primary-teal);"><i class="fa-solid fa-plus me-1"></i> Lập hóa đơn</button>
+                <div class="content-card h-100">
+                    <div class="card-header bg-white border-bottom py-3 px-4 d-flex justify-content-between align-items-center">
+                        <h6 class="fw-bold mb-0 text-dark"><i class="fa-solid fa-file-invoice me-2 text-teal"></i> Hóa đơn Cần Thu Nợ (0)</h6>
+                        <button class="btn btn-teal-custom btn-sm"><i class="fa-solid fa-plus me-1"></i> Lập hóa đơn</button>
                     </div>
-                    <div class="card-body p-0">
-                        <div class="table-responsive">
-                            <table class="table table-hover align-middle mb-0 text-center" style="font-size: 0.9rem;">
-                                <thead class="table-light text-muted small">
-                                    <tr>
-                                        <th>MÃ HĐ</th>
-                                        <th>PHÒNG / KHÁCH</th>
-                                        <th>KỲ</th>
-                                        <th>CÒN PHẢI THU</th>
-                                        <th>HẠN ĐÓNG</th>
-                                        <th>THAO TÁC</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <tr>
-                                        <td class="text-muted">INV-2610-P201</td>
-                                        <td><span class="badge bg-success bg-opacity-10 text-success me-1">P201</span> P. M. Tuấn</td>
-                                        <td>T10/26</td>
-                                        <td class="fw-medium">3.605.000 đ</td>
-                                        <td>15/10 <span class="badge bg-danger bg-opacity-10 text-danger ms-1">Quá hạn</span></td>
-                                        <td>
-                                            <button class="btn btn-sm text-white" style="background-color: var(--primary-teal);">Thu</button>
-                                            <button class="btn btn-sm btn-outline-secondary">Chi tiết</button>
-                                        </td>
-                                    </tr>
-                                    <tr>
-                                        <td class="text-muted">INV-2610-P101</td>
-                                        <td><span class="badge bg-success bg-opacity-10 text-success me-1">P101</span> N. V. An</td>
-                                        <td>T10/26</td>
-                                        <td class="fw-medium">1.505.000 đ</td>
-                                        <td>25/10 <span class="badge bg-warning bg-opacity-10 text-warning ms-1">1 phần</span></td>
-                                        <td>
-                                            <button class="btn btn-sm text-white" style="background-color: var(--primary-teal);">Thu</button>
-                                            <button class="btn btn-sm btn-outline-secondary">Chi tiết</button>
-                                        </td>
-                                    </tr>
-                                    <tr>
-                                        <td class="text-muted">INV-2610-P202</td>
-                                        <td><span class="badge bg-success bg-opacity-10 text-success me-1">P202</span> V. T. T. Hà</td>
-                                        <td>T10/26</td>
-                                        <td class="fw-medium">3.520.000 đ</td>
-                                        <td>28/10</td>
-                                        <td>
-                                            <button class="btn btn-sm text-white" style="background-color: var(--primary-teal);">Thu</button>
-                                            <button class="btn btn-sm btn-outline-secondary">Chi tiết</button>
-                                        </td>
-                                    </tr>
-                                </tbody>
-                            </table>
+                    <div class="card-body p-4 text-center text-muted">
+                        <div class="py-5">
+                            <i class="fa-solid fa-folder-open fs-1 text-teal opacity-50 mb-3"></i>
+                            <p class="fw-semibold mb-0">Chưa có dữ liệu hóa đơn công nợ trong hệ thống.</p>
+                            <small class="text-xs">Dữ liệu sẽ hiển thị khi kết nối Cơ sở dữ liệu.</small>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <!-- Cột Phải: Thông báo & Biểu đồ -->
-            <div class="col-lg-5">
-                <div class="card border-0 shadow-sm rounded-3 mb-4">
-                    <div class="card-header bg-white border-bottom-0 pt-3 pb-2 d-flex justify-content-between align-items-center">
-                        <h6 class="fw-bold mb-0"><i class="fa-solid fa-bell me-2" style="color: var(--primary-teal);"></i> Đặt trước Phòng <span class="badge bg-danger rounded-pill ms-1">3 mới</span></h6>
-                        <a href="#" class="text-decoration-none small text-muted">Lịch sử</a>
+            <!-- Cột Phải: Đặt trước phòng & Sắp hết hạn -->
+            <div class="col-lg-5 d-flex flex-column gap-4">
+                <!-- Đặt trước phòng -->
+                <div class="content-card">
+                    <div class="card-header bg-white border-bottom py-3 px-4 d-flex justify-content-between align-items-center">
+                        <h6 class="fw-bold mb-0 text-dark"><i class="fa-solid fa-bell me-2 text-teal"></i> Đặt trước Phòng <span class="badge bg-secondary rounded-pill ms-1">0 mới</span></h6>
+                        <a href="#" class="text-decoration-none text-xs text-muted fw-semibold">Lịch sử</a>
                     </div>
-                    <div class="card-body p-0">
-                        <div class="table-responsive">
-                            <table class="table align-middle mb-0" style="font-size: 0.85rem;">
-                                <thead class="text-muted small">
-                                    <tr>
-                                        <th>PHÒNG</th>
-                                        <th>KHÁCH ĐẶT</th>
-                                        <th>VÀO Ở</th>
-                                        <th>XỬ LÝ</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <tr>
-                                        <td><span class="badge bg-success bg-opacity-10 text-success">P103</span></td>
-                                        <td>Nguyễn Văn B <span class="text-muted">(0987654321)</span></td>
-                                        <td>29/10</td>
-                                        <td class="text-success"><i class="fa-solid fa-circle-check me-1"></i> Đã LH</td>
-                                    </tr>
-                                </tbody>
-                            </table>
-                        </div>
+                    <div class="card-body p-3 text-center text-muted">
+                        <small class="text-xs"><i class="fa-solid fa-circle-info me-1"></i> Không có lịch đặt phòng chờ xử lý.</small>
                     </div>
                 </div>
 
-                <div class="card border-0 shadow-sm rounded-3">
-                    <div class="card-header bg-white border-bottom-0 pt-3 pb-2 d-flex justify-content-between align-items-center">
-                        <h6 class="fw-bold mb-0"><i class="fa-regular fa-calendar-xmark me-2 text-warning"></i> Sắp hết hạn (60 ngày)</h6>
-                        <button class="btn btn-sm btn-outline-secondary">Quản lý HĐ</button>
+                <!-- Sắp hết hạn -->
+                <div class="content-card">
+                    <div class="card-header bg-white border-bottom py-3 px-4 d-flex justify-content-between align-items-center">
+                        <h6 class="fw-bold mb-0 text-dark"><i class="fa-regular fa-calendar-xmark me-2 text-warning"></i> Sắp hết hạn (60 ngày)</h6>
+                        <button class="btn btn-sm btn-outline-secondary py-1 px-3 text-xs fw-bold">Quản lý HĐ</button>
                     </div>
-                    <div class="card-body p-0">
-                        <div class="table-responsive">
-                            <table class="table align-middle mb-0" style="font-size: 0.85rem;">
-                                <thead class="text-muted small">
-                                    <tr>
-                                        <th>PHÒNG</th>
-                                        <th>KHÁCH THUÊ</th>
-                                        <th>HẾT HẠN</th>
-                                        <th>CÒN LẠI</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <tr>
-                                        <td><span class="badge bg-success bg-opacity-10 text-success">P201</span></td>
-                                        <td>Phạm Tuấn <span class="text-muted">(0912345003)</span></td>
-                                        <td>05/11/26</td>
-                                        <td><span class="badge bg-warning bg-opacity-10 text-warning">Còn 9 ngày</span></td>
-                                    </tr>
-                                </tbody>
-                            </table>
-                        </div>
+                    <div class="card-body p-3 text-center text-muted">
+                        <small class="text-xs"><i class="fa-solid fa-circle-check text-success me-1"></i> Không có hợp đồng nào sắp hết hạn.</small>
                     </div>
                 </div>
             </div>
@@ -325,11 +291,13 @@
     </div>
 
     <!-- Footer -->
-    <footer class="bg-white border-top py-3 mt-5 text-muted small">
-        <div class="container-fluid px-4 d-flex justify-content-between align-items-center">
-            <div><i class="fa-solid fa-building-shield me-1" style="color: var(--primary-teal);"></i> © 2026 StayMate - Quản lý Nhà trọ Chuyên nghiệp</div>
-            <div class="d-flex gap-3">
-                <span><i class="fa-solid fa-shield-halved text-success me-1"></i> WAMP MVC Architecture</span>
+    <footer class="py-4 mt-5 text-muted text-xs border-top bg-white">
+        <div class="container-fluid px-4 px-xl-5 d-flex flex-column flex-md-row justify-content-between align-items-center">
+            <div class="mb-2 mb-md-0 fw-bold text-dark">
+                <i class="fa-solid fa-building me-1 text-teal"></i> © 2026 StayMate - Quản lý Nhà trọ Chuyên nghiệp
+            </div>
+            <div class="d-flex gap-4 fw-bold">
+                <span><i class="fa-solid fa-shield-halved text-teal me-1"></i> WAMP MVC Architecture</span>
                 <span><i class="fa-solid fa-bolt text-warning me-1"></i> Tự động hóa Điện, Nước & Hóa đơn</span>
             </div>
         </div>
