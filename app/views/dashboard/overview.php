@@ -127,7 +127,8 @@
                 <li class="nav-item"><a class="nav-link active" href="index.php?route=overview"><i class="fa-solid fa-chart-pie"></i> Tổng quan</a></li>
                 <li class="nav-item"><a class="nav-link" href="index.php?route=rooms"><i class="fa-solid fa-door-open"></i> Phòng trọ</a></li>
                 <li class="nav-item"><a class="nav-link" href="#"><i class="fa-solid fa-users"></i> Khách thuê</a></li>
-                <li class="nav-item"><a class="nav-link" href="#"><i class="fa-solid fa-file-contract"></i> Hợp đồng</a></li>
+                <!-- ĐÃ SỬA: Gắn link chuẩn cho nút Hợp đồng -->
+                <li class="nav-item"><a class="nav-link" href="index.php?route=contracts"><i class="fa-solid fa-file-contract"></i> Hợp đồng</a></li>
                 <li class="nav-item"><a class="nav-link" href="#"><i class="fa-solid fa-bolt"></i> Điện Nước</a></li>
                 <li class="nav-item"><a class="nav-link" href="#"><i class="fa-solid fa-file-invoice-dollar"></i> Hóa đơn</a></li>
                 <li class="nav-item"><a class="nav-link" href="#"><i class="fa-solid fa-chart-column"></i> Báo cáo</a></li>
@@ -164,7 +165,7 @@
                 <h3 class="fw-bold mb-0 text-dark">
                     Tổng quan Quản lý Nhà trọ
                     <?php if (isset($_GET['building_id']) && $_GET['building_id'] !== 'all'): ?>
-                        <span class="text-teal"> - Tòa <?= htmlspecialchars($_GET['building_id']) ?></span>
+                        <span class="text-teal">Tòa <?= htmlspecialchars($_GET['building_id']) ?></span>
                     <?php endif; ?>
                 </h3>
             </div>

@@ -20,6 +20,8 @@ if ($route === 'auth/logout') {
 // Nạp các Controller cần thiết
 require_once __DIR__ . '/app/Controllers/DashboardController.php';
 require_once __DIR__ . '/app/Controllers/AuthController.php';
+// ĐÃ THÊM: Nạp Controller Hợp đồng của bạn
+require_once __DIR__ . '/app/Controllers/ContractController.php'; 
 
 // ==========================================
 // 2. BỘ ĐIỀU HƯỚNG CÁC TRANG (ROUTER)
@@ -53,9 +55,32 @@ switch ($route) {
     case 'tenants':
         showPlaceholder('Quản lý Khách thuê');
         break;
+        
+    // ==========================================
+    // PHÂN HỆ QUẢN LÝ HỢP ĐỒNG
+    // ==========================================
     case 'contracts':
-        showPlaceholder('Quản lý Hợp đồng');
+        $contractController = new ContractController();
+        $contractController->index();
         break;
+        
+    case 'contracts/store': // Xử lý khi form Thêm mới submit
+        $contractController = new ContractController();
+        $contractController->store();
+        break;
+        
+    case 'contracts/edit': // Xử lý khi bấm nút Sửa
+        $contractController = new ContractController();
+        $contractController->edit();
+        break;
+        
+    case 'contracts/delete': // Xử lý khi bấm nút Xóa
+        $contractController = new ContractController();
+        $contractController->delete();
+        break;
+        
+    // ==========================================
+        
     case 'utilities':
         showPlaceholder('Điện Nước');
         break;
