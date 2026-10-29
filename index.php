@@ -20,6 +20,7 @@ if ($route === 'auth/logout') {
 // Nạp các Controller cần thiết
 require_once __DIR__ . '/app/Controllers/DashboardController.php';
 require_once __DIR__ . '/app/Controllers/AuthController.php';
+require_once __DIR__ . '/app/Controllers/UtilitiesController.php'; // Nạp Controller Điện Nước chuẩn MVC
 
 // ==========================================
 // 2. BỘ ĐIỀU HƯỚNG CÁC TRANG (ROUTER)
@@ -46,7 +47,13 @@ switch ($route) {
         $authController->login();
         break;
 
-    // --- CÁC TRANG MENU CHƯA CÓ CONTROLLER VÀ VIEW CHÍNH THỨC (HIỂN THỊ TẠM) ---
+    // --- ĐIỀU HƯỚNG CHUẨN MÔ HÌNH MVC CHO TRANG ĐIỆN NƯỚC ---
+    case 'utilities':
+        $utilitiesController = new UtilitiesController();
+        $utilitiesController->index();
+        break;
+
+    // --- CÁC TRANG MENU CHƯA CÓ CONTROLLER VÀ VIEW CHÍNH THỨC ---
     case 'rooms':
         showPlaceholder('Quản lý Phòng trọ');
         break;
@@ -55,9 +62,6 @@ switch ($route) {
         break;
     case 'contracts':
         showPlaceholder('Quản lý Hợp đồng');
-        break;
-    case 'utilities':
-        showPlaceholder('Điện Nước');
         break;
     case 'invoices':
         showPlaceholder('Hóa đơn & Thu tiền');
@@ -73,7 +77,7 @@ switch ($route) {
 }
 
 // ==========================================
-// HÀM TẠO GIAO DIỆN TẠM CHO CÁC TRANG MENU CHƯA LÀM
+// HÀM TẠO GIAO DIỆN TẠM CHO CÁC TRANG MENU KHÁC
 // ==========================================
 function showPlaceholder($title) {
     echo '<div style="padding: 60px; font-family: sans-serif; text-align: center; background: #F0F7F6; height: 100vh; box-sizing: border-box;">

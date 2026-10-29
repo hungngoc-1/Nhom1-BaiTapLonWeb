@@ -61,3 +61,9 @@ Thực hiện các bước sau trên **phpMyAdmin** để khởi tạo cơ sở 
 6. Cấu hình kết nối PDO trong file config của dự án (nếu cần):
    - Database name: `quan_ly_nha_tro`
    - Encoding: `utf8mb4`
+
+
+### ⚡ Module Quản lý Điện Nước (Thành viên: Dương Thị Trang)
+- **Chức năng:** Thực hiện đầy đủ mô hình CRUD (Thêm, Xem, Sửa, Xóa) quản lý chỉ số điện nước hàng tháng của các phòng trọ.
+- **Đường dẫn Route:** `index.php?route=utilities`
+- **Bảo mật:** Sử dụng PDO `prepared statements` chống tấn công SQL Injection cho toàn bộ truy vấn thêm, sửa, xóa, tìm kiếm.
