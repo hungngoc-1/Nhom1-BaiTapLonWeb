@@ -45,14 +45,41 @@ class ContractController {
         exit;
     }
 
-    // Xử lý Sửa hợp đồng (Tạo khung giữ chỗ)
+    // Xử lý Sửa hợp đồng (Lấy dữ liệu cũ và gọi giao diện edit.php)
     public function edit() {
         $id = $_GET['id'] ?? null;
-        // Tạm thời hiển thị thông báo, vì chúng ta chưa tạo file giao diện edit.php
-        echo "<div style='padding: 50px; font-family: sans-serif; text-align: center;'>";
-        echo "<h2>Giao diện Sửa hợp đồng ID: $id đang được xây dựng...</h2>";
-        echo "<a href='index.php?route=contracts' style='padding: 10px 20px; background: #6d28d9; color: white; text-decoration: none; border-radius: 8px;'>Quay lại trang Hợp đồng</a>";
-        echo "</div>";
+        if (!$id) {
+            header("Location: index.php?route=contracts");
+            exit;
+        }
+
+        // Gọi Model đi lấy dữ liệu của hợp đồng này
+        $contract = $this->contractModel->getContractById($id);
+        
+        // Gọi giao diện form sửa và truyền biến $contract sang
+        require_once __DIR__ . '/../views/contracts/edit.php';
+    }
+
+    // Xử lý khi người dùng bấm nút "Lưu thay đổi" trên form Sửa
+    public function update() {
+        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            $id = $_POST['id'];
+            $data = [
+                'room_id' => $_POST['room_id'],
+                'tenant_id' => $_POST['tenant_id'],
+                'start_date' => $_POST['start_date'],
+                'end_date' => $_POST['end_date'],
+                'deposit_amount' => $_POST['deposit_amount'],
+                'status' => $_POST['status']
+            ];
+            
+            // Ra lệnh Model cập nhật vào CSDL
+            $this->contractModel->updateContract($id, $data);
+            
+            // Quay về trang danh sách
+            header("Location: index.php?route=contracts");
+            exit;
+        }
     }
 }
 ?>
