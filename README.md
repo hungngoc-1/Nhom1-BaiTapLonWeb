@@ -61,3 +61,14 @@ Thực hiện các bước sau trên **phpMyAdmin** để khởi tạo cơ sở 
 6. Cấu hình kết nối PDO trong file config của dự án (nếu cần):
    - Database name: `quan_ly_nha_tro`
    - Encoding: `utf8mb4`
+
+# Nguyễn Kim Huệ
+- **Chức năng phụ trách:** 
+  - Đăng nhập / Đăng xuất hệ thống (Bảo mật bằng PDO Prepared Statement).
+  - Quản lý giao diện và danh sách Tòa nhà.
+  - Trang Tổng quan (Thống kê tỷ lệ lấp đầy phòng, doanh thu thực thu, công nợ và hợp đồng trực tiếp từ CSDL).
+- **Danh sách Route:**
+  - `index.php?route=auth/login`: Trang đăng nhập
+  - `index.php?route=auth/logout`: Đăng xuất, hủy session
+  - `index.php?route=dashboard`: Trang quản lý Tòa nhà
+  - `index.php?route=overview`: Trang Tổng quan hệ thống

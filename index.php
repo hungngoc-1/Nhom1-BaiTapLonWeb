@@ -20,8 +20,6 @@ if ($route === 'auth/logout') {
 // Nạp các Controller cần thiết
 require_once __DIR__ . '/app/Controllers/DashboardController.php';
 require_once __DIR__ . '/app/Controllers/AuthController.php';
-require_once __DIR__ . '/app/Controllers/ContractController.php'; // ĐÃ THÊM: Nạp Controller Hợp đồng
-require_once __DIR__ . '/app/Controllers/RoomController.php';     // ĐÃ THÊM: Nạp Controller Phòng trọ
 
 // ==========================================
 // 2. BỘ ĐIỀU HƯỚNG CÁC TRANG (ROUTER)
@@ -48,7 +46,7 @@ switch ($route) {
         $authController->login();
         break;
 
-    // --- TRANG QUẢN LÝ PHÒNG TRỌ ĐÃ KẾT NỐI ---
+    // --- CÁC TRANG MENU CHƯA CÓ CONTROLLER VÀ VIEW CHÍNH THỨC (HIỂN THỊ TẠM) ---
     case 'rooms':
         $roomController = new RoomController();
         $roomController->index();
@@ -86,9 +84,6 @@ switch ($route) {
         $contractController = new ContractController();
         $contractController->delete();
         break;
-        
-    // ==========================================
-        
     case 'utilities':
         showPlaceholder('Điện Nước');
         break;
@@ -106,7 +101,7 @@ switch ($route) {
 }
 
 // ==========================================
-// HÀM TẠO GIAO DIỆN TẠM CHO CÁC TRANG MENU CHƯA LÀM
+// HÀM TẠO GIAO DIỆN TẠM CHO CÁC TRANG MENU KHÁC
 // ==========================================
 function showPlaceholder($title) {
     echo '<div style="padding: 60px; font-family: sans-serif; text-align: center; background: #F0F7F6; height: 100vh; box-sizing: border-box;">
