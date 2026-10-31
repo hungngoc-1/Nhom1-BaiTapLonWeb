@@ -20,7 +20,6 @@ if ($route === 'auth/logout') {
 // Nạp các Controller cần thiết
 require_once __DIR__ . '/app/Controllers/DashboardController.php';
 require_once __DIR__ . '/app/Controllers/AuthController.php';
-require_once __DIR__ . '/app/Controllers/UtilitiesController.php'; // Nạp Controller Điện Nước chuẩn MVC
 
 // ==========================================
 // 2. BỘ ĐIỀU HƯỚNG CÁC TRANG (ROUTER)
@@ -74,6 +73,11 @@ switch ($route) {
     case 'contracts/edit': // Xử lý khi bấm nút Sửa
         $contractController = new ContractController();
         $contractController->edit();
+        break;
+
+    case 'contracts/update': // ĐÃ THÊM: Xử lý khi bấm nút Lưu thay đổi ở form Sửa
+        $contractController = new ContractController();
+        $contractController->update();
         break;
         
     case 'contracts/delete': // Xử lý khi bấm nút Xóa
