@@ -80,8 +80,10 @@ switch ($route) {
         $contractController = new ContractController();
         $contractController->delete();
         break;
+    // --- TRANG ĐIỆN NƯỚC (Chuẩn MVC) ---
     case 'utilities':
-        showPlaceholder('Điện Nước');
+        $utilitiesController = new UtilitiesController();
+        $utilitiesController->index();
         break;
     case 'invoices':
         showPlaceholder('Hóa đơn & Thu tiền');
