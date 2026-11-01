@@ -1,24 +1,25 @@
 <?php
+require_once __DIR__ . '/../Config/Database.php';
+
 class RoomModel {
     private $conn;
 
     public function __construct() {
-        try {
-            $this->conn = new PDO("mysql:host=localhost;dbname=quan_ly_nha_tro;charset=utf8mb4", "root", "");
-            $this->conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-        } catch(PDOException $e) {
-            die("Lỗi kết nối CSDL: " . $e->getMessage());
-        }
+        // Dùng kết nối chung trong app/Config/Database.php
+        $this->conn = Database::getConnection();
     }
 
     public function getRooms($keyword = '') {
         $sql = "SELECT * FROM rooms";
         if (!empty($keyword)) {
-            $sql .= " WHERE room_number LIKE :keyword OR description LIKE :keyword";
+            $sql .= " WHERE room_number LIKE :keyword OR description LIKE :keyword2";
         }
         $sql .= " ORDER BY id DESC";
         $stmt = $this->conn->prepare($sql);
-        if (!empty($keyword)) $stmt->bindValue(':keyword', "%$keyword%");
+        if (!empty($keyword)) {
+            $stmt->bindValue(':keyword', "%$keyword%");
+            $stmt->bindValue(':keyword2', "%$keyword%");
+        }
         $stmt->execute();
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }

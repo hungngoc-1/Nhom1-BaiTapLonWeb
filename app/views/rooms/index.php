@@ -13,7 +13,7 @@
         </div>
 
         <!-- Báo trạng thái -->
-        <?php if (!empty($message)): ?> <div class="alert alert-danger"><?= $message ?></div> <?php endif; ?>
+        <?php if (!empty($message)): ?> <div class="alert alert-danger"><?= htmlspecialchars($message) ?></div> <?php endif; ?>
         <?php if (isset($_GET['msg']) && $_GET['msg'] == 'created'): ?> <div class="alert alert-success">Thêm phòng thành công!</div> <?php endif; ?>
         <?php if (isset($_GET['msg']) && $_GET['msg'] == 'updated'): ?> <div class="alert alert-success">Cập nhật phòng thành công!</div> <?php endif; ?>
         <?php if (isset($_GET['msg']) && $_GET['msg'] == 'deleted'): ?> <div class="alert alert-success">Đã xóa phòng thành công!</div> <?php endif; ?>
@@ -33,15 +33,15 @@
                     <h5 class="card-title text-primary"><?= $edit_room ? 'Sửa Thông Tin Phòng' : 'Thêm Phòng Mới' ?></h5>
                     <form method="POST" action="index.php?route=rooms">
                         <input type="hidden" name="action" value="<?= $edit_room ? 'update' : 'create' ?>">
-                        <?php if ($edit_room): ?> <input type="hidden" name="id" value="<?= $edit_room['id'] ?>"> <?php endif; ?>
+                        <?php if ($edit_room): ?> <input type="hidden" name="id" value="<?= (int)$edit_room['id'] ?>"> <?php endif; ?>
                         
                         <div class="mb-2">
                             <label>Số phòng *</label>
-                            <input type="text" name="room_number" class="form-control" value="<?= $edit_room ? $edit_room['room_number'] : '' ?>" required placeholder="VD: P101">
+                            <input type="text" name="room_number" class="form-control" value="<?= $edit_room ? htmlspecialchars($edit_room['room_number']) : '' ?>" required placeholder="VD: P101">
                         </div>
                         <div class="mb-2">
                             <label>Giá thuê (VNĐ) *</label>
-                            <input type="number" name="price" class="form-control" value="<?= $edit_room ? $edit_room['price'] : '' ?>" required placeholder="VD: 2500000">
+                            <input type="number" name="price" class="form-control" value="<?= $edit_room ? htmlspecialchars((string)(float)$edit_room['price']) : '' ?>" required placeholder="VD: 2500000">
                         </div>
                         <div class="mb-2">
                             <label>Trạng thái</label>
@@ -52,7 +52,7 @@
                         </div>
                         <div class="mb-3">
                             <label>Mô tả / Tiện ích</label>
-                            <textarea name="description" class="form-control" rows="2" placeholder="Điều hòa, nóng lạnh..."><?= $edit_room ? $edit_room['description'] : '' ?></textarea>
+                            <textarea name="description" class="form-control" rows="2" placeholder="Điều hòa, nóng lạnh..."><?= $edit_room ? htmlspecialchars($edit_room['description'] ?? '') : '' ?></textarea>
                         </div>
                         <button type="submit" class="btn <?= $edit_room ? 'btn-warning' : 'btn-success' ?> w-100">
                             <?= $edit_room ? 'Cập nhật phòng' : 'Thêm phòng mới' ?>
@@ -80,7 +80,7 @@
                         <?php if (!empty($rooms)): ?>
                             <?php foreach ($rooms as $room): ?>
                                 <tr>
-                                    <td><?= $room['id'] ?></td>
+                                    <td><?= (int)$room['id'] ?></td>
                                     <td class="fw-bold text-primary"><?= htmlspecialchars($room['room_number']) ?></td>
                                     <td class="text-danger fw-semibold"><?= number_format($room['price'], 0, ',', '.') ?> đ</td>
                                     <td>
@@ -90,11 +90,11 @@
                                     </td>
                                     <td>
                                         <!-- Nút Sửa -->
-                                        <a href="index.php?route=rooms&edit_id=<?= $room['id'] ?>" class="btn btn-sm btn-warning">Sửa</a>
+                                        <a href="index.php?route=rooms&edit_id=<?= (int)$room['id'] ?>" class="btn btn-sm btn-warning">Sửa</a>
                                         <!-- Nút Xóa bọc Form POST bảo mật -->
                                         <form method="POST" action="index.php?route=rooms" style="display:inline;" onsubmit="return confirm('Bạn có chắc chắn muốn xóa phòng này không?');">
                                             <input type="hidden" name="action" value="delete">
-                                            <input type="hidden" name="id" value="<?= $room['id'] ?>">
+                                            <input type="hidden" name="id" value="<?= (int)$room['id'] ?>">
                                             <button type="submit" class="btn btn-sm btn-danger">Xóa</button>
                                         </form>
                                     </td>

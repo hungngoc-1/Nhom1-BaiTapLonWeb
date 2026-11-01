@@ -1,8 +1,8 @@
-USE `quan_ly_nha_tro`;
+﻿USE `quan_ly_nha_tro`;
 
 -- Thêm tài khoản
 INSERT INTO `users` (`username`, `password`, `full_name`, `phone`, `email`, `role`) VALUES
-('admin01', 'hashed_pass_1', 'Quản Trị Viên', '0901234567', 'admin@nhatro.com', 'admin'),
+('admin01', 'admin01', 'Quản Trị Viên', '0901234567', 'admin@nhatro.com', 'admin'),
 ('chutro01', 'hashed_pass_2', 'Nguyễn Văn Chủ', '0912345678', 'chu@nhatro.com', 'landlord'),
 ('khach01', 'hashed_pass_3', 'Trần Thị Khách', '0987654321', 'khach1@gmail.com', 'tenant'),
 ('khach02', 'hashed_pass_4', 'Lê Văn Thuê', '0976543210', 'khach2@gmail.com', 'tenant');
