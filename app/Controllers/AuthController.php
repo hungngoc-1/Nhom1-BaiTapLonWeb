@@ -45,7 +45,7 @@ class AuthController {
         }
 
         // 4. Truy vấn cơ sở dữ liệu bằng Prepared Statement (Bảo mật chống SQL Injection)
-        require_once __DIR__ . '/../Models/Database.php';
+        require_once __DIR__ . '/../Config/Database.php';
         
         try {
             $db = Database::getConnection();

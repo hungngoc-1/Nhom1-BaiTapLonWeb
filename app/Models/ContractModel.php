@@ -1,19 +1,12 @@
 <?php
+require_once __DIR__ . '/../Config/Database.php';
+
 class ContractModel {
     private $conn;
 
     public function __construct() {
-        $host = 'localhost';
-        $dbname = 'quan_ly_nha_tro';
-        $username = 'root';
-        $password = ''; 
-        
-        try {
-            $this->conn = new PDO("mysql:host=$host;dbname=$dbname;charset=utf8", $username, $password);
-            $this->conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-        } catch (PDOException $e) {
-            die("Lỗi kết nối CSDL: " . $e->getMessage());
-        }
+        // Dùng kết nối chung trong app/Config/Database.php
+        $this->conn = Database::getConnection();
     }
 
     public function getAllContracts($keyword = '', $status = '') {
@@ -25,8 +18,8 @@ class ContractModel {
         
         $params = [];
         if (!empty($keyword)) {
-            $sql .= " AND (r.room_number LIKE :keyword OR u.full_name LIKE :keyword OR c.id LIKE :keyword)";
-            $params[':keyword'] = "%$keyword%";
+            $sql .= " AND (r.room_number LIKE :kw1 OR u.full_name LIKE :kw2 OR c.id LIKE :kw3)";
+            $params[':kw1'] = $params[':kw2'] = $params[':kw3'] = "%$keyword%";
         }
         if (!empty($status)) {
             $sql .= " AND c.status = :status";
@@ -39,10 +32,51 @@ class ContractModel {
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
+    // Lấy 1 hợp đồng theo id (dùng cho form Sửa)
+    public function getContractById($id) {
+        $stmt = $this->conn->prepare("SELECT * FROM contracts WHERE id = :id");
+        $stmt->execute([':id' => $id]);
+        return $stmt->fetch(PDO::FETCH_ASSOC);
+    }
+
+    // Danh sách phòng & khách thuê để chọn trong form
+    public function getRooms() {
+        return $this->conn->query("SELECT id, room_number, status FROM rooms ORDER BY room_number")->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    public function getTenants() {
+        return $this->conn->query("SELECT id, full_name, phone FROM users WHERE role = 'tenant' ORDER BY full_name")->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    // Nghiệp vụ: kiểm tra hợp đồng đang hiệu lực của phòng có bị chồng lấn thời gian không
+    public function hasOverlap($room_id, $start_date, $end_date, $exclude_id = 0) {
+        $sql = "SELECT COUNT(*) FROM contracts
+                WHERE room_id = :room_id AND status = 'active' AND id <> :exclude_id
+                  AND start_date <= :end_date AND end_date >= :start_date";
+        $stmt = $this->conn->prepare($sql);
+        $stmt->execute([
+            ':room_id' => $room_id,
+            ':exclude_id' => $exclude_id,
+            ':start_date' => $start_date,
+            ':end_date' => $end_date
+        ]);
+        return $stmt->fetchColumn() > 0;
+    }
+
     // Hàm Thêm hợp đồng mới
     public function createContract($data) {
         $sql = "INSERT INTO contracts (room_id, tenant_id, start_date, end_date, deposit_amount, status) 
                 VALUES (:room_id, :tenant_id, :start_date, :end_date, :deposit_amount, :status)";
+        $stmt = $this->conn->prepare($sql);
+        return $stmt->execute($data);
+    }
+
+    // Hàm Cập nhật hợp đồng
+    public function updateContract($id, $data) {
+        $sql = "UPDATE contracts SET room_id = :room_id, tenant_id = :tenant_id, start_date = :start_date,
+                       end_date = :end_date, deposit_amount = :deposit_amount, status = :status
+                WHERE id = :id";
+        $data['id'] = $id;
         $stmt = $this->conn->prepare($sql);
         return $stmt->execute($data);
     }

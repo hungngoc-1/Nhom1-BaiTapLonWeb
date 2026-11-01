@@ -54,16 +54,24 @@
             <ul class="nav nav-pills me-auto">
                 <li class="nav-item"><a class="nav-link" href="index.php?route=dashboard"><i class="fa-solid fa-chart-pie"></i> Tổng quan</a></li>
                 <li class="nav-item"><a class="nav-link" href="index.php?route=rooms"><i class="fa-solid fa-door-open"></i> Phòng trọ</a></li>
-                <li class="nav-item"><a class="nav-link" href="#"><i class="fa-solid fa-users"></i> Khách thuê</a></li>
+                <li class="nav-item"><a class="nav-link" href="index.php?route=tenants"><i class="fa-solid fa-users"></i> Khách thuê</a></li>
                 <li class="nav-item"><a class="nav-link active" href="index.php?route=contracts"><i class="fa-solid fa-file-contract"></i> Hợp đồng</a></li>
-                <li class="nav-item"><a class="nav-link" href="#"><i class="fa-solid fa-bolt"></i> Điện Nước</a></li>
-                <li class="nav-item"><a class="nav-link" href="#"><i class="fa-solid fa-file-invoice-dollar"></i> Hóa đơn</a></li>
-                <li class="nav-item"><a class="nav-link" href="#"><i class="fa-solid fa-chart-column"></i> Báo cáo</a></li>
+                <li class="nav-item"><a class="nav-link" href="index.php?route=utilities"><i class="fa-solid fa-bolt"></i> Điện Nước</a></li>
+                <li class="nav-item"><a class="nav-link" href="index.php?route=invoices"><i class="fa-solid fa-file-invoice-dollar"></i> Hóa đơn</a></li>
+                <li class="nav-item"><a class="nav-link" href="index.php?route=reports"><i class="fa-solid fa-chart-column"></i> Báo cáo</a></li>
             </ul>
         </div>
     </nav>
 
     <div class="container-fluid px-4 py-4">
+
+        <!-- THÔNG BÁO -->
+        <?php if (!empty($flash_error)): ?>
+            <div class="alert alert-danger"><?= htmlspecialchars($flash_error) ?></div>
+        <?php endif; ?>
+        <?php if (!empty($flash_success)): ?>
+            <div class="alert alert-success"><?= htmlspecialchars($flash_success) ?></div>
+        <?php endif; ?>
         
         <!-- BỘ LỌC ĐỘNG (Lưu lại giá trị tìm kiếm) -->
         <div class="toolbar d-flex justify-content-between align-items-center">
@@ -75,9 +83,9 @@
                 
                 <select name="status" class="form-select" style="max-width: 200px;">
                     <option value="">Tất cả trạng thái</option>
-                    <option value="Đang thuê" <?= ($_GET['status'] ?? '') === 'Đang thuê' ? 'selected' : '' ?>>Đang thuê</option>
-                    <option value="Chờ duyệt" <?= ($_GET['status'] ?? '') === 'Chờ duyệt' ? 'selected' : '' ?>>Chờ duyệt</option>
-                    <option value="Đã thanh lý" <?= ($_GET['status'] ?? '') === 'Đã thanh lý' ? 'selected' : '' ?>>Đã thanh lý</option>
+                    <?php foreach ($statuses as $value => $label): ?>
+                        <option value="<?= $value ?>" <?= ($_GET['status'] ?? '') === $value ? 'selected' : '' ?>><?= $label ?></option>
+                    <?php endforeach; ?>
                 </select>
                 
                 <button type="submit" class="btn btn-outline-custom"><i class="fa-solid fa-filter me-1"></i> Lọc</button>
@@ -107,8 +115,9 @@
                     <tbody>
                         <?php if (!empty($contracts)): ?>
                             <?php foreach ($contracts as $contract): ?>
+                                <?php $code = 'HD-' . date('Y', strtotime($contract['created_at'])) . '-' . str_pad($contract['id'], 3, '0', STR_PAD_LEFT); ?>
                                 <tr>
-                                    <td class="text-primary fw-bold">HD-<?= date('Y') ?>-<?= str_pad($contract['id'], 3, '0', STR_PAD_LEFT) ?></td>
+                                    <td class="text-primary fw-bold"><?= $code ?></td>
                                     <td><span class="badge-room"><?= htmlspecialchars($contract['room_number'] ?? 'Trống') ?></span></td>
                                     <td>
                                         <div><?= htmlspecialchars($contract['full_name'] ?? 'Không rõ') ?></div>
@@ -128,14 +137,18 @@
                                         <?php 
                                             // Chỉnh màu badge theo trạng thái
                                             $badgeClass = 'status-wait';
-                                            if ($contract['status'] == 'Đang thuê') $badgeClass = 'status-active';
-                                            if ($contract['status'] == 'Đã thanh lý') $badgeClass = 'status-ended';
+                                            if ($contract['status'] == 'active') $badgeClass = 'status-active';
+                                            if ($contract['status'] == 'terminated') $badgeClass = 'status-ended';
                                         ?>
-                                        <span class="badge-status <?= $badgeClass ?>"><?= htmlspecialchars($contract['status']) ?></span>
+                                        <span class="badge-status <?= $badgeClass ?>"><?= htmlspecialchars($statuses[$contract['status']] ?? $contract['status']) ?></span>
                                     </td>
                                     <td class="text-end">
-                                        <a href="index.php?route=contracts/edit&id=<?= $contract['id'] ?>" class="btn-action-main me-1"><i class="fa-solid fa-pen me-1"></i> Sửa</a>
-                                        <a href="index.php?route=contracts/delete&id=<?= $contract['id'] ?>" class="btn-action-danger" onclick="return confirm('Bạn có chắc chắn muốn xóa hợp đồng số HD-<?= date('Y') ?>-<?= str_pad($contract['id'], 3, '0', STR_PAD_LEFT) ?> này không?');"><i class="fa-solid fa-trash me-1"></i> Xóa</a>
+                                        <a href="index.php?route=contracts/edit&id=<?= (int)$contract['id'] ?>" class="btn-action-main me-1"><i class="fa-solid fa-pen me-1"></i> Sửa</a>
+                                        <!-- Nút Xóa bọc Form POST bảo mật -->
+                                        <form method="POST" action="index.php?route=contracts/delete" style="display:inline;" onsubmit="return confirm('Bạn có chắc chắn muốn xóa hợp đồng số <?= $code ?> này không?');">
+                                            <input type="hidden" name="id" value="<?= (int)$contract['id'] ?>">
+                                            <button type="submit" class="btn-action-danger"><i class="fa-solid fa-trash me-1"></i> Xóa</button>
+                                        </form>
                                     </td>
                                 </tr>
                             <?php endforeach; ?>
@@ -163,12 +176,22 @@
                     <div class="modal-body">
                         <div class="row g-3 mb-3">
                             <div class="col-md-6">
-                                <label class="fw-bold" style="font-size:0.8rem">ID Phòng trọ <span class="text-danger">*</span></label>
-                                <input type="number" class="form-control" name="room_id" placeholder="Nhập ID phòng (VD: 1)" required>
+                                <label class="fw-bold" style="font-size:0.8rem">Phòng trọ <span class="text-danger">*</span></label>
+                                <select class="form-select" name="room_id" required>
+                                    <option value="">-- Chọn phòng --</option>
+                                    <?php foreach ($rooms as $r): ?>
+                                        <option value="<?= (int)$r['id'] ?>"><?= htmlspecialchars($r['room_number']) ?> (<?= $r['status'] === 'available' ? 'Trống' : 'Đang thuê' ?>)</option>
+                                    <?php endforeach; ?>
+                                </select>
                             </div>
                             <div class="col-md-6">
-                                <label class="fw-bold" style="font-size:0.8rem">ID Khách thuê <span class="text-danger">*</span></label>
-                                <input type="number" class="form-control" name="tenant_id" placeholder="Nhập ID khách (VD: 1)" required>
+                                <label class="fw-bold" style="font-size:0.8rem">Khách thuê <span class="text-danger">*</span></label>
+                                <select class="form-select" name="tenant_id" required>
+                                    <option value="">-- Chọn khách thuê --</option>
+                                    <?php foreach ($tenants as $t): ?>
+                                        <option value="<?= (int)$t['id'] ?>"><?= htmlspecialchars($t['full_name']) ?> - <?= htmlspecialchars($t['phone']) ?></option>
+                                    <?php endforeach; ?>
+                                </select>
                             </div>
                         </div>
 
@@ -183,15 +206,16 @@
                             </div>
                             <div class="col-md-6">
                                 <label class="fw-bold" style="font-size:0.8rem">Tiền cọc (VNĐ) <span class="text-danger">*</span></label>
-                                <input type="number" class="form-control" name="deposit_amount" required>
+                                <input type="number" min="0" class="form-control" name="deposit_amount" required>
                             </div>
                         </div>
 
                         <div class="mb-2">
                             <label class="fw-bold" style="font-size:0.8rem">Trạng thái hợp đồng</label>
                             <select class="form-select" name="status">
-                                <option value="Chờ duyệt">Chờ duyệt</option>
-                                <option value="Đang thuê">Đang thuê</option>
+                                <?php foreach ($statuses as $value => $label): ?>
+                                    <option value="<?= $value ?>"><?= $label ?></option>
+                                <?php endforeach; ?>
                             </select>
                         </div>
                     </div>
