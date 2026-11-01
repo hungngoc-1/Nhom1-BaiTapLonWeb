@@ -87,8 +87,6 @@ switch ($route) {
         $contractController = new ContractController();
         $contractController->delete();
         break;
-
-    // --- PHÂN HỆ ĐIỆN NƯỚC ---
     case 'utilities':
         $utilitiesController = new UtilitiesController();
         $utilitiesController->index();
