@@ -91,6 +91,12 @@ switch ($route) {
         $utilitiesController = new UtilitiesController();
         $utilitiesController->index();
         break;
+       
+
+    // THÊM ĐOẠN NÀY VÀO ĐỂ NHẬN ĐƯỜNG DẪN API:
+    case 'api/utilities/search':
+        $utilitiesController = new UtilitiesController();$utilitiesController->searchApi();
+        break;
 
     // --- CÁC PHÂN HỆ ĐANG XÂY DỰNG ---
     case 'invoices':
