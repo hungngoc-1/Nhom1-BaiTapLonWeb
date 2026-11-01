@@ -1,26 +1,53 @@
-<?php
-// MÔ PHỎNG DỮ LIỆU TỪ CƠ SỞ DỮ LIỆU (Khi nào có SQL thì thay bằng Query)
-$building_id = $_GET['building_id'] ?? 'A'; // Mặc định là A nếu không có id
 
-$buildings_data = [
-    'A' => [
-        'name' => 'Tòa A - StayMate Sunrise',
-        'address' => 'Số 128 Cầu Giấy, Quận Cầu Giấy, TP. Hà Nội',
-        'rooms' => 15, 'rented' => 12, 'empty' => 3
-    ],
-    'B' => [
-        'name' => 'Tòa B - StayMate Emerald',
-        'address' => 'Số 45 Nguyễn Chí Thanh, Quận Đống Đa, TP. Hà Nội',
-        'rooms' => 20, 'rented' => 18, 'empty' => 2
-    ],
-    'C' => [
-        'name' => 'Tòa C - StayMate Horizon',
-        'address' => 'Số 88 Nguyễn Trãi, Quận Thanh Xuân, TP. Hà Nội',
-        'rooms' => 10, 'rented' => 7, 'empty' => 3
-    ]
-];
+// 1. KẾT NỐI CƠ SỞ DỮ LIỆU
+$host = 'localhost';
+$db_name = 'quan_ly_nha_tro';
+$username = 'root';
+$password = '';
 
-$current_bld = $buildings_data[$building_id] ?? $buildings_data['A'];
+try {
+    $conn = new PDO("mysql:host=$host;dbname=$db_name;charset=utf8", $username, $password);
+    $conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+
+    // 2. TRUY VẤN LẤY SỐ LIỆU TỪ SQL
+    // Tỷ lệ lấp đầy
+    $stmt = $conn->query("SELECT COUNT(*) as total FROM rooms");
+    $total_rooms = $stmt->fetch(PDO::FETCH_ASSOC)['total'] ?? 0;
+
+    $stmt = $conn->query("SELECT COUNT(*) as rented FROM rooms WHERE status = 'rented'");
+    $rented_rooms = $stmt->fetch(PDO::FETCH_ASSOC)['rented'] ?? 0;
+    
+    $empty_rooms = $total_rooms - $rented_rooms;
+    $occupancy_rate = $total_rooms > 0 ? round(($rented_rooms / $total_rooms) * 100) : 0;
+
+    // Thực thu
+    $stmt = $conn->query("SELECT SUM(total_amount) as total_paid FROM invoices WHERE status = 'paid'");
+    $total_revenue = $stmt->fetch(PDO::FETCH_ASSOC)['total_paid'] ?? 0;
+
+    // Công nợ
+    $stmt = $conn->query("SELECT SUM(total_amount) as total_unpaid, COUNT(*) as unpaid_count FROM invoices WHERE status = 'unpaid'");
+    $unpaid_data = $stmt->fetch(PDO::FETCH_ASSOC);
+    $total_debt = $unpaid_data['total_unpaid'] ?? 0;
+    $unpaid_count = $unpaid_data['unpaid_count'] ?? 0;
+
+    // Khách & Hợp đồng
+    $stmt = $conn->query("SELECT COUNT(*) as active_contracts FROM contracts WHERE status = 'active'");
+    $active_contracts = $stmt->fetch(PDO::FETCH_ASSOC)['active_contracts'] ?? 0;
+
+    // Danh sách hóa đơn nợ
+    $stmt = $conn->query("
+        SELECT i.id, i.month_year, i.total_amount, r.room_number, u.full_name 
+        FROM invoices i 
+        JOIN contracts c ON i.contract_id = c.id
+        JOIN rooms r ON i.room_id = r.id
+        JOIN users u ON c.tenant_id = u.id
+        WHERE i.status = 'unpaid' ORDER BY i.id DESC LIMIT 5
+    ");
+    $unpaid_invoices_list = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+} catch(PDOException $e) {
+    echo "Lỗi kết nối CSDL: " . $e->getMessage();
+}
 ?>
 <!DOCTYPE html>
 <html lang="vi">
