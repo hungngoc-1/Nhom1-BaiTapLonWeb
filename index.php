@@ -72,6 +72,31 @@ switch ($route) {
         $contractController = new ContractController();
         $contractController->store();
         break;
+
+    case 'contracts/detail': // Xem bản Hợp đồng A4, Ký Online, In & Lưu bản Scan
+        $contractController = new ContractController();
+        $contractController->detail();
+        break;
+
+    case 'contracts/sign-online': // Lưu chữ ký điện tử (Online)
+        $contractController = new ContractController();
+        $contractController->signOnline();
+        break;
+
+    case 'contracts/upload-scan': // Lưu bản Scan hợp đồng ký giấy
+        $contractController = new ContractController();
+        $contractController->uploadScan();
+        break;
+
+    case 'contracts/terminate': // Thanh lý hợp đồng (hoàn cọc / mất cọc)
+        $contractController = new ContractController();
+        $contractController->terminate();
+        break;
+
+    case 'contracts/renew': // Gia hạn hợp đồng
+        $contractController = new ContractController();
+        $contractController->renew();
+        break;
         
     case 'contracts/edit': // Xử lý khi bấm nút Sửa
         $contractController = new ContractController();
@@ -87,15 +112,16 @@ switch ($route) {
         $contractController = new ContractController();
         $contractController->delete();
         break;
+
+    // --- PHÂN HỆ ĐIỆN NƯỚC ---
     case 'utilities':
         $utilitiesController = new UtilitiesController();
         $utilitiesController->index();
         break;
-       
 
-    // THÊM ĐOẠN NÀY VÀO ĐỂ NHẬN ĐƯỜNG DẪN API:
     case 'api/utilities/search':
-        $utilitiesController = new UtilitiesController();$utilitiesController->searchApi();
+        $utilitiesController = new UtilitiesController();
+        $utilitiesController->searchApi();
         break;
 
     // --- CÁC PHÂN HỆ ĐANG XÂY DỰNG ---
