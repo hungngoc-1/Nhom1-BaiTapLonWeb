@@ -1,76 +1,84 @@
+<?php
+$monthlyRent = (float)($contract['monthly_rent'] ?? $contract['room_price'] ?? $contract['deposit_amount']);
+$depositDate = !empty($contract['deposit_date']) ? $contract['deposit_date'] : $contract['start_date'];
+?>
 <!DOCTYPE html>
 <html lang="vi">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>StayMate - Sửa Hợp đồng</title>
-    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <title>StayMate - Sửa Hợp đồng <?= htmlspecialchars($contract['contract_code']) ?></title>
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        :root {
-            --primary-purple: #6d28d9;
-            --primary-hover: #5b21b6;
-            --bg-body: #f3f4f6;
-            --text-main: #374151;
-            --border-color: #e5e7eb;
+        :root { --teal-main: #308f86; --teal-hover: #25756d; --bg-page: #f8fafc; }
+        body {
+            background-color: var(--bg-page);
+            font-family: 'Nunito', sans-serif;
+            font-size: 0.9rem;
+            color: #334155;
+            min-height: 100vh;
+            background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1440 320"><path fill="%23e6f4f1" fill-opacity="0.8" d="M0,160L48,170.7C96,181,192,203,288,197.3C384,192,480,160,576,149.3C672,139,768,149,864,170.7C960,192,1056,224,1152,213.3C1248,203,1344,149,1392,122.7L1440,96L1440,0L1392,0C1344,0,1248,0,1152,0C1056,0,960,0,864,0C768,0,672,0,576,0C480,0,384,0,288,0C192,0,96,0,48,0L0,0Z"></path></svg>');
+            background-position: top center;
+            background-repeat: no-repeat;
+            background-size: 100% auto;
         }
-        body { background-color: var(--bg-body); font-family: 'Nunito', sans-serif; font-size: 0.85rem; color: var(--text-main); }
-        .navbar-custom { background-color: #ffffff; padding: 10px 20px; box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05); border-bottom: 1px solid var(--border-color); }
-        .brand-logo i { color: var(--primary-purple); font-size: 1.8rem; }
-        .brand-text { color: var(--primary-purple); font-weight: 800; font-size: 1.1rem; line-height: 1; }
-        .nav-pills .nav-link { color: #6b7280; font-weight: 700; font-size: 0.8rem; padding: 8px 12px; border-radius: 12px; margin-right: 4px; }
-        .nav-pills .nav-link:hover { background: #f3f4f6; color: var(--primary-purple); }
-        .nav-pills .nav-link.active { background-color: var(--primary-purple); color: white; }
-        .toolbar { background: #ffffff; border-radius: 16px; padding: 16px 20px; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05); margin-bottom: 20px; }
-        .form-control, .form-select { font-size: 0.85rem; border-radius: 10px; border: 1px solid var(--border-color); padding: 8px 12px; }
-        .btn-primary-custom { background-color: var(--primary-purple); color: white; border-radius: 10px; font-weight: 700; border: none; padding: 8px 16px; font-size: 0.85rem; transition: 0.2s; }
-        .btn-primary-custom:hover { background-color: var(--primary-hover); color: white; }
-        .btn-outline-custom { border: 1px solid var(--border-color); background: white; color: #4b5563; border-radius: 10px; font-weight: 600; padding: 8px 16px; }
-        .table-card { background: #ffffff; border-radius: 16px; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05); overflow: hidden; }
-        .table thead th { background-color: #f9fafb; color: #6b7280; font-size: 0.75rem; font-weight: 700; text-transform: uppercase; padding: 16px; border-bottom: 1px solid var(--border-color); }
-        .table tbody td { padding: 16px; vertical-align: middle; border-bottom: 1px solid var(--border-color); color: #1f2937; font-weight: 600; }
-        .badge-room { background-color: #111827; color: white; padding: 4px 8px; border-radius: 6px; font-size: 0.75rem; }
-        .badge-status { padding: 4px 10px; border-radius: 20px; font-size: 0.7rem; font-weight: 700; }
-        .status-active { background-color: #d1fae5; color: #059669; border: 1px solid #10b981; }
-        .status-ended { background-color: #f3f4f6; color: #6b7280; border: 1px solid #d1d5db; }
-        .status-wait { background-color: #fef3c7; color: #d97706; border: 1px solid #f59e0b; }
-        .badge-sign { background-color: #e0f2fe; color: #0284c7; padding: 4px 8px; border-radius: 6px; font-size: 0.7rem; }
-        .btn-action-main { background-color: #ede9fe; color: var(--primary-purple); border: 1px solid #ddd6fe; border-radius: 8px; padding: 4px 10px; font-size: 0.75rem; font-weight: 700; text-decoration: none; display: inline-block; }
-        .btn-action-danger { background-color: #fef2f2; color: #ef4444; border: 1px solid #fecaca; border-radius: 8px; padding: 4px 10px; font-size: 0.75rem; font-weight: 600; text-decoration: none; display: inline-block; }
+        .text-teal-main { color: var(--teal-main) !important; }
+        .edit-card {
+            background: rgba(255,255,255,0.96);
+            border-radius: 30px;
+            border: 4px solid #ffffff;
+            padding: 28px;
+            box-shadow: 0 15px 40px rgba(0,0,0,0.08);
+            max-width: 820px;
+            margin: 0 auto;
+        }
+        .form-control, .form-select { border-radius: 14px; border: 1.5px solid #e2e8f0; padding: 9px 14px; font-weight: 600; font-size: 0.9rem; }
+        .form-control:focus, .form-select:focus { border-color: var(--teal-main); box-shadow: 0 0 0 3px rgba(48, 143, 134, 0.15); }
+        .btn-teal-custom { background: var(--teal-main); border-radius: 50px; font-weight: 800; color: white; padding: 10px 26px; border: 2px solid var(--teal-hover); box-shadow: 0 8px 20px rgba(48, 143, 134, 0.35); }
+        .btn-teal-custom:hover { background: var(--teal-hover); color: white; }
+        .btn-back-content { background: white; border: 3px solid #ffffff; color: #334155; font-weight: 800; font-size: 0.9rem; padding: 9px 24px; border-radius: 50px; text-decoration: none; display: inline-flex; align-items: center; box-shadow: 0 8px 20px rgba(0,0,0,0.08); }
     </style>
 </head>
 <body>
-    <div class="container py-5" style="max-width: 760px;">
-        <div class="d-flex justify-content-between align-items-center mb-3">
-            <h4 class="fw-bold mb-0" style="color: var(--primary-purple);">
-                <i class="fa-solid fa-file-pen me-2"></i>Sửa Hợp đồng HD-<?= date('Y', strtotime($contract['created_at'])) ?>-<?= str_pad($contract['id'], 3, '0', STR_PAD_LEFT) ?>
-            </h4>
-            <a href="index.php?route=contracts" class="btn btn-outline-custom">← Quay lại danh sách</a>
+    <div class="container py-5">
+        <div class="d-flex justify-content-between align-items-center mb-4" style="max-width: 820px; margin: 0 auto;">
+            <div>
+                <h4 class="fw-bold mb-0 text-teal-main">
+                    <i class="fa-solid fa-file-pen me-2"></i>Cập nhật Hợp đồng <?= htmlspecialchars($contract['contract_code']) ?>
+                </h4>
+                <div class="small text-muted fw-semibold">Chỉnh sửa thông tin hợp đồng thuê phòng</div>
+            </div>
+            <a href="index.php?route=contracts" class="btn-back-content"><i class="fa-solid fa-arrow-left me-2"></i>Quay lại danh sách</a>
         </div>
 
         <?php if (!empty($flash_error)): ?>
-            <div class="alert alert-danger"><?= htmlspecialchars($flash_error) ?></div>
+            <div class="alert alert-danger rounded-4 fw-bold mx-auto mb-3" style="max-width: 820px;"><?= htmlspecialchars($flash_error) ?></div>
         <?php endif; ?>
 
-        <div class="table-card p-4">
+        <div class="edit-card">
             <form action="index.php?route=contracts/update" method="POST">
                 <input type="hidden" name="id" value="<?= (int)$contract['id'] ?>">
 
                 <div class="row g-3 mb-3">
                     <div class="col-md-6">
-                        <label class="fw-bold" style="font-size:0.8rem">Phòng trọ <span class="text-danger">*</span></label>
-                        <select class="form-select" name="room_id" required>
+                        <label class="form-label small fw-bold">Phòng trọ <span class="text-danger">*</span></label>
+                        <select class="form-select" name="room_id" required onchange="onEditRoomSelect(this)">
                             <?php foreach ($rooms as $r): ?>
-                                <option value="<?= (int)$r['id'] ?>" <?= $r['id'] == $contract['room_id'] ? 'selected' : '' ?>><?= htmlspecialchars($r['room_number']) ?></option>
+                                <option value="<?= (int)$r['id'] ?>" data-price="<?= (float)$r['price'] ?>" <?= $r['id'] == $contract['room_id'] ? 'selected' : '' ?>>
+                                    <?= htmlspecialchars($r['room_number']) ?> - <?= number_format((float)$r['price'], 0, ',', '.') ?> đ
+                                </option>
                             <?php endforeach; ?>
                         </select>
                     </div>
                     <div class="col-md-6">
-                        <label class="fw-bold" style="font-size:0.8rem">Khách thuê <span class="text-danger">*</span></label>
+                        <label class="form-label small fw-bold">Khách thuê <span class="text-danger">*</span></label>
                         <select class="form-select" name="tenant_id" required>
                             <?php foreach ($tenants as $t): ?>
-                                <option value="<?= (int)$t['id'] ?>" <?= $t['id'] == $contract['tenant_id'] ? 'selected' : '' ?>><?= htmlspecialchars($t['full_name']) ?> - <?= htmlspecialchars($t['phone']) ?></option>
+                                <option value="<?= (int)$t['id'] ?>" <?= $t['id'] == $contract['tenant_id'] ? 'selected' : '' ?>>
+                                    <?= htmlspecialchars($t['full_name']) ?> - <?= htmlspecialchars($t['phone']) ?>
+                                </option>
                             <?php endforeach; ?>
                         </select>
                     </div>
@@ -78,34 +86,82 @@
 
                 <div class="row g-3 mb-3">
                     <div class="col-md-4">
-                        <label class="fw-bold" style="font-size:0.8rem">Ngày bắt đầu <span class="text-danger">*</span></label>
-                        <input type="date" class="form-control" name="start_date" value="<?= htmlspecialchars($contract['start_date']) ?>" required>
+                        <label class="form-label small fw-bold">Ngày đặt cọc <span class="text-danger">*</span></label>
+                        <input type="date" class="form-control" name="deposit_date" value="<?= htmlspecialchars($depositDate) ?>" required>
                     </div>
                     <div class="col-md-4">
-                        <label class="fw-bold" style="font-size:0.8rem">Ngày kết thúc <span class="text-danger">*</span></label>
-                        <input type="date" class="form-control" name="end_date" value="<?= htmlspecialchars($contract['end_date']) ?>" required>
+                        <label class="form-label small fw-bold">Ngày bắt đầu <span class="text-danger">*</span></label>
+                        <input type="date" class="form-control fw-bold text-teal-main" name="start_date" value="<?= htmlspecialchars($contract['start_date']) ?>" required>
                     </div>
                     <div class="col-md-4">
-                        <label class="fw-bold" style="font-size:0.8rem">Tiền cọc (VNĐ) <span class="text-danger">*</span></label>
-                        <input type="number" min="0" class="form-control" name="deposit_amount" value="<?= (float)$contract['deposit_amount'] ?>" required>
+                        <label class="form-label small fw-bold">Ngày kết thúc <span class="text-danger">*</span></label>
+                        <input type="date" class="form-control fw-bold text-danger" name="end_date" value="<?= htmlspecialchars($contract['end_date']) ?>" required>
                     </div>
                 </div>
 
-                <div class="mb-4">
-                    <label class="fw-bold" style="font-size:0.8rem">Trạng thái hợp đồng</label>
-                    <select class="form-select" name="status">
-                        <?php foreach ($statuses as $value => $label): ?>
-                            <option value="<?= $value ?>" <?= $contract['status'] === $value ? 'selected' : '' ?>><?= $label ?></option>
-                        <?php endforeach; ?>
-                    </select>
+                <div class="row g-3 mb-3">
+                    <div class="col-md-4">
+                        <label class="form-label small fw-bold">Giá thuê/tháng (VNĐ) <span class="text-danger">*</span></label>
+                        <input type="number" min="0" step="50000" class="form-control" id="edit_monthly_rent" name="monthly_rent" value="<?= (float)$monthlyRent ?>" required oninput="document.getElementById('edit_deposit').value=this.value">
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label small fw-bold">Tiền cọc (= 1 tháng)</label>
+                        <input type="number" min="0" class="form-control bg-light fw-bold text-teal-main" id="edit_deposit" name="deposit_amount" value="<?= (float)$contract['deposit_amount'] ?>">
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label small fw-bold">Hình thức ký</label>
+                        <select class="form-select" name="signature_type">
+                            <option value="online" <?= ($contract['signature_type'] ?? 'online') === 'online' ? 'selected' : '' ?>>Hợp đồng Điện tử (Online)</option>
+                            <option value="paper" <?= ($contract['signature_type'] ?? '') === 'paper' ? 'selected' : '' ?>>Hợp đồng Ký giấy (Scan)</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="row g-3 mb-3">
+                    <div class="col-md-4">
+                        <label class="form-label small fw-bold">Giá điện (đ/kWh)</label>
+                        <input type="number" class="form-control" name="electricity_rate" value="<?= (float)($contract['electricity_rate'] ?? 3500) ?>">
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label small fw-bold">Giá nước (đ/khối)</label>
+                        <input type="number" class="form-control" name="water_rate" value="<?= (float)($contract['water_rate'] ?? 20000) ?>">
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label small fw-bold">Phí dịch vụ (đ/tháng)</label>
+                        <input type="number" class="form-control" name="service_fee" value="<?= (float)($contract['service_fee'] ?? 150000) ?>">
+                    </div>
+                </div>
+
+                <div class="row g-3 mb-4">
+                    <div class="col-md-4">
+                        <label class="form-label small fw-bold">Trạng thái hợp đồng</label>
+                        <select class="form-select" name="status">
+                            <?php foreach ($statuses as $value => $label): ?>
+                                <option value="<?= $value ?>" <?= $contract['status'] === $value ? 'selected' : '' ?>><?= $label ?></option>
+                            <?php endforeach; ?>
+                        </select>
+                    </div>
+                    <div class="col-md-8">
+                        <label class="form-label small fw-bold">Ghi chú bổ sung</label>
+                        <input type="text" class="form-control" name="notes" value="<?= htmlspecialchars($contract['notes'] ?? '') ?>" placeholder="Ghi chú thỏa thuận riêng...">
+                    </div>
                 </div>
 
                 <div class="d-flex justify-content-end gap-2">
-                    <a href="index.php?route=contracts" class="btn btn-outline-custom">Hủy</a>
-                    <button type="submit" class="btn btn-primary-custom"><i class="fa-solid fa-check me-1"></i> Lưu thay đổi</button>
+                    <a href="index.php?route=contracts" class="btn btn-light rounded-pill px-4 fw-bold">Hủy</a>
+                    <button type="submit" class="btn-teal-custom"><i class="fa-solid fa-check me-2"></i> Lưu thay đổi</button>
                 </div>
             </form>
         </div>
     </div>
+    <script>
+    function onEditRoomSelect(sel) {
+        const opt = sel.options[sel.selectedIndex];
+        if (opt && opt.dataset.price) {
+            document.getElementById('edit_monthly_rent').value = opt.dataset.price;
+            document.getElementById('edit_deposit').value = opt.dataset.price;
+        }
+    }
+    </script>
 </body>
 </html>
