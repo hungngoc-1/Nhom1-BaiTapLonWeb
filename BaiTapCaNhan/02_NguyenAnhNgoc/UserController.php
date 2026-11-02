@@ -1,11 +1,11 @@
 <?php
-require_once 'UserModel.php';
+require_once __DIR__ . '/UserRepository.php';
 
 class UserController {
-    private $model;
+    private $repository;
 
     public function __construct() {
-        $this->model = new UserModel();
+        $this->repository = new UserRepository();
     }
 
     public function index() {
@@ -23,7 +23,7 @@ class UserController {
 
                 if (!empty($username) && !empty($password) && !empty($full_name)) {
                     try {
-                        $this->model->createUser($username, $password, $full_name, $role);
+                        $this->repository->createUser($username, $password, $full_name, $role);
                         header("Location: UserController.php?msg=created"); exit;
                     } catch (Exception $e) { $message = "Lỗi: Tài khoản đã tồn tại!"; }
                 } else { $message = "Vui lòng nhập đủ thông tin!"; }
@@ -33,31 +33,33 @@ class UserController {
                 $full_name = trim($_POST['full_name'] ?? '');
                 $role = $_POST['role'] ?? 'tenant';
                 if ($id > 0 && !empty($full_name)) {
-                    $this->model->updateUser($id, $full_name, $role);
+                    $this->repository->updateUser($id, $full_name, $role);
                     header("Location: UserController.php?msg=updated"); exit;
                 }
             }
             elseif ($action === 'delete') {
                 $id = $_POST['id'] ?? 0;
-                if ($id > 0) $this->model->deleteUser($id);
+                if ($id > 0) $this->repository->deleteUser($id);
                 header("Location: UserController.php?msg=deleted"); exit;
             }
         }
 
-        // Kiểm tra xem có đang bấm nút Sửa không
+        // Lấy thông tin User nếu đang bấm nút Sửa
         $edit_user = null;
         if (isset($_GET['edit_id'])) {
-            $edit_user = $this->model->getUserById($_GET['edit_id']);
+            $edit_user = $this->repository->getUserById($_GET['edit_id']);
         }
 
-        // Xử lý Tìm kiếm
+        // Lấy danh sách (có tìm kiếm)
         $keyword = trim($_GET['keyword'] ?? '');
-        $users = $this->model->getUsers($keyword);
+        $users = $this->repository->getUsers($keyword);
         
-        require_once 'index.php';
+        // Gọi file View
+        require_once __DIR__ . '/views/index.php';
     }
 }
 
+// Chạy trực tiếp file này
 $controller = new UserController();
 $controller->index();
 ?>
