@@ -67,7 +67,9 @@ try {
     $unpaid_invoices_list = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
 } catch(PDOException $e) {
-    echo "Lỗi kết nối CSDL: " . $e->getMessage();
+    // Nếu máy chưa cài SQL hoặc lỗi kết nối, hiển thị số 0 để không bị vỡ thẻ HTML
+    $total_rooms = 0; $rented_rooms = 0; $empty_rooms = 0; $occupancy_rate = 0;
+    $total_revenue = 0; $total_debt = 0; $unpaid_count = 0; $active_contracts = 0;
 }
 ?>
 <!DOCTYPE html>
@@ -238,13 +240,14 @@ try {
                 </div>
             </a>
 
+            <!-- MENU ĐÃ ĐƯỢC CHỈNH SỬA LẠI THEO CHUẨN -->
             <ul class="nav nav-pills me-auto d-none d-lg-flex">
-                <li class="nav-item"><a class="nav-link" href="index.php?route=dashboard"><i class="fa-solid fa-city"></i> Tòa nhà</a></li>
-                <li class="nav-item"><a class="nav-link active" href="index.php?route=overview"><i class="fa-solid fa-border-all"></i> Tổng quan</a></li>
-                <li class="nav-item"><a class="nav-link" href="index.php?route=rooms"><i class="fa-solid fa-bed"></i> Phòng trọ</a></li>
-                <li class="nav-item"><a class="nav-link" href="index.php?route=contracts"><i class="fa-solid fa-file-signature"></i> Hợp đồng</a></li>
-                <li class="nav-item"><a class="nav-link" href="index.php?route=utilities"><i class="fa-solid fa-bolt"></i> Điện Nước</a></li>
-                <li class="nav-item"><a class="nav-link" href="TrangXemPhong/" target="_blank"><i class="fa-solid fa-eye"></i> Xem phòng khách</a></li>
+                <li class="nav-item"><a class="nav-link active" href="#"><i class="fa-solid fa-border-all"></i> Tổng quan</a></li>
+                <li class="nav-item"><a class="nav-link" href="#"><i class="fa-solid fa-bed"></i> Phòng trọ</a></li>
+                <li class="nav-item"><a class="nav-link" href="#"><i class="fa-solid fa-users"></i> Khách thuê</a></li>
+                <li class="nav-item"><a class="nav-link" href="#"><i class="fa-solid fa-file-signature"></i> Hợp đồng</a></li>
+                <li class="nav-item"><a class="nav-link" href="#"><i class="fa-solid fa-bolt"></i> Điện Nước</a></li>
+                <li class="nav-item"><a class="nav-link" href="#"><i class="fa-solid fa-file-invoice-dollar"></i> Hóa đơn</a></li>
             </ul>
 
             <div class="d-flex align-items-center gap-4">
@@ -254,7 +257,6 @@ try {
                 </div>
                 <div class="dropdown">
                     <div class="d-flex align-items-center gap-2 cursor-pointer" data-bs-toggle="dropdown">
-                        <!-- Avatar khung tròn viền nét bóng đậm -->
                         <div class="avatar-circle">AS</div>
                         
                         <div class="text-start d-none d-sm-block lh-sm">
