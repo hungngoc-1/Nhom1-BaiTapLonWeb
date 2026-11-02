@@ -64,31 +64,17 @@ if (isset($_POST['action']) && $_POST['action'] == 'edit') {
 }
 
 // ==========================================
-// 3. TRUY VẤN LẤY DỮ LIỆU VÀ TÌM KIẾM (READ)
+// 3. TRUY VẤN LẤY DỮ LIỆU HIỂN THỊ BAN ĐẦU
 // ==========================================
 $rooms = $conn->query("SELECT id, room_number FROM rooms WHERE status = 'rented' ORDER BY room_number")->fetchAll(PDO::FETCH_ASSOC);
 
-// Xử lý tìm kiếm phòng theo yêu cầu cá nhân BTVN số 5
-$search = trim($_GET['search_room'] ?? '');
-if ($search !== '') {
-    $stmtSearch = $conn->prepare("
-        SELECT u.id, u.month_year, u.electric_old, u.electric_new, u.water_old, u.water_new, r.room_number 
-        FROM utilities_readings u
-        JOIN rooms r ON u.room_id = r.id
-        WHERE r.room_number LIKE ?
-        ORDER BY u.id DESC
-    ");
-    $stmtSearch->execute(['%' . $search . '%']);
-    $readings = $stmtSearch->fetchAll(PDO::FETCH_ASSOC);
-} else {
-    $query = "
-        SELECT u.id, u.month_year, u.electric_old, u.electric_new, u.water_old, u.water_new, r.room_number 
-        FROM utilities_readings u
-        JOIN rooms r ON u.room_id = r.id
-        ORDER BY u.id DESC
-    ";
-    $readings = $conn->query($query)->fetchAll(PDO::FETCH_ASSOC);
-}
+$query = "
+    SELECT u.id, u.month_year, u.electric_old, u.electric_new, u.water_old, u.water_new, r.room_number 
+    FROM utilities_readings u
+    JOIN rooms r ON u.room_id = r.id
+    ORDER BY u.id DESC
+";
+$readings = $conn->query($query)->fetchAll(PDO::FETCH_ASSOC);
 ?>
 
 <!DOCTYPE html>
@@ -110,90 +96,72 @@ if ($search !== '') {
         body { background-color: var(--bg-body); font-family: 'Nunito', sans-serif; font-size: 0.9rem; color: #334155; min-height: 100vh; }
         
         /* Navbar */
-        .navbar-custom { background-color: #ffffff; padding: 10px 20px; box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06); border-bottom: 2px solid #e2e8f0; }
+        .navbar-custom { background-color: #ffffff; padding: 10px 20px; box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05); border-bottom: 1px solid #e2e8f0; }
         .brand-logo { display: flex; align-items: center; gap: 10px; text-decoration: none; }
         .brand-logo i { color: var(--primary-teal); font-size: 2rem; }
         .brand-text { color: var(--primary-teal); font-weight: 800; font-size: 1.2rem; line-height: 1.1; }
-        .nav-pills .nav-link { color: #64748b; font-weight: 700; font-size: 0.8rem; padding: 7px 12px; border-radius: 14px; transition: all 0.2s; white-space: nowrap; margin-right: 3px; }
+        .nav-pills .nav-link { color: #64748b; font-weight: 700; font-size: 0.85rem; padding: 8px 14px; border-radius: 14px; transition: all 0.2s; white-space: nowrap; margin-right: 4px; }
         .nav-pills .nav-link:hover { color: var(--primary-teal); background: #e6f3f1; }
-        .nav-pills .nav-link.active { background-color: var(--primary-teal); color: white; box-shadow: 0 4px 12px rgba(54, 131, 124, 0.25); }
+        .nav-pills .nav-link.active { background-color: var(--primary-teal); color: white; box-shadow: 0 4px 12px rgba(54, 131, 124, 0.3); border: 1px solid var(--primary-hover); }
 
-        /* Card & Table Design */
+        /* Card Design - Nâng cấp bóng & Viền mềm mại */
         .content-card { 
             background: #ffffff; 
             border-radius: var(--card-radius); 
-            border: 2px solid #cbd5e1; 
-            box-shadow: 0 14px 40px rgba(15, 23, 42, 0.08); 
+            border: 1px solid #e2e8f0; 
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.04); 
             overflow: hidden; 
+            transition: transform 0.2s;
         }
         
+        /* Button Design - Bo góc & Viền đậm */
         .btn-teal-custom { 
             background-color: var(--primary-teal); 
             color: white; 
             border-radius: 14px; 
             font-weight: 700; 
             font-size: 0.85rem; 
-            padding: 10px 20px; 
-            border: none; 
-            box-shadow: 0 4px 14px rgba(54, 131, 124, 0.35); 
+            padding: 10px 22px; 
+            border: 2px solid var(--primary-hover); 
+            box-shadow: 0 4px 14px rgba(54, 131, 124, 0.25); 
             transition: all 0.2s ease; 
         }
-        .btn-teal-custom:hover { background-color: var(--primary-hover); color: white; transform: translateY(-2px); box-shadow: 0 6px 18px rgba(54, 131, 124, 0.45); }
+        .btn-teal-custom:hover { background-color: var(--primary-hover); color: white; transform: translateY(-2px); box-shadow: 0 6px 18px rgba(54, 131, 124, 0.4); }
         
         .text-teal { color: var(--primary-teal) !important; }
+
+        /* Search Bar API */
+        .search-wrapper { border: 2px solid #cbd5e1; border-radius: 16px; overflow: hidden; background: #fff; transition: 0.2s; box-shadow: 0 4px 10px rgba(0,0,0,0.02); }
+        .search-wrapper:focus-within { border-color: var(--primary-teal); box-shadow: 0 0 0 4px rgba(54, 131, 124, 0.15); }
         
-        /* Viền bảng đậm và rõ nét */
-        .table-custom { margin-bottom: 0; border-collapse: separate; border-spacing: 0; }
+        /* Table Design - Bo tròn bọc viền */
+        .table-container { border: 1px solid #cbd5e1; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 15px rgba(0,0,0,0.02); }
+        .table-custom { margin-bottom: 0; border-collapse: collapse; }
         .table-custom th { 
-            background-color: #f1f5f9; 
-            color: #334155; 
-            font-weight: 800; 
-            font-size: 0.78rem; 
-            text-transform: uppercase; 
-            letter-spacing: 0.6px; 
-            border-bottom: 3px solid #cbd5e1; 
-            padding: 18px 20px; 
+            background-color: #f8fafc; color: #475569; font-weight: 800; font-size: 0.75rem; 
+            text-transform: uppercase; letter-spacing: 0.5px; border-bottom: 2px solid #cbd5e1; padding: 18px 20px; 
         }
-        .table-custom td { 
-            padding: 18px 20px; 
-            vertical-align: middle; 
-            color: #1e293b; 
-            font-weight: 600; 
-            border-bottom: 2px solid #e2e8f0; 
-        }
-        .table-hover tbody tr:hover { background-color: #f8fafc; }
+        .table-custom td { padding: 18px 20px; vertical-align: middle; color: #1e293b; font-weight: 600; border-bottom: 1px solid #f1f5f9; }
+        .table-hover tbody tr { transition: all 0.2s; }
+        .table-hover tbody tr:hover { background-color: #f1f5f9; }
         
         /* Badges chỉ số tiêu thụ */
         .usage-badge { 
-            background-color: #e0f2fe; 
-            color: #0369a1; 
-            padding: 6px 12px; 
-            border-radius: 10px; 
-            font-weight: 800; 
-            font-size: 0.75rem; 
-            border: 1px solid #bae6fd;
-            box-shadow: 0 2px 5px rgba(3, 105, 161, 0.08);
+            background-color: #e0f2fe; color: #0369a1; padding: 6px 12px; border-radius: 12px; 
+            font-weight: 800; font-size: 0.75rem; border: 1px solid #bae6fd; box-shadow: 0 2px 5px rgba(3, 105, 161, 0.08);
         }
         .usage-badge.water { 
-            background-color: #dcfce7; 
-            color: #15803d; 
-            border-color: #bbf7d0;
-            box-shadow: 0 2px 5px rgba(21, 128, 61, 0.08);
+            background-color: #dcfce7; color: #15803d; border-color: #bbf7d0; box-shadow: 0 2px 5px rgba(21, 128, 61, 0.08);
         }
 
-        /* Nút chức năng nổi bật */
-        .action-btn-edit {
-            background-color: #eff6ff; color: #2563eb; border: 2px solid #93c5fd;
-            width: 38px; height: 38px; display: inline-flex; align-items: center; justify-content: center;
-            border-radius: 12px; font-weight: bold; box-shadow: 0 3px 8px rgba(37, 99, 235, 0.15); transition: all 0.2s ease;
+        /* Nút chức năng nổi bật - Có đổ bóng và viền */
+        .action-btn-edit, .action-btn-delete {
+            width: 36px; height: 36px; display: inline-flex; align-items: center; justify-content: center;
+            border-radius: 12px; font-weight: bold; transition: all 0.2s ease; cursor: pointer;
         }
+        .action-btn-edit { background-color: #eff6ff; color: #2563eb; border: 2px solid #bfdbfe; box-shadow: 0 3px 8px rgba(37, 99, 235, 0.1); }
         .action-btn-edit:hover { background-color: #2563eb; color: #ffffff; border-color: #2563eb; transform: translateY(-2px); box-shadow: 0 5px 12px rgba(37, 99, 235, 0.3); }
-
-        .action-btn-delete {
-            background-color: #fef2f2; color: #dc2626; border: 2px solid #fca5a5;
-            width: 38px; height: 38px; display: inline-flex; align-items: center; justify-content: center;
-            border-radius: 12px; font-weight: bold; box-shadow: 0 3px 8px rgba(220, 38, 38, 0.15); transition: all 0.2s ease;
-        }
+        .action-btn-delete { background-color: #fef2f2; color: #dc2626; border: 2px solid #fecaca; box-shadow: 0 3px 8px rgba(220, 38, 38, 0.1); }
         .action-btn-delete:hover { background-color: #dc2626; color: #ffffff; border-color: #dc2626; transform: translateY(-2px); box-shadow: 0 5px 12px rgba(220, 38, 38, 0.3); }
     </style>
 </head>
@@ -217,7 +185,7 @@ if ($search !== '') {
                 <li class="nav-item"><a class="nav-link" href="index.php?route=invoices"><i class="fa-solid fa-file-invoice-dollar"></i> Hóa đơn</a></li>
             </ul>
             <div class="d-flex align-items-center gap-2">
-                <div class="rounded-circle text-white d-flex align-items-center justify-content-center fw-bold shadow-sm" style="width:38px; height:38px; background-color: var(--primary-teal); font-size: 0.9rem;">AS</div>
+                <div class="rounded-circle text-white d-flex align-items-center justify-content-center fw-bold shadow-sm" style="width:38px; height:38px; background-color: var(--primary-teal); font-size: 0.9rem; border: 2px solid var(--primary-hover);">AS</div>
                 <div class="text-start d-none d-sm-block lh-sm">
                     <div class="fw-bold text-dark" style="font-size: 0.85rem;">Quản trị viên <i class="fa-solid fa-angle-down ms-1 text-muted"></i></div>
                     <div class="text-muted" style="font-size: 0.75rem;">Admin hệ thống</div>
@@ -235,45 +203,49 @@ if ($search !== '') {
                 <div class="text-muted fw-semibold" style="font-size: 0.85rem;">Chỉ số hàng tháng để thiết lập tự động hóa hóa đơn</div>
             </div>
             <button class="btn btn-teal-custom" data-bs-toggle="modal" data-bs-target="#addUtilityModal">
-                <i class="fa-solid fa-plus me-2"></i> Chỉ số mới
+                <i class="fa-solid fa-plus me-2"></i> Chốt Chỉ Số Mới
             </button>
         </div>
 
-        <!-- Thông báo -->
+        <!-- Thông báo thao tác CRUD -->
         <?php if($msg): ?>
-            <div class="alert alert-<?= $msgType ?> alert-dismissible fade show border-0 shadow-sm rounded-4 fw-bold" role="alert">
+            <div class="alert alert-<?= $msgType ?> alert-dismissible fade show border-2 border-<?= $msgType ?> shadow-sm rounded-4 fw-bold" role="alert">
                 <i class="fa-solid <?= $msgType == 'success' ? 'fa-circle-check' : 'fa-triangle-exclamation' ?> me-2"></i> <?= $msg ?>
                 <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
             </div>
         <?php endif; ?>
 
-        <!-- THANH TÌM KIẾM THEO SỐ PHÒNG (ĐÁP ỨNG YÊU CẦU BTVN SỐ 5) -->
-        <div class="content-card mb-4 p-3">
-            <form method="GET" action="index.php" class="row g-3 align-items-center">
-                <input type="hidden" name="route" value="utilities">
-                <div class="col-md-4">
-                    <div class="input-group">
-                        <span class="input-group-text bg-white border-2 border-end-0 text-muted"><i class="fa-solid fa-magnifying-glass"></i></span>
-                        <input type="text" class="form-control border-2 border-start-0 ps-0 fw-semibold" name="search_room" placeholder="Nhập số phòng cần tìm..." value="<?= htmlspecialchars($search) ?>">
+        <!-- THANH TÌM KIẾM API (LIVE SEARCH GIAO DIỆN ĐẸP) -->
+        <div class="content-card mb-4 p-4">
+            <div class="row align-items-center">
+                <div class="col-md-6">
+                    <label class="form-label text-teal fw-bold text-uppercase" style="font-size: 0.75rem; letter-spacing: 0.5px;"><i class="fa-solid fa-filter"></i> Tra cứu chỉ số theo phòng</label>
+                    <div class="input-group search-wrapper">
+                        <span class="input-group-text bg-white border-0 text-muted px-3"><i class="fa-solid fa-magnifying-glass"></i></span>
+                        <input type="text" id="searchInput" class="form-control border-0 fw-semibold ps-1 py-2" placeholder="Gõ số phòng (VD: P101) để tìm kiếm tự động...">
+                    </div>
+                    <div id="loadingIndicator" style="display: none;" class="text-teal mt-2 fw-bold" style="font-size: 0.85rem;"><i class="fa-solid fa-spinner fa-spin me-2"></i>Hệ thống đang tải dữ liệu...</div>
+                    <div id="errorMsg" style="display: none;" class="text-danger mt-2 fw-bold" style="font-size: 0.85rem;"></div>
+                </div>
+                <div class="col-md-6 text-end d-none d-md-block">
+                    <div class="d-inline-flex align-items-center bg-light border border-2 border-light rounded-pill px-4 py-2 text-muted fw-bold shadow-sm" style="font-size: 0.85rem;">
+                        <i class="fa-solid fa-bolt text-warning me-2 fs-5"></i>
+                        <i class="fa-solid fa-droplet text-info me-2 fs-5"></i>
+                        Tự động Fetch API không tải lại trang
                     </div>
                 </div>
-                <div class="col-md-auto">
-                    <button type="submit" class="btn btn-teal-custom px-4"><i class="fa-solid fa-filter me-1"></i> Tìm kiếm</button>
-                    <?php if($search !== ''): ?>
-                        <a href="index.php?route=utilities" class="btn btn-outline-secondary rounded-pill px-3 fw-bold ms-2">Hủy lọc</a>
-                    <?php endif; ?>
-                </div>
-            </form>
+            </div>
         </div>
 
         <!-- Bảng danh sách chính -->
         <div class="content-card">
             <div class="card-header bg-white border-bottom border-2 py-3 px-4 d-flex justify-content-between align-items-center">
-                <h6 class="fw-bold mb-0 text-dark"><i class="fa-solid fa-list-check me-2 text-teal"></i> Lịch sử chỉ số điện nước</h6>
+                <h6 class="fw-bold mb-0 text-dark"><i class="fa-solid fa-list-check me-2 text-teal"></i> Lịch sử dữ liệu</h6>
             </div>
             
-            <div class="card-body p-0">
-                <div class="table-responsive">
+            <div class="card-body p-4">
+                <!-- Bọc table container để bo viền bảng cực đẹp -->
+                <div class="table-container table-responsive">
                     <table class="table table-custom table-hover align-middle">
                         <thead>
                             <tr>
@@ -284,7 +256,8 @@ if ($search !== '') {
                                 <th class="text-end pe-4">THAO TÁC</th>
                             </tr>
                         </thead>
-                        <tbody>
+                        <!-- Thêm ID cho tbody để JS dễ dàng thao tác ghi đè -->
+                        <tbody id="tableBody">
                             <?php if(count($readings) > 0): ?>
                                 <?php foreach($readings as $row): 
                                     $dien_tieu_thu = $row['electric_new'] - $row['electric_old'];
@@ -310,11 +283,11 @@ if ($search !== '') {
                                         </div>
                                     </td>
                                     <td class="text-end pe-4">
-                                        <button class="action-btn-edit me-2" title="Chỉnh sửa chỉ số" 
-                                            onclick="openEditModal(<?= $row['id'] ?>, '<?= $row['room_number'] ?>', '<?= $row['month_year'] ?>', <?= $row['electric_old'] ?>, <?= $row['electric_new'] ?>, <?= $row['water_old'] ?>, <?= $row['water_new'] ?>)">
+                                        <button class="action-btn-edit me-2" title="Chỉnh sửa" 
+                                            onclick="openEditModal(<?= $row['id'] ?>, '<?= htmlspecialchars($row['room_number']) ?>', '<?= htmlspecialchars($row['month_year']) ?>', <?= $row['electric_old'] ?>, <?= $row['electric_new'] ?>, <?= $row['water_old'] ?>, <?= $row['water_new'] ?>)">
                                             <i class="fa-solid fa-pen"></i>
                                         </button>
-                                        <a href="index.php?route=utilities&action=delete&id=<?= $row['id'] ?>" class="action-btn-delete" title="Xóa bản ghi" onclick="return confirm('Bạn có chắc chắn muốn xóa bản ghi chỉ số này không?');">
+                                        <a href="index.php?route=utilities&action=delete&id=<?= $row['id'] ?>" class="action-btn-delete" title="Xóa" onclick="return confirm('Bạn có chắc chắn muốn xóa bản ghi chỉ số này không?');">
                                             <i class="fa-solid fa-trash"></i>
                                         </a>
                                     </td>
@@ -323,8 +296,8 @@ if ($search !== '') {
                             <?php else: ?>
                                 <tr>
                                     <td colspan="5" class="text-center py-5 text-muted">
-                                        <i class="fa-solid fa-folder-open fs-1 text-teal opacity-50 mb-3"></i>
-                                        <p class="fw-semibold mb-0">Không tìm thấy dữ liệu chốt điện nước phù hợp.</p>
+                                        <i class="fa-solid fa-folder-open fs-1 text-teal opacity-25 mb-3"></i>
+                                        <p class="fw-semibold mb-0">Hệ thống chưa có dữ liệu điện nước.</p>
                                     </td>
                                 </tr>
                             <?php endif; ?>
@@ -363,7 +336,7 @@ if ($search !== '') {
                             </div>
                         </div>
 
-                        <div class="p-3 bg-light rounded-3 border border-2 mb-3">
+                        <div class="p-3 bg-light rounded-4 border border-2 mb-3 shadow-sm">
                             <h6 class="fw-bold text-warning mb-3"><i class="fa-solid fa-bolt me-1"></i> Thông số Điện</h6>
                             <div class="row g-3">
                                 <div class="col-6">
@@ -377,7 +350,7 @@ if ($search !== '') {
                             </div>
                         </div>
 
-                        <div class="p-3 bg-light rounded-3 border border-2 mb-4">
+                        <div class="p-3 bg-light rounded-4 border border-2 mb-4 shadow-sm">
                             <h6 class="fw-bold text-info mb-3"><i class="fa-solid fa-droplet me-1"></i> Thông số Nước</h6>
                             <div class="row g-3">
                                 <div class="col-6">
@@ -392,7 +365,7 @@ if ($search !== '') {
                         </div>
 
                         <div class="d-flex justify-content-end gap-2">
-                            <button type="button" class="btn btn-outline-secondary rounded-pill px-4 fw-bold" data-bs-dismiss="modal">Hủy</button>
+                            <button type="button" class="btn btn-outline-secondary border-2 rounded-pill px-4 fw-bold" data-bs-dismiss="modal">Hủy</button>
                             <button type="submit" class="btn btn-teal-custom px-4"><i class="fa-solid fa-floppy-disk me-1"></i> Lưu chỉ số</button>
                         </div>
                     </form>
@@ -415,7 +388,7 @@ if ($search !== '') {
                         <input type="hidden" name="id" id="edit_id">
                         
                         <div class="mb-3 text-center">
-                            <span class="badge text-white fs-6 px-3 py-2 rounded-pill shadow-sm" style="background-color: var(--primary-teal);" id="edit_title">Phòng -- Kỳ --</span>
+                            <span class="badge text-white fs-6 px-4 py-2 rounded-pill shadow-sm" style="background-color: var(--primary-teal); border: 2px solid var(--primary-hover);" id="edit_title">Phòng -- Kỳ --</span>
                         </div>
 
                         <div class="row g-3 mb-4">
@@ -432,7 +405,7 @@ if ($search !== '') {
                         </div>
 
                         <div class="d-flex justify-content-end gap-2">
-                            <button type="button" class="btn btn-outline-secondary rounded-pill px-4 fw-bold" data-bs-dismiss="modal">Hủy</button>
+                            <button type="button" class="btn btn-outline-secondary border-2 rounded-pill px-4 fw-bold" data-bs-dismiss="modal">Hủy</button>
                             <button type="submit" class="btn btn-teal-custom px-4"><i class="fa-solid fa-check me-1"></i> Cập nhật</button>
                         </div>
                     </form>
@@ -441,8 +414,10 @@ if ($search !== '') {
         </div>
     </div>
 
+    <!-- SCRIPT TƯƠNG TÁC -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
+        // Hàm mở Modal sửa chỉ số
         function openEditModal(id, room, month, e_old, e_new, w_old, w_new) {
             document.getElementById('edit_id').value = id;
             document.getElementById('edit_title').innerText = 'Phòng ' + room + ' - Kỳ ' + month;
@@ -457,6 +432,87 @@ if ($search !== '') {
             
             new bootstrap.Modal(document.getElementById('editUtilityModal')).show();
         }
+
+        // ===============================================================
+        // FETCH API: LIVE SEARCH CẬP NHẬT DOM AN TOÀN THEO YÊU CẦU CÔ GIÁO
+        // ===============================================================
+        let typingTimer;
+        const searchInput = document.getElementById('searchInput');
+        const tableBody = document.getElementById('tableBody');
+        const loadingIndicator = document.getElementById('loadingIndicator');
+        const errorMsg = document.getElementById('errorMsg');
+
+        searchInput.addEventListener('input', () => {
+            clearTimeout(typingTimer);
+            loadingIndicator.style.display = 'block';
+            errorMsg.style.display = 'none';
+            
+            // Xử lý Debounce (đợi 300ms sau khi ngừng gõ mới gọi API)
+            typingTimer = setTimeout(async () => {
+                const keyword = searchInput.value;
+                try {
+                    const res = await fetch(`index.php?route=api/utilities/search&q=${encodeURIComponent(keyword)}`);
+                    if (!res.ok) throw new Error('HTTP Error: ' + res.status);
+                    
+                    const json = await res.json();
+                    tableBody.innerHTML = ''; // Làm sạch bảng
+                    loadingIndicator.style.display = 'none';
+
+                    if (json.data.length === 0) {
+                         tableBody.innerHTML = '<tr><td colspan="5" class="text-center py-5 text-muted"><i class="fa-solid fa-folder-open fs-1 opacity-25 mb-3 d-block"></i>Không tìm thấy phòng phù hợp với từ khóa.</td></tr>';
+                         return;
+                    }
+
+                    // Render giao diện an toàn không dùng innerHTML với dữ liệu User Input (như tên phòng)
+                    json.data.forEach(item => {
+                        const tr = document.createElement('tr');
+                        const dienTieuThu = item.electric_new - item.electric_old;
+                        const nuocTieuThu = item.water_new - item.water_old;
+
+                        // Định dạng giao diện theo mẫu HTML cực đẹp lúc nãy
+                        tr.innerHTML = `
+                            <td class="ps-4 fw-bold text-teal fs-6 room-cell"></td>
+                            <td><span class="badge bg-light text-dark border border-2 px-2 py-1">${item.month_year}</span></td>
+                            <td>
+                                <div class="d-flex align-items-center gap-2">
+                                    <span class="text-muted fw-bold">${item.electric_old}</span>
+                                    <i class="fa-solid fa-bolt text-warning"></i>
+                                    <span class="fw-bold text-dark">${item.electric_new}</span>
+                                    <span class="usage-badge ms-2">+${dienTieuThu} số</span>
+                                </div>
+                            </td>
+                            <td>
+                                <div class="d-flex align-items-center gap-2">
+                                    <span class="text-muted fw-bold">${item.water_old}</span>
+                                    <i class="fa-solid fa-droplet text-info"></i>
+                                    <span class="fw-bold text-dark">${item.water_new}</span>
+                                    <span class="usage-badge water ms-2">+${nuocTieuThu} khối</span>
+                                </div>
+                            </td>
+                            <td class="text-end pe-4">
+                                <button class="action-btn-edit me-2" title="Chỉnh sửa" 
+                                    onclick="openEditModal(${item.id}, '${item.room_number}', '${item.month_year}', ${item.electric_old}, ${item.electric_new}, ${item.water_old}, ${item.water_new})">
+                                    <i class="fa-solid fa-pen"></i>
+                                </button>
+                                <a href="index.php?route=utilities&action=delete&id=${item.id}" class="action-btn-delete" title="Xóa" onclick="return confirm('Bạn có chắc chắn muốn xóa bản ghi chỉ số này không?');">
+                                    <i class="fa-solid fa-trash"></i>
+                                </a>
+                            </td>
+                        `;
+                        
+                        // Sử dụng textContent cho dữ liệu dễ bị tấn công XSS để đảm bảo an toàn tuyệt đối
+                        tr.querySelector('.room-cell').textContent = item.room_number;
+                        
+                        tableBody.appendChild(tr);
+                    });
+                    
+                } catch (err) {
+                    loadingIndicator.style.display = 'none';
+                    errorMsg.style.display = 'block';
+                    errorMsg.innerHTML = '<i class="fa-solid fa-triangle-exclamation me-1"></i> Gặp lỗi khi tải dữ liệu từ máy chủ API.';
+                }
+            }, 300); // 300ms Delay
+        });
     </script>
 </body>
 </html>
