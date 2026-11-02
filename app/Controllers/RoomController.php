@@ -68,6 +68,23 @@ class RoomController {
         
         // Gọi View hiển thị
         require_once __DIR__ . '/../views/rooms/index.php';
+
+        $edit_room = null;
+    if (isset($_GET['edit_id'])) {
+        $edit_room = $this->model->getRoomById($_GET['edit_id']);
+    }
+
+    // LẤY DỮ LIỆU TỪ THANH BỘ LỌC
+    $keyword = trim($_GET['keyword'] ?? '');
+    $status = trim($_GET['status'] ?? '');
+    $room_type = trim($_GET['room_type'] ?? '');
+    $floor = trim($_GET['floor'] ?? '');
+
+    // Truyền đủ 4 tham số vào Model
+    $rooms = $this->model->getRooms($keyword, $status, $room_type, $floor);
+    
+    // Gọi View
+    require_once __DIR__ . '/../views/rooms/index.php';
     }
 
     // Chỉ chấp nhận trạng thái có trong CSDL (ENUM 'available', 'rented')

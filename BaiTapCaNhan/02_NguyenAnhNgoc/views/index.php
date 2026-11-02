@@ -7,13 +7,17 @@
 </head>
 <body class="bg-light p-4">
     <div class="container bg-white p-4 rounded shadow">
-        <h3 class="fw-bold mb-4 text-primary">Quản lý Tài Khoản (CRUD)</h3>
+        <h3 class="fw-bold mb-4 text-primary">Quản lý Tài Khoản (Bảng Users)</h3>
 
         <!-- Báo trạng thái -->
-        <?php if (!empty($message)): ?> <div class="alert alert-danger"><?= $message ?></div> <?php endif; ?>
-        <?php if (isset($_GET['msg']) && $_GET['msg'] == 'created'): ?> <div class="alert alert-success">Thêm thành công!</div> <?php endif; ?>
-        <?php if (isset($_GET['msg']) && $_GET['msg'] == 'updated'): ?> <div class="alert alert-success">Cập nhật thành công!</div> <?php endif; ?>
-        <?php if (isset($_GET['msg']) && $_GET['msg'] == 'deleted'): ?> <div class="alert alert-success">Đã xóa tài khoản!</div> <?php endif; ?>
+        <?php if (!empty($message)): ?> 
+            <div class="alert alert-danger"><?= htmlspecialchars($message) ?></div> 
+        <?php endif; ?>
+        <?php if (isset($_GET['msg'])): ?>
+            <?php if ($_GET['msg'] == 'created'): ?> <div class="alert alert-success">Thêm thành công!</div> <?php endif; ?>
+            <?php if ($_GET['msg'] == 'updated'): ?> <div class="alert alert-success">Cập nhật thành công!</div> <?php endif; ?>
+            <?php if ($_GET['msg'] == 'deleted'): ?> <div class="alert alert-success">Đã xóa tài khoản!</div> <?php endif; ?>
+        <?php endif; ?>
 
         <!-- Tìm kiếm -->
         <form method="GET" action="UserController.php" class="d-flex mb-4 w-50">
@@ -26,37 +30,44 @@
             <!-- Form Thêm / Sửa -->
             <div class="col-md-4 mb-4">
                 <div class="card card-body bg-light border-primary">
-                    <h5 class="card-title text-primary"><?= $edit_user ? 'Sửa Tài Khoản' : 'Thêm Mới' ?></h5>
+                    <h5 class="card-title text-primary"><?= !empty($edit_user) ? 'Sửa Tài Khoản' : 'Thêm Mới' ?></h5>
                     <form method="POST" action="UserController.php">
-                        <input type="hidden" name="action" value="<?= $edit_user ? 'update' : 'create' ?>">
-                        <?php if ($edit_user): ?> <input type="hidden" name="id" value="<?= $edit_user['id'] ?>"> <?php endif; ?>
+                        <input type="hidden" name="action" value="<?= !empty($edit_user) ? 'update' : 'create' ?>">
+                        <?php if (!empty($edit_user)): ?> 
+                            <input type="hidden" name="id" value="<?= $edit_user['id'] ?>"> 
+                        <?php endif; ?>
                         
                         <div class="mb-2">
                             <label>Tên đăng nhập *</label>
-                            <input type="text" name="username" class="form-control" value="<?= $edit_user ? $edit_user['username'] : '' ?>" <?= $edit_user ? 'readonly' : '' ?>>
+                            <input type="text" name="username" class="form-control" value="<?= !empty($edit_user) ? htmlspecialchars($edit_user['username']) : '' ?>" <?= !empty($edit_user) ? 'readonly' : 'required' ?>>
                         </div>
-                        <?php if (!$edit_user): ?>
+                        
+                        <?php if (empty($edit_user)): ?>
                         <div class="mb-2">
                             <label>Mật khẩu *</label>
-                            <input type="password" name="password" class="form-control">
+                            <input type="password" name="password" class="form-control" required>
                         </div>
                         <?php endif; ?>
+                        
                         <div class="mb-2">
                             <label>Họ và tên *</label>
-                            <input type="text" name="full_name" class="form-control" value="<?= $edit_user ? $edit_user['full_name'] : '' ?>">
+                            <input type="text" name="full_name" class="form-control" value="<?= !empty($edit_user) ? htmlspecialchars($edit_user['full_name']) : '' ?>" required>
                         </div>
+                        
                         <div class="mb-3">
                             <label>Vai trò</label>
                             <select name="role" class="form-select">
-                                <option value="tenant" <?= ($edit_user && $edit_user['role'] == 'tenant') ? 'selected' : '' ?>>Người thuê</option>
-                                <option value="landlord" <?= ($edit_user && $edit_user['role'] == 'landlord') ? 'selected' : '' ?>>Chủ trọ</option>
-                                <option value="admin" <?= ($edit_user && $edit_user['role'] == 'admin') ? 'selected' : '' ?>>Quản trị viên</option>
+                                <option value="tenant" <?= (!empty($edit_user) && $edit_user['role'] == 'tenant') ? 'selected' : '' ?>>Người thuê</option>
+                                <option value="landlord" <?= (!empty($edit_user) && $edit_user['role'] == 'landlord') ? 'selected' : '' ?>>Chủ trọ</option>
+                                <option value="admin" <?= (!empty($edit_user) && $edit_user['role'] == 'admin') ? 'selected' : '' ?>>Quản trị viên</option>
                             </select>
                         </div>
-                        <button type="submit" class="btn <?= $edit_user ? 'btn-warning' : 'btn-success' ?> w-100">
-                            <?= $edit_user ? 'Cập nhật' : 'Thêm tài khoản' ?>
+                        
+                        <button type="submit" class="btn <?= !empty($edit_user) ? 'btn-warning' : 'btn-success' ?> w-100">
+                            <?= !empty($edit_user) ? 'Cập nhật' : 'Thêm tài khoản' ?>
                         </button>
-                        <?php if ($edit_user): ?>
+                        
+                        <?php if (!empty($edit_user)): ?>
                             <a href="UserController.php" class="btn btn-secondary w-100 mt-2">Hủy sửa</a>
                         <?php endif; ?>
                     </form>
@@ -65,7 +76,7 @@
 
             <!-- Bảng Dữ Liệu -->
             <div class="col-md-8">
-                <table class="table table-bordered table-hover">
+                <table class="table table-bordered table-hover align-middle">
                     <thead class="table-dark">
                         <tr>
                             <th>ID</th><th>Username</th><th>Họ tên</th><th>Vai trò</th><th>Thao tác</th>
@@ -76,14 +87,18 @@
                             <?php foreach ($users as $user): ?>
                                 <tr>
                                     <td><?= $user['id'] ?></td>
-                                    <td><?= htmlspecialchars($user['username']) ?></td>
+                                    <td class="text-primary fw-bold"><?= htmlspecialchars($user['username']) ?></td>
                                     <td class="fw-bold"><?= htmlspecialchars($user['full_name']) ?></td>
-                                    <td><?= htmlspecialchars($user['role']) ?></td>
+                                    <td>
+                                        <span class="badge <?= $user['role'] == 'admin' ? 'bg-danger' : ($user['role'] == 'landlord' ? 'bg-primary' : 'bg-success') ?>">
+                                            <?= htmlspecialchars($user['role']) ?>
+                                        </span>
+                                    </td>
                                     <td>
                                         <!-- Nút Sửa -->
                                         <a href="UserController.php?edit_id=<?= $user['id'] ?>" class="btn btn-sm btn-warning">Sửa</a>
-                                        <!-- Nút Xóa bọc Form POST -->
-                                        <form method="POST" action="UserController.php" style="display:inline;" onsubmit="return confirm('Xóa tài khoản này?');">
+                                        <!-- Nút Xóa -->
+                                        <form method="POST" action="UserController.php" style="display:inline;" onsubmit="return confirm('Bạn có chắc muốn xóa?');">
                                             <input type="hidden" name="action" value="delete">
                                             <input type="hidden" name="id" value="<?= $user['id'] ?>">
                                             <button type="submit" class="btn btn-sm btn-danger">Xóa</button>
@@ -92,7 +107,7 @@
                                 </tr>
                             <?php endforeach; ?>
                         <?php else: ?>
-                            <tr><td colspan="5" class="text-center">Không có dữ liệu</td></tr>
+                            <tr><td colspan="5" class="text-center py-4">Chưa có dữ liệu</td></tr>
                         <?php endif; ?>
                     </tbody>
                 </table>

@@ -9,20 +9,44 @@ class RoomModel {
         $this->conn = Database::getConnection();
     }
 
-    public function getRooms($keyword = '') {
-        $sql = "SELECT * FROM rooms";
-        if (!empty($keyword)) {
-            $sql .= " WHERE room_number LIKE :keyword OR description LIKE :keyword2";
-        }
-        $sql .= " ORDER BY id DESC";
-        $stmt = $this->conn->prepare($sql);
-        if (!empty($keyword)) {
-            $stmt->bindValue(':keyword', "%$keyword%");
-            $stmt->bindValue(':keyword2', "%$keyword%");
-        }
-        $stmt->execute();
-        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    public function getRooms($keyword = '', $status = '', $room_type = '', $floor = '') {
+    $sql = "SELECT * FROM rooms WHERE 1=1";
+    $params = [];
+
+    // Lọc theo từ khóa (Mã phòng hoặc Mô tả)
+    if (!empty($keyword)) {
+        $sql .= " AND (room_number LIKE :keyword OR description LIKE :keyword)";
+        $params[':keyword'] = "%$keyword%";
     }
+    
+    // Lọc theo trạng thái
+    if (!empty($status)) {
+        $sql .= " AND status = :status";
+        $params[':status'] = $status;
+    }
+
+    // Lọc theo loại phòng (Dựa vào từ khóa trong description)
+    if (!empty($room_type)) {
+        if ($room_type === 'standard') {
+            $sql .= " AND (description LIKE '%Tiêu chuẩn%' OR description LIKE '%Standard%')";
+        } elseif ($room_type === 'duplex') {
+            $sql .= " AND (description LIKE '%Gác lửng%' OR description LIKE '%Duplex%')";
+        } elseif ($room_type === 'studio') {
+            $sql .= " AND (description LIKE '%Studio%')";
+        }
+    }
+
+    // Lọc theo tầng (Dựa vào số đầu tiên của mã phòng. VD: P102 -> Tầng 1)
+    if (!empty($floor)) {
+        $sql .= " AND room_number LIKE :floor";
+        $params[':floor'] = "_$floor%"; // Bỏ qua ký tự đầu (P), khớp số tầng
+    }
+
+    $sql .= " ORDER BY id DESC";
+    $stmt = $this->conn->prepare($sql);
+    $stmt->execute($params);
+    return $stmt->fetchAll(PDO::FETCH_ASSOC);
+}
 
     public function getRoomById($id) {
         $stmt = $this->conn->prepare("SELECT * FROM rooms WHERE id = :id");
