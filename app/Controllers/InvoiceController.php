@@ -1,96 +1,132 @@
 <?php
-require_once 'app/Models/InvoiceModel.php';
-require_once 'app/Models/UtilityModel.php'; // Gọi lại file điện nước nãy bạn làm để lấy chỉ số cũ
+require_once __DIR__ . '/../Models/InvoiceModel.php';
 
+/**
+ * Controller Hóa đơn & Thu tiền.
+ * Routes: invoices, invoices/store, invoices/store-all, invoices/pay, invoices/delete, invoices/detail, invoices/export
+ */
 class InvoiceController {
-    private $invoiceModel;
-    private $utilityModel;
+    private InvoiceModel $model;
 
-    public function __construct($pdo) {
-        $this->invoiceModel = new InvoiceModel($pdo);
-        $this->utilityModel = new UtilityModel($pdo);
+    public function __construct() {
+        if (session_status() === PHP_SESSION_NONE) session_start();
+        $this->model = new InvoiceModel();
     }
 
-    /**
-     * TRẢ VỀ JSON CHO FETCH API (Xem trước tổng tiền trên màn hình)
-     * Route: GET ?route=api/preview-invoice
-     */
-    public function previewInvoice() {
-        header('Content-Type: application/json'); // Khai báo chuẩn JSON cho Javascript đọc
-        
-        $roomId = $_GET['room_id'] ?? 0;
-        $soDienMoi = $_GET['so_dien'] ?? 0;
-        $soNuocMoi = $_GET['so_nuoc'] ?? 0;
-        
-        // Giả sử bảng giá (Thực tế nhóm bạn có thể tạo bảng riêng, ở đây ta fix cứng theo yêu cầu cơ bản)
-        $giaDien = 3500;  // 3.500đ / số
-        $giaNuoc = 25000; // 25.000đ / khối
-        $tienPhong = 2500000; // Tiền phòng mặc định 2.500.000đ
-        $tienDichVu = 150000; // Phí rác, wifi, vệ sinh...
-        
-        // Lấy chỉ số tháng trước từ Database để tính số lượng tiêu thụ
-        $lastReading = $this->utilityModel->getLastReading($roomId);
-        $soDienCu = $lastReading ? $lastReading['so_dien'] : 0;
-        $soNuocCu = $lastReading ? $lastReading['so_nuoc'] : 0;
-        
-        // Kiểm tra hợp lệ (Chặn nhập lùi)
-        if ($soDienMoi < $soDienCu || $soNuocMoi < $soNuocCu) {
-            echo json_encode(['status' => 'error', 'message' => 'Lỗi: Chỉ số mới nhỏ hơn chỉ số cũ!']);
-            exit;
-        }
-        
-        // THUẬT TOÁN TÍNH TIỀN
-        $tienDien = ($soDienMoi - $soDienCu) * $giaDien;
-        $tienNuoc = ($soNuocMoi - $soNuocCu) * $giaNuoc;
-        $tongTien = $tienPhong + $tienDien + $tienNuoc + $tienDichVu;
-        
-        // Gửi kết quả JSON về cho Frontend
-        echo json_encode([
-            'status' => 'success',
-            'data' => [
-                'tien_phong' => $tienPhong,
-                'tien_dien' => $tienDien,
-                'tien_nuoc' => $tienNuoc,
-                'tien_dichvu' => $tienDichVu,
-                'tong_tien' => $tongTien
-            ]
-        ]);
+    private function filters(): array {
+        $periods = $this->model->getPeriods();
+        $period = $_GET['period'] ?? ($periods[0] ?? 'all');
+        $status = $_GET['status'] ?? '';
+        if (!in_array($status, ['', 'paid', 'unpaid', 'overdue'], true)) $status = '';
+        return [
+            'period'  => $period,
+            'status'  => $status,
+            'room_id' => $_GET['room_id'] ?? '',
+            'keyword' => trim($_GET['keyword'] ?? ''),
+        ];
+    }
+
+    private function flash(array $res): void {
+        $_SESSION[$res['ok'] ? 'flash_success' : 'flash_error'] = $res['msg'];
+    }
+
+    private function back(string $url = 'index.php?route=invoices'): void {
+        header('Location: ' . $url);
         exit;
     }
 
-    /**
-     * LƯU HÓA ĐƠN CHÍNH THỨC VÀO DATABASE (POST)
-     * Route: POST ?route=invoices/store
-     */
-    public function store() {
-        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-            $roomId = $_POST['room_id'] ?? null;
-            $thang = date('m'); // Tự động lấy tháng hiện tại
-            $nam = date('Y');   // Tự động lấy năm hiện tại
-            
-            // Nhận dữ liệu tổng tiền từ Form
-            $tienPhong = $_POST['tien_phong'] ?? 0;
-            $tienDien = $_POST['tien_dien'] ?? 0;
-            $tienNuoc = $_POST['tien_nuoc'] ?? 0;
-            $tienDichVu = $_POST['tien_dichvu'] ?? 0;
-            $tongTien = $_POST['tong_tien'] ?? 0;
-
-            if (!$roomId) {
-                die("Lỗi: Không nhận diện được phòng cần lập hóa đơn.");
-            }
-
-            // PASS TEST CASE 6: Chặn lập hóa đơn trùng lặp
-            if ($this->invoiceModel->isInvoiceExist($roomId, $thang, $nam)) {
-                die("Lỗi: Phòng $roomId đã được lập hóa đơn tháng $thang/$nam rồi. Hệ thống từ chối tạo trùng!");
-            }
-
-            // Lưu vào Database
-            if ($this->invoiceModel->createInvoice($roomId, $thang, $nam, $tienPhong, $tienDien, $tienNuoc, $tienDichVu, $tongTien)) {
-                echo "Tuyệt vời: Đã chốt hóa đơn phòng $roomId thành công!";
-            } else {
-                echo "Lỗi hệ thống: Không thể tạo hóa đơn.";
-            }
+    private function checkPost(): void {
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') $this->back();
+        $token = $_POST['csrf_token'] ?? '';
+        if (empty($_SESSION['csrf_token']) || !hash_equals($_SESSION['csrf_token'], $token)) {
+            $_SESSION['flash_error'] = 'Phiên làm việc không hợp lệ (CSRF). Vui lòng thử lại.';
+            $this->back();
         }
     }
+
+    private function returnUrl(): string {
+        $q = $_POST['return_query'] ?? '';
+        return 'index.php?route=invoices' . ($q !== '' ? '&' . ltrim($q, '&') : '');
+    }
+
+    public function index(): void {
+        $filters = $this->filters();
+        $invoices = $this->model->getInvoices($filters);
+        $stats = $this->model->getStats($invoices);
+        $periods = $this->model->getPeriods();
+        $pending = $this->model->getPendingReadings();
+        $rates = $this->model->getRates();
+        $rooms = Database::getConnection()->query("SELECT id, room_number FROM rooms ORDER BY room_number")->fetchAll();
+        $methods = InvoiceModel::METHODS;
+
+        $flash_success = $_SESSION['flash_success'] ?? '';
+        $flash_error = $_SESSION['flash_error'] ?? '';
+        unset($_SESSION['flash_success'], $_SESSION['flash_error']);
+
+        require __DIR__ . '/../views/invoices/index.php';
+    }
+
+    public function detail(): void {
+        $inv = $this->model->getInvoice((int)($_GET['id'] ?? 0));
+        if (!$inv) {
+            $_SESSION['flash_error'] = 'Không tìm thấy hóa đơn.';
+            $this->back();
+        }
+        $methods = InvoiceModel::METHODS;
+        $flash_success = $_SESSION['flash_success'] ?? '';
+        $flash_error = $_SESSION['flash_error'] ?? '';
+        unset($_SESSION['flash_success'], $_SESSION['flash_error']);
+        require __DIR__ . '/../views/invoices/detail.php';
+    }
+
+    public function store(): void {
+        $this->checkPost();
+        $res = $this->model->createFromReading((int)($_POST['reading_id'] ?? 0));
+        $this->flash($res);
+        $this->back($this->returnUrl());
+    }
+
+    public function storeAll(): void {
+        $this->checkPost();
+        $this->flash($this->model->createAllForPeriod(trim($_POST['period'] ?? '')));
+        $this->back($this->returnUrl());
+    }
+
+    public function pay(): void {
+        $this->checkPost();
+        $res = $this->model->markPaid(
+            (int)($_POST['id'] ?? 0),
+            $_POST['method'] ?? 'cash',
+            trim($_POST['note'] ?? ''),
+            $_POST['paid_date'] ?? null
+        );
+        $this->flash($res);
+        $this->back(($_POST['from'] ?? '') === 'detail' ? 'index.php?route=invoices/detail&id=' . (int)$_POST['id'] : $this->returnUrl());
+    }
+
+    public function delete(): void {
+        $this->checkPost();
+        $this->flash($this->model->delete((int)($_POST['id'] ?? 0)));
+        $this->back($this->returnUrl());
+    }
+
+    public function export(): void {
+        $rows = $this->model->getInvoices($this->filters());
+        header('Content-Type: text/csv; charset=utf-8');
+        header('Content-Disposition: attachment; filename="hoa_don_' . date('Ymd_His') . '.csv"');
+        echo "\xEF\xBB\xBF";
+        $out = fopen('php://output', 'w');
+        fputcsv($out, ['Ma HD', 'Phong', 'Khach thue', 'Ky', 'Tien phong', 'Tien dien', 'Tien nuoc', 'Dich vu khac', 'Tong cong', 'Han thanh toan', 'Trang thai', 'Ngay thu', 'Hinh thuc']);
+        foreach ($rows as $r) {
+            $b = $r['breakdown'];
+            $st = $r['status'] === 'paid' ? 'Da thu' : ($r['is_overdue'] ? 'Qua han' : 'Chua thu');
+            fputcsv($out, [
+                $r['code'], $r['room_number'], $r['tenant_name'], $r['month_year'],
+                round($b['room']), round($b['elec']), round($b['water']), round($b['other']), round($r['total_amount']),
+                $r['due_date'], $st, $r['paid_at'] ?? '', InvoiceModel::METHODS[$r['payment_method'] ?? ''] ?? '',
+            ]);
+        }
+        fclose($out);
+        exit;
+    }
 }
-?>

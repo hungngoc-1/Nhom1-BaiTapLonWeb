@@ -530,9 +530,9 @@ try {
                 url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1440 320"><path fill="%23e6f4f1" fill-opacity="0.8" d="M0,160L48,170.7C96,181,192,203,288,197.3C384,192,480,160,576,149.3C672,139,768,149,864,170.7C960,192,1056,224,1152,213.3C1248,203,1344,149,1392,122.7L1440,96L1440,0L1392,0C1344,0,1248,0,1152,0C1056,0,960,0,864,0C768,0,672,0,576,0C480,0,384,0,288,0C192,0,96,0,48,0L0,0Z"></path></svg>'),
                 url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 300"><path d="M0,150 Q50,100 100,250" stroke="%2334d399" stroke-width="4" fill="none"/><path d="M10,120 Q40,90 60,110 Q30,140 10,120" fill="%236ee7b7"/><path d="M30,180 Q80,140 90,170 Q50,200 30,180" fill="%2310b981"/><path d="M60,220 Q100,190 110,220 Q70,250 60,220" fill="%23059669"/></svg>'),
                 url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 300"><path d="M200,150 Q150,100 100,250" stroke="%2334d399" stroke-width="4" fill="none"/><path d="M190,120 Q160,90 140,110 Q170,140 190,120" fill="%236ee7b7"/><path d="M170,180 Q120,140 110,170 Q150,200 170,180" fill="%2310b981"/><path d="M140,220 Q100,190 90,220 Q130,250 140,220" fill="%23059669"/></svg>');
-            background-position: top center, left 20%, right bottom;
+            background-position: top center, left -35px bottom 60px, right -35px bottom 40px;
             background-repeat: no-repeat;
-            background-size: 100% auto, 150px, 150px;
+            background-size: 100% auto, 120px, 120px;
             background-attachment: fixed;
         }
 
@@ -544,7 +544,7 @@ try {
         .brand-sub { color: #64748b; font-size: 0.75rem; font-weight: 600; }
         .text-teal-main { color: var(--teal-main) !important; }
 
-        .nav-pills { gap: 8px; }
+        .nav-pills { gap: 8px; flex-wrap: nowrap; }
         .nav-pills .nav-link { 
             color: #475569; font-weight: 800; font-size: 0.92rem; 
             padding: 10px 18px; border-radius: 50px; transition: all 0.2s; white-space: nowrap; 
@@ -780,10 +780,14 @@ try {
             background: #f1f5f9;
             color: #334155;
             border: 2px solid #cbd5e1;
-            padding: 5px 14px;
+            padding: 6px 14px;
             border-radius: 50px;
             font-weight: 800;
             font-size: 0.82rem;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            white-space: nowrap;
         }
         .meter-box {
             background: #f8fafc;
@@ -792,26 +796,53 @@ try {
             padding: 8px 12px;
             display: inline-flex;
             align-items: center;
+            justify-content: center;
             gap: 8px;
+            min-width: 108px;
+            white-space: nowrap;
+        }
+        .usage-pill-elec, .usage-pill-water {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 4px;
+            min-width: 84px;
+            padding: 5px 11px;
+            border-radius: 50px;
+            font-weight: 800;
+            font-size: 0.76rem;
+            white-space: nowrap;
         }
         .usage-pill-elec {
             background: #fef3c7;
             color: #b45309;
             border: 1.5px solid #fde68a;
-            padding: 4px 11px;
-            border-radius: 50px;
-            font-weight: 800;
-            font-size: 0.76rem;
         }
         .usage-pill-water {
             background: #e0f2fe;
             color: #0369a1;
             border: 1.5px solid #bae6fd;
-            padding: 4px 11px;
-            border-radius: 50px;
-            font-weight: 800;
-            font-size: 0.76rem;
         }
+        .table-staymate td, .table-staymate th { white-space: nowrap; }
+        .table-staymate thead th { padding: 14px 10px; font-size: 0.72rem; }
+        .table-staymate tbody td { padding: 14px 10px; }
+        .table-staymate thead th:first-child, .table-staymate tbody td:first-child { padding-left: 16px !important; }
+        .table-staymate td .tenant-name { white-space: normal; min-width: 110px; max-width: 150px; line-height: 1.25; }
+        .table-staymate .col-period { width: 110px; }
+        .table-staymate .meter-box { min-width: 96px; padding: 7px 10px; gap: 6px; }
+        .table-staymate .usage-pill-elec, .table-staymate .usage-pill-water { min-width: 76px; padding: 4px 8px; }
+        .table-staymate .badge-period-pill { padding: 5px 10px; font-size: 0.78rem; }
+        .table-staymate .badge-room-pill { padding: 6px 11px; font-size: 0.8rem; }
+        /* Cột thao tác luôn hiển thị (ghim bên phải) */
+        .table-staymate thead th:last-child, .table-staymate tbody td:last-child {
+            position: sticky; right: 0; z-index: 2;
+            padding-right: 14px !important; padding-left: 12px !important;
+            box-shadow: -8px 0 12px -8px rgba(0,0,0,0.08);
+        }
+        .table-staymate thead th:last-child { background: #f0fdfa; }
+        .table-staymate tbody td:last-child { background: #ffffff; }
+        .table-staymate tbody tr:hover td:last-child { background: #f8fafc; }
+        .btn-icon-circle { width: 34px !important; height: 34px !important; }
 
         /* Action Buttons */
         .btn-icon-circle {
@@ -1226,7 +1257,7 @@ try {
                     <thead>
                         <tr>
                             <th class="ps-4">PHÒNG &amp; KHÁCH THUÊ</th>
-                            <th>KỲ CHỐT</th>
+                            <th class="col-period">KỲ CHỐT</th>
                             <th>CHỈ SỐ ĐIỆN (CŨ → MỚI)</th>
                             <th>CHỈ SỐ NƯỚC (CŨ → MỚI)</th>
                             <th>TỔNG ĐIỆN + NƯỚC</th>
@@ -1249,7 +1280,7 @@ try {
                                     <div class="d-flex align-items-center gap-2">
                                         <span class="badge-room-pill"><?= htmlspecialchars($row['room_number']) ?></span>
                                         <div>
-                                            <div class="fw-bold text-dark" style="font-size: 0.86rem;">
+                                            <div class="fw-bold text-dark tenant-name" style="font-size: 0.86rem;">
                                                 <?= htmlspecialchars($row['tenant_name'] ?? 'Khách thuê phòng') ?>
                                             </div>
                                             <div class="text-muted" style="font-size: 0.74rem;">
@@ -2039,7 +2070,7 @@ try {
                                 <div class="d-flex align-items-center gap-2">
                                     <span class="badge-room-pill room-cell"></span>
                                     <div>
-                                        <div class="fw-bold text-dark tenant-cell" style="font-size: 0.86rem;"></div>
+                                        <div class="fw-bold text-dark tenant-cell tenant-name" style="font-size: 0.86rem;"></div>
                                         <div class="text-muted" style="font-size: 0.74rem;">Giá phòng: ${formatVND(roomPrice)}</div>
                                     </div>
                                 </div>
