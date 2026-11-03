@@ -663,7 +663,7 @@ try {
         .btn-back-content:hover { background: #f8fafc; border-color: var(--teal-main); color: var(--teal-main); transform: translateY(-3px); box-shadow: 0 12px 25px rgba(0,0,0,0.12); }
 
         .header-title-wrapper { position: relative; z-index: 2; display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 28px; flex-wrap: wrap; gap: 16px; }
-        .main-title { font-weight: 900; color: #0f172a; font-size: 1.95rem; letter-spacing: -0.5px; display: inline-flex; align-items: center; flex-wrap: wrap; }
+        .main-title { font-weight: 800; color: #0f172a; font-size: 1.25rem; letter-spacing: -0.3px; display: inline-flex; align-items: center; flex-wrap: wrap; }
         .bld-highlight { color: var(--teal-main); margin-left: 8px; position: relative; }
         .title-sparkle { position: absolute; background-color: #fde047; border-radius: 2px; }
         .ts-1 { width: 4px; height: 12px; top: -10px; right: -15px; transform: rotate(20deg); }
@@ -678,41 +678,25 @@ try {
             background-size: contain; background-repeat: no-repeat; background-position: bottom right;
         }
 
-        /* ================= 4 THẺ OVERVIEW BO TRÒN SÂU 30PX ================= */
-        .overview-card {
-            border-radius: 30px;
-            padding: 24px; position: relative; overflow: hidden;
-            box-shadow: 0 15px 35px rgba(0,0,0,0.12);
-            border: 4px solid #ffffff;
-            height: 100%; transition: transform 0.3s ease, box-shadow 0.3s ease;
-            backdrop-filter: blur(5px);
+                .overview-card {
+            border-radius: 18px;
+            padding: 18px 22px; position: relative; overflow: hidden;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.03);
+            border: 1px solid #e2e8f0;
+            background: #ffffff;
+            height: 100%; transition: transform 0.2s ease, box-shadow 0.2s ease;
         }
-        .overview-card:hover { transform: translateY(-7px); box-shadow: 0 25px 45px rgba(0,0,0,0.17); }
-
-        .card-green { background: linear-gradient(135deg, #dcfce7 0%, #bbf7d0 100%); }
-        .card-blue { background: linear-gradient(135deg, #e0f2fe 0%, #bae6fd 100%); }
-        .card-yellow { background: linear-gradient(135deg, #fef9c3 0%, #fef08a 100%); }
-        .card-purple { background: linear-gradient(135deg, #f3e8ff 0%, #e9d5ff 100%); }
-
-        .card-bg-pattern { position: absolute; right: 0; bottom: 0; width: 135px; height: 135px; background-size: contain; background-repeat: no-repeat; background-position: bottom right; opacity: 0.85; pointer-events: none; }
-        .pattern-house { background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><rect x="30" y="50" width="50" height="40" fill="%23bae6fd"/><polygon points="20,50 55,20 90,50" fill="%233b82f6"/><rect x="40" y="60" width="10" height="10" fill="%23ffffff"/><rect x="60" y="60" width="10" height="10" fill="%23ffffff"/><circle cx="15" cy="80" r="10" fill="%234ade80"/><circle cx="95" cy="75" r="12" fill="%2322c55e"/></svg>'); }
-        .pattern-wave { background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><path d="M0,70 Q25,40 50,70 T100,70 L100,100 L0,100 Z" fill="%23bae6fd" opacity="0.5"/><path d="M0,90 Q25,60 50,90 T100,90 L100,100 L0,100 Z" fill="%237dd3fc" opacity="0.5"/></svg>'); }
-        .pattern-wave-yellow { background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><path d="M0,70 Q25,40 50,70 T100,70 L100,100 L0,100 Z" fill="%23fde047" opacity="0.5"/><path d="M0,90 Q25,60 50,90 T100,90 L100,100 L0,100 Z" fill="%23facc15" opacity="0.5"/></svg>'); }
-        .pattern-people { background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><circle cx="30" cy="40" r="12" fill="%23c084fc" opacity="0.6"/><circle cx="50" cy="30" r="15" fill="%23a855f7" opacity="0.7"/><circle cx="70" cy="40" r="12" fill="%23c084fc" opacity="0.6"/><path d="M10,90 Q30,60 50,60 Q70,60 90,90" fill="%23a855f7" opacity="0.6"/></svg>'); }
-
-        .overview-title { font-size: 0.8rem; font-weight: 900; margin-bottom: 8px; display: flex; align-items: center; gap: 8px; text-transform: uppercase; position: relative; z-index: 2; }
-        .overview-val { font-size: 2.2rem; font-weight: 900; line-height: 1.05; letter-spacing: -1px; position: relative; z-index: 2; }
+        .overview-card:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(0,0,0,0.06); }
+        .overview-title { font-size: 0.8125rem; font-weight: 700; margin-bottom: 6px; display: flex; align-items: center; gap: 6px; text-transform: uppercase; color: #475569; position: relative; z-index: 2; }
+        .overview-val { font-size: 1.25rem; font-weight: 800; line-height: 1.2; letter-spacing: -0.3px; position: relative; z-index: 2; color: #0f172a; }
         .overview-icon-bg {
-            position: absolute; right: 20px; top: 22px;
-            width: 50px; height: 50px; border-radius: 50%;
+            position: absolute; right: 18px; top: 18px;
+            width: 38px; height: 38px; border-radius: 50%;
             display: flex; align-items: center; justify-content: center;
-            color: white; font-size: 1.3rem;
-            box-shadow: 0 8px 18px rgba(0,0,0,0.15); z-index: 2;
-            border: 3px solid #ffffff;
+            color: white; font-size: 1rem;
+            z-index: 2;
         }
-        .icon-yellow { background: linear-gradient(135deg, #f59e0b, #eab308); }
-        .icon-blue { background: linear-gradient(135deg, #0284c7, #38bdf8); }
-        .icon-purple { background: linear-gradient(135deg, #9333ea, #a855f7); }
+        .card-bg-pattern { display: none !important; }
 
         /* ================= KHUNG SECTION BO GÓC 30PX GIỐNG TRANG TỔNG QUAN ================= */
         .section-box {
@@ -877,6 +861,9 @@ try {
             align-items: center;
             gap: 6px;
             white-space: nowrap;
+        
+            white-space: nowrap !important;
+            flex-shrink: 0 !important;
         }
         .meter-box {
             background: #f8fafc;
@@ -917,10 +904,13 @@ try {
         .table-staymate tbody td { padding: 14px 10px; }
         .table-staymate thead th:first-child, .table-staymate tbody td:first-child { padding-left: 16px !important; }
         .table-staymate td .tenant-name { white-space: normal; min-width: 110px; max-width: 150px; line-height: 1.25; }
-        .table-staymate .col-period { width: 110px; }
+        .table-staymate .col-period { width: 135px !important; min-width: 125px !important; white-space: nowrap !important; }
         .table-staymate .meter-box { min-width: 96px; padding: 7px 10px; gap: 6px; }
         .table-staymate .usage-pill-elec, .table-staymate .usage-pill-water { min-width: 76px; padding: 4px 8px; }
-        .table-staymate .badge-period-pill { padding: 5px 10px; font-size: 0.78rem; }
+        .table-staymate .badge-period-pill { padding: 5px 10px; font-size: 0.78rem; 
+            white-space: nowrap !important;
+            flex-shrink: 0 !important;
+        }
         .table-staymate .badge-room-pill { padding: 6px 11px; font-size: 0.8rem; }
         /* Cột thao tác luôn hiển thị (ghim bên phải) */
         .table-staymate thead th:last-child, .table-staymate tbody td:last-child {
@@ -1070,7 +1060,8 @@ try {
                 <li class="nav-item"><a class="nav-link" href="index.php?route=tenants"><i class="fa-solid fa-users"></i> Khách thuê</a></li>
                 <li class="nav-item"><a class="nav-link" href="index.php?route=contracts"><i class="fa-solid fa-file-signature"></i> Hợp đồng</a></li>
                 <li class="nav-item"><a class="nav-link active" href="index.php?route=utilities"><i class="fa-solid fa-bolt"></i> Điện Nước</a></li>
-                <li class="nav-item"><a class="nav-link" href="index.php?route=showcase" target="_blank"><i class="fa-regular fa-eye"></i> Xem phòng khách</a></li>
+                <li class="nav-item"><a class="nav-link" href="index.php?route=invoices"><i class="fa-solid fa-file-invoice-dollar"></i> Hóa đơn</a></li>
+                <li class="nav-item"><a class="nav-link" href="index.php?route=showcase" target="_blank"><i class="fa-regular fa-eye"></i> Xem phòng</a></li>
             </ul>
             </div>
         </div>
@@ -1122,8 +1113,7 @@ try {
                     Quản lý Chỉ số Điện Nước -
                     <span class="bld-highlight">
                         <?= $selectedPeriod === 'all' ? 'Tất cả các Kỳ' : 'Kỳ ' . htmlspecialchars($selectedPeriod) ?>
-                        <span class="title-sparkle ts-1"></span>
-                        <span class="title-sparkle ts-2"></span>
+                        
                     </span>
                 </div>
                 <div class="bld-address-txt">
@@ -1149,7 +1139,7 @@ try {
                 </button>
             </div>
 
-            <div class="header-house-graphic d-none d-lg-block"></div>
+            
         </div>
 
         <!-- THÔNG BÁO FLASH / CRUD -->
@@ -1207,149 +1197,153 @@ try {
                         <input type="hidden" name="action" value="add">
                         <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($_SESSION['csrf_token']) ?>">
 
-                        <div class="table-responsive rounded-4 border bg-white shadow-sm p-3 mb-3">
-                            <table class="table table-borderless table-quick-calc align-middle mb-0" id="quickCalcTable">
-                                <thead>
-                                    <tr style="border-bottom: 2px solid #e2e8f0;">
-                                        <th style="min-width: 190px;">1. Phòng Trọ</th>
-                                        <th style="min-width: 110px;">2. Kỳ Chốt</th>
-                                        <th style="min-width: 200px;">3. Nhập Số Điện (kWh)</th>
-                                        <th style="min-width: 200px;">4. Nhập Số Nước (m³)</th>
-                                        <th style="min-width: 130px;" class="text-center">5. Thao Tác</th>
-                                        <th style="min-width: 230px;">6. Số Tiền Tương Ứng</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <tr>
-                                        <!-- Cột 1: Phòng Trọ -->
-                                        <td>
-                                            <select class="form-select filter-control fw-bold" id="sc_room_id" name="room_id" required onchange="onSingleCalcRoomChange()">
-                                                <option value="">-- Chọn phòng --</option>
-                                                <?php foreach ($allRooms as $r): ?>
-                                                    <option value="<?= (int)$r['id'] ?>"
-                                                            data-room-number="<?= htmlspecialchars($r['room_number']) ?>"
-                                                            data-room-price="<?= (float)$r['price'] ?>"
-                                                            data-tenant="<?= htmlspecialchars($r['tenant_name'] ?? 'Chưa có khách') ?>"
-                                                            data-last-elec="<?= (int)($r['last_electric'] ?? 0) ?>"
-                                                            data-last-water="<?= (int)($r['last_water'] ?? 0) ?>"
-                                                            data-last-period="<?= htmlspecialchars($r['last_period'] ?? '') ?>">
-                                                        Phòng <?= htmlspecialchars($r['room_number']) ?> (<?= htmlspecialchars($r['tenant_name'] ?? ($r['status'] === 'rented' ? 'Đang thuê' : 'Trống')) ?>)
-                                                    </option>
-                                                <?php endforeach; ?>
-                                            </select>
-                                            <div id="sc_room_info" class="small fw-semibold text-muted mt-1" style="font-size: 0.75rem;">
-                                                <i class="fa-solid fa-circle-info me-1"></i> Chọn phòng để lấy số cũ
-                                            </div>
-                                        </td>
-
-                                        <!-- Cột 2: Kỳ chốt -->
-                                        <td>
-                                            <input type="text" class="form-control filter-control fw-bold text-center" 
-                                                   id="sc_month_year" name="month_year" 
-                                                   value="<?= htmlspecialchars($activeCheckPeriod) ?>" required>
-                                            <div class="text-muted text-center mt-1" style="font-size: 0.72rem;">MM-YYYY</div>
-                                        </td>
-
-                                        <!-- Cột 3: Điện Cũ & Mới -->
-                                        <td>
-                                            <div class="d-flex align-items-center gap-1">
-                                                <div class="flex-fill">
-                                                    <label class="form-label text-muted mb-0 fw-bold" style="font-size: 0.7rem;">Số cũ</label>
-                                                    <input type="number" class="form-control form-control-sm text-center fw-bold bg-light" 
-                                                           id="sc_elec_old" name="electric_old" value="0" min="0" required oninput="resetCalculatedPreview()">
-                                                </div>
-                                                <i class="fa-solid fa-arrow-right text-warning small mt-3"></i>
-                                                <div class="flex-fill">
-                                                    <label class="form-label text-dark mb-0 fw-bold" style="font-size: 0.7rem;">Số mới *</label>
-                                                    <input type="number" class="form-control form-control-sm text-center fw-black border-warning border-2" 
-                                                           id="sc_elec_new" name="electric_new" placeholder="Nhập số..." min="0" required oninput="resetCalculatedPreview()">
-                                                </div>
-                                            </div>
-                                            <div class="d-flex justify-content-between mt-1 text-muted" style="font-size: 0.75rem; font-weight: 700;">
-                                                <span id="sc_elec_used_text">Tiêu thụ: -- kWh</span>
-                                            </div>
-                                        </td>
-
-                                        <!-- Cột 4: Nước Cũ & Mới -->
-                                        <td>
-                                            <div class="d-flex align-items-center gap-1">
-                                                <div class="flex-fill">
-                                                    <label class="form-label text-muted mb-0 fw-bold" style="font-size: 0.7rem;">Số cũ</label>
-                                                    <input type="number" class="form-control form-control-sm text-center fw-bold bg-light" 
-                                                           id="sc_water_old" name="water_old" value="0" min="0" required oninput="resetCalculatedPreview()">
-                                                </div>
-                                                <i class="fa-solid fa-arrow-right text-info small mt-3"></i>
-                                                <div class="flex-fill">
-                                                    <label class="form-label text-dark mb-0 fw-bold" style="font-size: 0.7rem;">Số mới *</label>
-                                                    <input type="number" class="form-control form-control-sm text-center fw-black border-info border-2" 
-                                                           id="sc_water_new" name="water_new" placeholder="Nhập số..." min="0" required oninput="resetCalculatedPreview()">
-                                                </div>
-                                            </div>
-                                            <div class="d-flex justify-content-between mt-1 text-muted" style="font-size: 0.75rem; font-weight: 700;">
-                                                <span id="sc_water_used_text">Tiêu thụ: -- m³</span>
-                                            </div>
-                                        </td>
-
-                                        <!-- Cột 5: Nút Hoàn tất -->
-                                        <td class="text-center">
-                                            <button type="button" id="btnSingleComplete" class="btn-teal-custom w-100 py-2 fw-bold rounded-pill shadow-sm" style="font-size: 0.88rem;" onclick="onManagerClickComplete()">
-                                                <i class="fa-solid fa-circle-check me-1"></i> Hoàn tất
-                                            </button>
-                                            <div class="text-muted small mt-1" style="font-size: 0.7rem;">Ấn để hiện số tiền</div>
-                                        </td>
-
-                                        <!-- Cột 6: Số tiền tương ứng (Tự động hiện khi ấn Hoàn tất) -->
-                                        <td>
-                                            <div class="calc-result-box text-center" id="sc_calc_box" style="min-height: 78px; display: flex; flex-direction: column; justify-content: center;">
-                                                <div class="text-muted fw-bold" id="sc_calc_status_title" style="font-size: 0.75rem;">
-                                                    <i class="fa-regular fa-clock me-1 text-muted"></i> CHƯA TÍNH TIỀN
-                                                </div>
-                                                <div class="fw-black text-secondary" id="sc_total_money_display" style="font-size: 1.15rem; font-weight: 900;">
-                                                    -- đ
-                                                </div>
-                                                <div class="text-muted" id="sc_calc_breakdown" style="font-size: 0.7rem;">
-                                                    Nhập số điện, nước &amp; ấn "Hoàn tất"
-                                                </div>
-                                            </div>
-                                        </td>
-                                    </tr>
-                                </tbody>
-                            </table>
-                        </div>
-
-                        <!-- Khung thông báo thành công sau khi ấn Hoàn tất -->
-                        <div id="sc_result_alert" class="p-3 rounded-4 mb-3 d-flex flex-wrap justify-content-between align-items-center gap-2" style="background: #ecfdf5; border: 2px solid #308f86; display: none;">
-                            <div class="d-flex align-items-center gap-3">
-                                <div class="rounded-circle d-flex align-items-center justify-content-center" style="width: 40px; height: 40px; background: #308f86; color: white;">
-                                    <i class="fa-solid fa-check fs-5"></i>
-                                </div>
-                                <div>
-                                    <div class="fw-black text-dark" id="sc_result_title" style="font-weight: 900; font-size: 1rem;">
-                                        ĐÃ TỰ ĐỘNG HIỆN SỐ TIỀN TƯƠNG ỨNG!
+                        <div class="p-3 p-md-4 rounded-4 border bg-white shadow-sm mb-3">
+                            <!-- Hàng chọn Phòng trọ & Kỳ chốt -->
+                            <div class="row g-3 align-items-center mb-3 p-3 bg-light rounded-3 border border-light-subtle">
+                                <div class="col-12 col-md-5">
+                                    <label class="form-label fw-bold text-secondary mb-1" style="font-size: 0.8125rem;">
+                                        <i class="fa-solid fa-door-closed me-1 text-teal-main"></i> 1. Chọn phòng trọ:
+                                    </label>
+                                    <select class="form-select fw-semibold" id="sc_room_id" name="room_id" required onchange="onSingleCalcRoomChange()" style="font-size: 0.875rem;">
+                                        <option value="">-- Chọn phòng trọ --</option>
+                                        <?php foreach ($allRooms as $r): ?>
+                                            <option value="<?= (int)$r['id'] ?>"
+                                                    data-room-number="<?= htmlspecialchars($r['room_number']) ?>"
+                                                    data-room-price="<?= (float)$r['price'] ?>"
+                                                    data-tenant="<?= htmlspecialchars($r['tenant_name'] ?? 'Chưa có khách') ?>"
+                                                    data-last-elec="<?= (int)($r['last_electric'] ?? 0) ?>"
+                                                    data-last-water="<?= (int)($r['last_water'] ?? 0) ?>"
+                                                    data-last-period="<?= htmlspecialchars($r['last_period'] ?? '') ?>">
+                                                Phòng <?= htmlspecialchars($r['room_number']) ?> (<?= htmlspecialchars($r['tenant_name'] ?? ($r['status'] === 'rented' ? 'Đang thuê' : 'Trống')) ?>)
+                                            </option>
+                                        <?php endforeach; ?>
+                                    </select>
+                                    <div id="sc_room_info" class="text-muted mt-1" style="font-size: 0.78rem;">
+                                        <i class="fa-solid fa-circle-info me-1"></i> Chọn phòng để lấy số cũ kỳ trước
                                     </div>
-                                    <div class="small fw-bold text-teal-main" id="sc_result_desc">
-                                        Chi tiết thành tiền điện nước đã được tính xong.
+                                </div>
+
+                                <div class="col-12 col-md-3">
+                                    <label class="form-label fw-bold text-secondary mb-1" style="font-size: 0.8125rem;">
+                                        <i class="fa-regular fa-calendar me-1 text-teal-main"></i> 2. Kỳ chốt:
+                                    </label>
+                                    <input type="text" class="form-control text-center fw-bold" 
+                                           id="sc_month_year" name="month_year" 
+                                           value="<?= htmlspecialchars($activeCheckPeriod) ?>" required style="font-size: 0.875rem;">
+                                    <div class="text-muted text-center mt-1" style="font-size: 0.78rem;">Định dạng: MM-YYYY</div>
+                                </div>
+
+                                <div class="col-12 col-md-4 d-flex align-items-center pt-md-3">
+                                    <div class="form-check form-switch">
+                                        <input class="form-check-input" type="checkbox" id="sc_auto_invoice" name="auto_create_invoice" value="1" checked>
+                                        <label class="form-check-label text-dark fw-bold" for="sc_auto_invoice" style="font-size: 0.8125rem;">
+                                            Tự động lập hóa đơn sau khi hoàn tất
+                                        </label>
                                     </div>
                                 </div>
                             </div>
-                            <div class="d-flex align-items-center gap-3">
-                                <div class="form-check form-switch mb-0">
-                                    <input class="form-check-input" type="checkbox" id="sc_auto_invoice" name="auto_create_invoice" value="1" checked>
-                                    <label class="form-check-label fw-bold text-dark small" for="sc_auto_invoice">
-                                        Tự động lập Hóa đơn
-                                    </label>
+
+                            <!-- HÀNG 1: NHẬP SỐ ĐIỆN (1 HÀNG RIÊNG BIỆT) -->
+                            <div class="p-3 mb-2 rounded-3 border bg-white d-flex flex-wrap align-items-center justify-content-between gap-3" style="border-left: 4px solid #f59e0b !important;">
+                                <div class="d-flex align-items-center gap-2" style="min-width: 180px;">
+                                    <span class="badge rounded-circle p-2 bg-warning-subtle text-warning-emphasis">
+                                        <i class="fa-solid fa-bolt fs-6"></i>
+                                    </span>
+                                    <div>
+                                        <div class="fw-bold text-dark" style="font-size: 0.875rem;">Số Điện sinh hoạt</div>
+                                        <div class="text-muted" style="font-size: 0.78rem;">Đơn giá: <?= number_format($elecPrice, 0, ',', '.') ?> đ/kWh</div>
+                                    </div>
                                 </div>
-                                <button type="submit" id="btnSaveToDB" class="btn btn-teal-custom rounded-pill fw-bold px-4 py-2">
-                                    <i class="fa-solid fa-floppy-disk me-1"></i> Lưu Vào Cơ Sở Dữ Liệu
+
+                                <div class="d-flex align-items-center gap-2 flex-grow-1" style="max-width: 440px;">
+                                    <div class="flex-fill">
+                                        <label class="text-muted mb-1" style="font-size: 0.75rem;">Số cũ (kWh)</label>
+                                        <input type="number" class="form-control text-center bg-light fw-bold" id="sc_elec_old" name="electric_old" value="0" min="0" required oninput="resetCalculatedPreview()" style="font-size: 0.875rem;">
+                                    </div>
+                                    <i class="fa-solid fa-arrow-right text-muted mt-3"></i>
+                                    <div class="flex-fill">
+                                        <label class="text-dark fw-bold mb-1" style="font-size: 0.75rem;">Số mới * (kWh)</label>
+                                        <input type="number" class="form-control text-center fw-bold border-warning" id="sc_elec_new" name="electric_new" placeholder="Nhập số..." min="0" required oninput="resetCalculatedPreview()" style="font-size: 0.875rem;">
+                                    </div>
+                                </div>
+
+                                <div class="d-flex align-items-center gap-4 text-end" style="min-width: 220px;">
+                                    <div>
+                                        <div class="text-muted" style="font-size: 0.75rem;">Tiêu thụ</div>
+                                        <div id="sc_elec_used_text" class="fw-bold text-dark" style="font-size: 0.875rem;">-- kWh</div>
+                                    </div>
+                                    <div>
+                                        <div class="text-muted" style="font-size: 0.75rem;">Thành tiền điện</div>
+                                        <div id="sc_elec_money_text" class="fw-bold text-warning-emphasis" style="font-size: 0.875rem;">-- đ</div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- HÀNG 2: NHẬP SỐ NƯỚC (1 HÀNG RIÊNG BIỆT) -->
+                            <div class="p-3 mb-3 rounded-3 border bg-white d-flex flex-wrap align-items-center justify-content-between gap-3" style="border-left: 4px solid #0284c7 !important;">
+                                <div class="d-flex align-items-center gap-2" style="min-width: 180px;">
+                                    <span class="badge rounded-circle p-2 bg-info-subtle text-info-emphasis">
+                                        <i class="fa-solid fa-droplet fs-6"></i>
+                                    </span>
+                                    <div>
+                                        <div class="fw-bold text-dark" style="font-size: 0.875rem;">Số Nước sinh hoạt</div>
+                                        <div class="text-muted" style="font-size: 0.78rem;">Đơn giá: <?= number_format($waterPrice, 0, ',', '.') ?> đ/m³</div>
+                                    </div>
+                                </div>
+
+                                <div class="d-flex align-items-center gap-2 flex-grow-1" style="max-width: 440px;">
+                                    <div class="flex-fill">
+                                        <label class="text-muted mb-1" style="font-size: 0.75rem;">Số cũ (m³)</label>
+                                        <input type="number" class="form-control text-center bg-light fw-bold" id="sc_water_old" name="water_old" value="0" min="0" required oninput="resetCalculatedPreview()" style="font-size: 0.875rem;">
+                                    </div>
+                                    <i class="fa-solid fa-arrow-right text-muted mt-3"></i>
+                                    <div class="flex-fill">
+                                        <label class="text-dark fw-bold mb-1" style="font-size: 0.75rem;">Số mới * (m³)</label>
+                                        <input type="number" class="form-control text-center fw-bold border-info" id="sc_water_new" name="water_new" placeholder="Nhập số..." min="0" required oninput="resetCalculatedPreview()" style="font-size: 0.875rem;">
+                                    </div>
+                                </div>
+
+                                <div class="d-flex align-items-center gap-4 text-end" style="min-width: 220px;">
+                                    <div>
+                                        <div class="text-muted" style="font-size: 0.75rem;">Tiêu thụ</div>
+                                        <div id="sc_water_used_text" class="fw-bold text-dark" style="font-size: 0.875rem;">-- m³</div>
+                                    </div>
+                                    <div>
+                                        <div class="text-muted" style="font-size: 0.75rem;">Thành tiền nước</div>
+                                        <div id="sc_water_money_text" class="fw-bold text-info-emphasis" style="font-size: 0.875rem;">-- đ</div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- HÀNG 3: TỔNG TIỀN & THAO TÁC HOÀN TẤT -->
+                            <div class="p-3 rounded-3 bg-light border d-flex flex-wrap align-items-center justify-content-between gap-3">
+                                <div class="d-flex align-items-center gap-3">
+                                    <span class="text-secondary fw-bold" style="font-size: 0.875rem;">Tổng tiền Điện + Nước:</span>
+                                    <span class="fw-bold text-teal-main" id="sc_total_money_display" style="font-size: 1.25rem;">-- đ</span>
+                                    <span class="text-muted" id="sc_calc_breakdown" style="font-size: 0.8125rem;">(Nhập số điện, nước rồi ấn Hoàn tất)</span>
+                                </div>
+                                <div class="d-flex align-items-center gap-2">
+                                    <button type="button" id="btnSingleComplete" class="btn btn-teal-custom px-4 py-2 fw-bold" onclick="onManagerClickComplete()" style="font-size: 0.875rem;">
+                                        <i class="fa-solid fa-circle-check me-1"></i> Hoàn tất tính tiền
+                                    </button>
+                                </div>
+                            </div>
+
+                            <!-- Thông báo lỗi hoặc kết quả -->
+                            <div id="sc_error_alert" class="alert alert-danger mt-3 mb-0 py-2 px-3 fw-bold small" style="display: none;"></div>
+                            <div id="sc_result_alert" class="alert alert-success mt-3 mb-0 py-2 px-3 d-flex flex-wrap justify-content-between align-items-center gap-2 small" style="display: none;">
+                                <div>
+                                    <div class="fw-bold text-success" id="sc_result_title" style="font-size: 0.875rem;"></div>
+                                    <div id="sc_result_desc" class="text-muted" style="font-size: 0.8125rem;"></div>
+                                </div>
+                                <button type="submit" id="btnSaveToDB" class="btn btn-sm btn-success fw-bold px-3 py-1" style="font-size: 0.875rem;">
+                                    <i class="fa-solid fa-floppy-disk me-1"></i> Xác nhận &amp; Lưu
                                 </button>
                             </div>
                         </div>
-
-                        <div id="sc_error_alert" class="alert alert-danger rounded-4 py-2 px-3 small fw-bold mb-3" style="display: none;"></div>
                     </form>
                 </div>
 
-                <!-- TAB 2: BẢNG NHẬP NHANH TẤT CẢ PHÒNG ĐANG THUÊ CHƯA CHỐT -->
                 <div class="tab-pane fade" id="tab-top-multi" role="tabpanel">
                     <?php if (count($unrecordedRooms) === 0): ?>
                         <div class="p-4 text-center rounded-4 border bg-white text-muted">
@@ -1453,59 +1447,53 @@ try {
             </div>
         </div>
 
-        <!-- ================= 3 THẺ OVERVIEW CARDS (ĐIỆN, NƯỚC, TỔNG THU - BỎ TIẾN ĐỘ CHỐT KỲ) ================= -->
-        <div class="row g-4 mb-4 position-relative z-2">
+        <!-- ================= 3 THẺ OVERVIEW CARDS (CÂN ĐỐI, ĐỒNG ĐỀU FONT) ================= -->
+        <div class="row g-3 mb-4 position-relative z-2">
             <!-- Card 1: Tổng Điện tiêu thụ -->
             <div class="col-12 col-md-4">
-                <div class="overview-card card-yellow">
-                    <div class="card-bg-pattern pattern-wave-yellow"></div>
-                    <div class="overview-icon-bg icon-yellow"><i class="fa-solid fa-bolt"></i></div>
-                    <div class="overview-title" style="color: #b45309;">
-                        <i class="fa-solid fa-plug-circle-bolt fs-6"></i> TỔNG ĐIỆN TIÊU THỤ
+                <div class="overview-card" style="border-top: 3px solid #f59e0b;">
+                    <div class="overview-title">
+                        <i class="fa-solid fa-bolt text-warning me-1"></i> TỔNG ĐIỆN TIÊU THỤ
                     </div>
-                    <div class="d-flex align-items-baseline mt-2 position-relative z-2">
-                        <span class="overview-val me-2" style="color: #b45309;"><?= number_format($totalElecKwh, 0, ',', '.') ?></span>
-                        <span class="fw-bold small" style="color: #92400e;">kWh (số)</span>
+                    <div class="d-flex align-items-baseline my-1">
+                        <span class="overview-val me-2"><?= number_format($totalElecKwh, 0, ',', '.') ?></span>
+                        <span class="fw-semibold text-muted small">kWh (số)</span>
                     </div>
-                    <div class="mt-3 position-relative z-2" style="font-size: 0.82rem; font-weight: 800; color: #b45309;">
-                        <i class="fa-solid fa-coins me-1"></i> Thành tiền: <span class="text-dark"><?= number_format($totalElecMoney, 0, ',', '.') ?> đ</span>
+                    <div class="text-muted" style="font-size: 0.8125rem;">
+                        Thành tiền: <strong class="text-dark"><?= number_format($totalElecMoney, 0, ',', '.') ?> đ</strong>
                     </div>
                 </div>
             </div>
 
             <!-- Card 2: Tổng Nước tiêu thụ -->
             <div class="col-12 col-md-4">
-                <div class="overview-card card-blue">
-                    <div class="card-bg-pattern pattern-wave"></div>
-                    <div class="overview-icon-bg icon-blue"><i class="fa-solid fa-droplet"></i></div>
-                    <div class="overview-title text-primary">
-                        <i class="fa-solid fa-faucet-drip fs-6"></i> TỔNG NƯỚC TIÊU THỤ
+                <div class="overview-card" style="border-top: 3px solid #0284c7;">
+                    <div class="overview-title">
+                        <i class="fa-solid fa-droplet text-info me-1"></i> TỔNG NƯỚC TIÊU THỤ
                     </div>
-                    <div class="d-flex align-items-baseline mt-2 position-relative z-2">
-                        <span class="overview-val text-dark me-2"><?= number_format($totalWaterM3, 0, ',', '.') ?></span>
-                        <span class="fw-bold text-primary small">Khối (m³)</span>
+                    <div class="d-flex align-items-baseline my-1">
+                        <span class="overview-val me-2"><?= number_format($totalWaterM3, 0, ',', '.') ?></span>
+                        <span class="fw-semibold text-muted small">Khối (m³)</span>
                     </div>
-                    <div class="mt-3 text-primary position-relative z-2" style="font-size: 0.82rem; font-weight: 800;">
-                        <i class="fa-solid fa-coins me-1"></i> Thành tiền: <span class="text-dark"><?= number_format($totalWaterMoney, 0, ',', '.') ?> đ</span>
+                    <div class="text-muted" style="font-size: 0.8125rem;">
+                        Thành tiền: <strong class="text-dark"><?= number_format($totalWaterMoney, 0, ',', '.') ?> đ</strong>
                     </div>
                 </div>
             </div>
 
-            <!-- Card 3: Tổng tiền Điện Nước & Hóa đơn -->
+            <!-- Card 3: Tổng tiền Điện Nước -->
             <div class="col-12 col-md-4">
-                <div class="overview-card card-purple">
-                    <div class="card-bg-pattern pattern-people"></div>
-                    <div class="overview-icon-bg icon-purple"><i class="fa-solid fa-sack-dollar"></i></div>
-                    <div class="overview-title" style="color: #7e22ce;">
-                        <i class="fa-solid fa-calculator fs-6"></i> TỔNG THU ĐIỆN NƯỚC
+                <div class="overview-card" style="border-top: 3px solid #308f86;">
+                    <div class="overview-title">
+                        <i class="fa-solid fa-coins text-teal-main me-1"></i> TỔNG THU ĐIỆN NƯỚC
                     </div>
-                    <div class="overview-val text-dark mt-2 position-relative z-2" style="font-size: 1.85rem;">
-                        <?= number_format($totalUtilityMoney, 0, ',', '.') ?> đ
+                    <div class="my-1">
+                        <span class="overview-val text-teal-main"><?= number_format($totalUtilityMoney, 0, ',', '.') ?> đ</span>
                     </div>
-                    <div class="mt-3 position-relative z-2 d-flex justify-content-between" style="font-size: 0.8rem; font-weight: 800; color: #7e22ce;">
-                        <span><i class="fa-solid fa-file-invoice me-1"></i> Đã lập: <?= $invoicesCreatedCount ?> HĐ</span>
+                    <div class="d-flex justify-content-between text-muted" style="font-size: 0.8125rem;">
+                        <span>Đã lập: <strong class="text-dark"><?= $invoicesCreatedCount ?></strong> HĐ</span>
                         <?php if ($invoicesPendingCount > 0): ?>
-                            <span class="text-danger">Chờ lập: <?= $invoicesPendingCount ?></span>
+                            <span class="text-danger fw-semibold">Chờ lập: <?= $invoicesPendingCount ?> HĐ</span>
                         <?php endif; ?>
                     </div>
                 </div>
@@ -1691,8 +1679,7 @@ try {
                                     </div>
                                 </td>
 
-                                <td>
-                                    <span class="badge-period-pill">
+                                <td class="col-period" style="white-space: nowrap;"><span class="badge-period-pill">
                                         <i class="fa-regular fa-calendar me-1 text-teal-main"></i><?= htmlspecialchars($row['month_year']) ?>
                                     </span>
                                 </td>
@@ -2284,6 +2271,25 @@ try {
             }
 
             const wUsedEl = document.getElementById('sc_water_used_text');
+            const eMoneyEl = document.getElementById('sc_elec_money_text');
+            const wMoneyEl = document.getElementById('sc_water_money_text');
+
+            if (eMoneyEl) {
+                if (eNewRaw !== '') {
+                    const eUsed = Math.max(0, parseInt(eNewRaw, 10) - eOld);
+                    eMoneyEl.textContent = formatVND(eUsed * ELEC_PRICE);
+                } else {
+                    eMoneyEl.textContent = '-- đ';
+                }
+            }
+            if (wMoneyEl) {
+                if (wNewRaw !== '') {
+                    const wUsed = Math.max(0, parseInt(wNewRaw, 10) - wOld);
+                    wMoneyEl.textContent = formatVND(wUsed * WATER_PRICE);
+                } else {
+                    wMoneyEl.textContent = '-- đ';
+                }
+            }
             if (wUsedEl) {
                 if (wNewRaw !== '') {
                     const wUsed = Math.max(0, parseInt(wNewRaw, 10) - wOld);
@@ -2707,8 +2713,7 @@ try {
                                     </div>
                                 </div>
                             </td>
-                            <td>
-                                <span class="badge-period-pill"><i class="fa-regular fa-calendar me-1 text-teal-main"></i><span class="period-cell"></span></span>
+                            <td class="col-period" style="white-space: nowrap;"><span class="badge-period-pill"><i class="fa-regular fa-calendar me-1 text-teal-main"></i><span class="period-cell"></span></span>
                             </td>
                             <td>
                                 <div class="d-flex flex-column gap-1">
