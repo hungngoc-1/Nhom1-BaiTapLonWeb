@@ -26,6 +26,7 @@ require_once __DIR__ . '/app/Controllers/ContractController.php';
 require_once __DIR__ . '/app/Controllers/UtilitiesController.php';
 require_once __DIR__ . '/app/Controllers/InvoiceController.php';
 require_once __DIR__ . '/app/Controllers/AccountController.php';
+require_once __DIR__ . '/app/Controllers/TenantPortalController.php';
 
 // ==========================================
 // 2. BỘ ĐIỀU HƯỚNG CÁC TRANG (ROUTER)
@@ -38,6 +39,10 @@ switch ($route) {
         break;
 
     case 'dashboard':
+        if (isset($_SESSION['role']) && $_SESSION['role'] === 'tenant') {
+            header("Location: index.php?route=tenant/portal");
+            exit;
+        }
         $dashboardController = new DashboardController();
         $dashboardController->index();
         break;
@@ -120,6 +125,25 @@ switch ($route) {
     case 'contracts/delete': // Xử lý khi bấm nút Xóa (POST)
         $contractController = new ContractController();
         $contractController->delete();
+        break;
+
+    // --- CỔNG THÔNG TIN KHÁCH THUÊ (TENANT PORTAL) ---
+    case 'tenant':
+    case 'tenant/portal':
+    case 'tenant/dashboard':
+        (new TenantPortalController())->index();
+        break;
+
+    case 'tenant/request':
+        (new TenantPortalController())->submitRequest();
+        break;
+
+    case 'tenant/contract-pdf':
+        (new TenantPortalController())->contractPdf();
+        break;
+
+    case 'tenant/invoice-detail':
+        (new TenantPortalController())->invoiceDetail();
         break;
 
     case 'tenant/contract': // Xem hợp đồng dành cho phân quyền khách thuê

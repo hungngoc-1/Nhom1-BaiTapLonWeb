@@ -151,6 +151,7 @@ $adminName = $_SESSION['full_name'] ?? 'Quản trị viên Hệ thống';
                 <li class="nav-item"><a class="nav-link" href="index.php?route=contracts"><i class="fa-solid fa-file-signature"></i> Hợp đồng</a></li>
                 <li class="nav-item"><a class="nav-link" href="index.php?route=utilities"><i class="fa-solid fa-bolt"></i> Điện Nước</a></li>
                 <li class="nav-item"><a class="nav-link" href="index.php?route=showcase" target="_blank"><i class="fa-regular fa-eye"></i> Xem phòng khách</a></li>
+                <li class="nav-item"><a class="nav-link" href="index.php?route=tenant/portal" target="_blank"><i class="fa-solid fa-user-shield text-teal-main"></i> Cổng khách thuê</a></li>
             </ul>
             </div>
         </div>
@@ -184,6 +185,20 @@ $adminName = $_SESSION['full_name'] ?? 'Quản trị viên Hệ thống';
             </div>
 
             <div class="d-flex flex-wrap gap-2 position-relative z-2">
+                <a href="index.php?route=tenant/portal" target="_blank" class="btn-pill-white">
+                    <i class="fa-solid fa-user-shield text-teal-main"></i> Cổng Khách Thuê
+                </a>
+                <button type="button" class="btn-pill-white position-relative" data-bs-toggle="modal" data-bs-target="#requestsModal">
+                    <i class="fa-solid fa-bell text-warning"></i> Yêu cầu khách gửi
+                    <?php 
+                    $pendingReqCount = 0;
+                    if (!empty($tenantRequests)) {
+                        foreach ($tenantRequests as $rq) if (($rq['status'] ?? '') === 'pending') $pendingReqCount++;
+                    }
+                    if ($pendingReqCount > 0): ?>
+                        <span class="badge rounded-pill bg-danger ms-1"><?= $pendingReqCount ?></span>
+                    <?php endif; ?>
+                </button>
                 <a href="index.php?route=contracts" class="btn-pill-white">
                     <i class="fa-solid fa-file-signature text-teal-main"></i> Quản lý Hợp đồng
                 </a>
@@ -480,6 +495,112 @@ $adminName = $_SESSION['full_name'] ?? 'Quản trị viên Hệ thống';
                 <div class="modal-footer bg-light">
                     <button type="button" class="btn btn-outline-secondary rounded-pill px-4" data-bs-dismiss="modal">Đóng</button>
                     <a href="index.php?route=auth/logout" class="btn btn-danger rounded-pill px-4"><i class="fa-solid fa-right-from-bracket me-1"></i> Đăng xuất</a>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- MODAL DUYET YEU CAU DIEU CHINH THONG TIN TU KHÁCH THUÊ -->
+    <div class="modal fade" id="requestsModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-xl">
+            <div class="modal-content border-0 shadow-lg rounded-4">
+                <div class="modal-header bg-teal-main text-white rounded-top-4 p-3 px-4" style="background:#308f86;">
+                    <h5 class="modal-title fw-bold">
+                        <i class="fa-solid fa-bell me-2"></i> Yêu Cầu Điều Chỉnh Thông Tin Từ Khách Thuê
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body p-4">
+                    <p class="text-muted small mb-3">
+                        Danh sách các yêu cầu thay đổi thông tin cá nhân do khách thuê gửi lên từ <strong>Cổng Khách Thuê</strong>. Quản lý có thể phê duyệt (hệ thống tự động cập nhật vào CSDL) hoặc từ chối kèm lý do.
+                    </p>
+
+                    <?php if (empty($tenantRequests)): ?>
+                        <div class="text-center py-4 bg-light rounded-4 border">
+                            <i class="fa-solid fa-circle-check fs-2 text-success mb-2"></i>
+                            <div class="fw-bold text-dark">Hiện chưa có yêu cầu nào từ khách thuê</div>
+                            <div class="text-muted small">Mọi yêu cầu gửi từ cổng khách thuê sẽ xuất hiện tại đây.</div>
+                        </div>
+                    <?php else: ?>
+                        <div class="table-responsive">
+                            <table class="table table-bordered table-hover align-middle mb-0" style="font-size: 0.88rem;">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>Thời gian</th>
+                                        <th>Khách thuê</th>
+                                        <th>Mục yêu cầu sửa</th>
+                                        <th>Nội dung mới đề xuất</th>
+                                        <th>Lý do từ khách</th>
+                                        <th>Trạng thái</th>
+                                        <th class="text-center" style="width: 180px;">Xử lý</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <?php foreach ($tenantRequests as $trq): ?>
+                                        <tr>
+                                            <td class="small text-muted"><?= date('d/m/Y H:i', strtotime($trq['created_at'])) ?></td>
+                                            <td>
+                                                <div class="fw-bold text-dark"><?= h($trq['tenant_name']) ?></div>
+                                                <div class="text-muted small"><?= h($trq['tenant_phone']) ?> (<?= h($trq['username']) ?>)</div>
+                                            </td>
+                                            <td class="fw-bold text-primary">
+                                                <?php
+                                                $mapF = [
+                                                    'phone'     => 'Số điện thoại',
+                                                    'email'     => 'Địa chỉ Email',
+                                                    'full_name' => 'Họ và tên',
+                                                    'id_card'   => 'CCCD / Định danh',
+                                                    'co_tenant' => 'Người ở cùng',
+                                                    'other'     => 'Yêu cầu khác'
+                                                ];
+                                                echo h($mapF[$trq['field_target']] ?? $trq['field_target']);
+                                                ?>
+                                            </td>
+                                            <td class="fw-bold text-success" style="word-break: break-all;">
+                                                <?= h($trq['new_value']) ?>
+                                            </td>
+                                            <td class="small text-muted"><?= h($trq['reason'] ?? '---') ?></td>
+                                            <td>
+                                                <?php if ($trq['status'] === 'approved'): ?>
+                                                    <span class="badge bg-success rounded-pill px-2 py-1">Đã duyệt</span>
+                                                <?php elseif ($trq['status'] === 'rejected'): ?>
+                                                    <span class="badge bg-danger rounded-pill px-2 py-1">Từ chối</span>
+                                                <?php else: ?>
+                                                    <span class="badge bg-warning text-dark rounded-pill px-2 py-1">Chờ duyệt</span>
+                                                <?php endif; ?>
+                                            </td>
+                                            <td class="text-center">
+                                                <?php if ($trq['status'] === 'pending'): ?>
+                                                    <div class="d-flex justify-content-center gap-1">
+                                                        <form method="POST" action="index.php?route=tenants" onsubmit="return confirm('Bạn có chắc chắn muốn DUYỆT và cập nhật thông tin này cho khách thuê?');">
+                                                            <input type="hidden" name="csrf_token" value="<?= h($csrf) ?>">
+                                                            <input type="hidden" name="action" value="approve_request">
+                                                            <input type="hidden" name="request_id" value="<?= (int)$trq['id'] ?>">
+                                                            <button type="submit" class="btn btn-sm btn-success rounded-pill px-3 fw-bold">
+                                                                <i class="fa-solid fa-check"></i> Duyệt
+                                                            </button>
+                                                        </form>
+                                                        <form method="POST" action="index.php?route=tenants" onsubmit="return confirm('Từ chối yêu cầu này?');">
+                                                            <input type="hidden" name="csrf_token" value="<?= h($csrf) ?>">
+                                                            <input type="hidden" name="action" value="reject_request">
+                                                            <input type="hidden" name="request_id" value="<?= (int)$trq['id'] ?>">
+                                                            <button type="submit" class="btn btn-sm btn-outline-danger rounded-pill px-2 fw-bold" title="Từ chối">
+                                                                <i class="fa-solid fa-xmark"></i>
+                                                            </button>
+                                                        </form>
+                                                    </div>
+                                                <?php else: ?>
+                                                    <span class="small text-muted"><?= h($trq['manager_note'] ?? 'Hoàn tất') ?></span>
+                                                <?php endif; ?>
+                                            </td>
+                                        </tr>
+                                    <?php endforeach; ?>
+                                </tbody>
+                            </table>
+                        </div>
+                    <?php endif; ?>
+                </div>
+                <div class="modal-footer bg-light">
+                    <button type="button" class="btn btn-secondary rounded-pill px-4 fw-bold" data-bs-dismiss="modal">Đóng</button>
                 </div>
             </div>
         </div>
