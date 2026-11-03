@@ -9,6 +9,17 @@ class TenantModel {
     }
 
     public function getTenantStats(): array {
+        require_once __DIR__ . '/ReportModel.php';
+        $mgr = ReportModel::getManagerBuildingInfo();
+        if ($mgr) {
+            $stTotal = $this->conn->prepare("SELECT COUNT(DISTINCT u.id) FROM users u JOIN contracts c ON c.tenant_id = u.id JOIN rooms r ON r.id = c.room_id WHERE u.role = 'tenant' AND (r.building_id = :bId OR r.room_number LIKE :pfx)");
+            $stTotal->execute([':bId' => $mgr['id'], ':pfx' => $mgr['prefix'] . '%']);
+            $staying = (int)$stTotal->fetchColumn();
+            $stDebt = $this->conn->prepare("SELECT COUNT(DISTINCT c.tenant_id) FROM invoices i JOIN contracts c ON c.id = i.contract_id JOIN rooms r ON r.id = c.room_id WHERE i.status = 'unpaid' AND (r.building_id = :bId OR r.room_number LIKE :pfx)");
+            $stDebt->execute([':bId' => $mgr['id'], ':pfx' => $mgr['prefix'] . '%']);
+            $debtTenants = (int)$stDebt->fetchColumn();
+            return ['total' => $staying, 'staying' => $staying, 'unassigned' => 0, 'debt_tenants' => $debtTenants];
+        }
         $total = (int)$this->conn->query("SELECT COUNT(*) FROM users WHERE role = 'tenant'")->fetchColumn();
         $staying = (int)$this->conn->query("
             SELECT COUNT(DISTINCT u.id)
@@ -51,6 +62,13 @@ class TenantModel {
                 WHERE u.role = 'tenant'";
 
         $params = [];
+        require_once __DIR__ . '/ReportModel.php';
+        $mgr = ReportModel::getManagerBuildingInfo();
+        if ($mgr) {
+            $sql .= " AND (r.building_id = :mgrBId OR r.room_number LIKE :mgrPfx)";
+            $params[':mgrBId'] = $mgr['id'];
+            $params[':mgrPfx'] = $mgr['prefix'] . '%';
+        }
         if ($keyword !== '') {
             $sql .= " AND (u.full_name LIKE :kw1 OR u.phone LIKE :kw2 OR u.email LIKE :kw3 OR u.username LIKE :kw4 OR r.room_number LIKE :kw5)";
             $kw = "%$keyword%";

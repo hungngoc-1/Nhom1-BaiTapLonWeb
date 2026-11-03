@@ -177,6 +177,13 @@ class ContractModel {
                 WHERE 1=1";
 
         $params = [];
+        require_once __DIR__ . '/ReportModel.php';
+        $mgr = ReportModel::getManagerBuildingInfo();
+        if ($mgr) {
+            $sql .= " AND (r.building_id = :mgrBId OR r.room_number LIKE :mgrPfx)";
+            $params[':mgrBId'] = $mgr['id'];
+            $params[':mgrPfx'] = $mgr['prefix'] . '%';
+        }
         if ($keyword !== '') {
             $sql .= " AND (c.contract_code LIKE :kw1 OR r.room_number LIKE :kw2 OR u.full_name LIKE :kw3 OR u.phone LIKE :kw4)";
             $params[':kw1'] = $params[':kw2'] = $params[':kw3'] = $params[':kw4'] = "%$keyword%";

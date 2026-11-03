@@ -95,6 +95,13 @@ class InvoiceModel {
             LEFT JOIN utilities_readings ur ON ur.room_id = i.room_id AND ur.month_year = i.month_year
             WHERE 1=1";
         $p = [];
+        require_once __DIR__ . '/ReportModel.php';
+        $mgr = ReportModel::getManagerBuildingInfo();
+        if ($mgr) {
+            $sql .= " AND (r.building_id = ? OR r.room_number LIKE ?)";
+            $p[] = $mgr['id'];
+            $p[] = $mgr['prefix'] . '%';
+        }
         if (!empty($f['period']) && $f['period'] !== 'all') { $sql .= " AND i.month_year = ?"; $p[] = $f['period']; }
         if (!empty($f['room_id'])) { $sql .= " AND i.room_id = ?"; $p[] = (int)$f['room_id']; }
         if (($f['status'] ?? '') === 'paid') { $sql .= " AND i.status = 'paid'"; }
@@ -246,6 +253,13 @@ class InvoiceModel {
             LEFT JOIN invoices i ON i.room_id = ur.room_id AND i.month_year = ur.month_year
             WHERE i.id IS NULL";
         $p = [];
+        require_once __DIR__ . '/ReportModel.php';
+        $mgr = ReportModel::getManagerBuildingInfo();
+        if ($mgr) {
+            $sql .= " AND (r.building_id = ? OR r.room_number LIKE ?)";
+            $p[] = $mgr['id'];
+            $p[] = $mgr['prefix'] . '%';
+        }
         if ($period && $period !== 'all') { $sql .= " AND ur.month_year = ?"; $p[] = $period; }
         $sql .= " ORDER BY SUBSTRING(ur.month_year, 4, 4) DESC, SUBSTRING(ur.month_year, 1, 2) DESC, r.room_number";
         $st = $this->db->prepare($sql);
