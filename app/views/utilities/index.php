@@ -553,6 +553,95 @@ try {
         .nav-pills .nav-link:hover { color: var(--teal-main); background: #f0fdfa; }
         .nav-pills .nav-link.active { background-color: var(--teal-main); color: white; box-shadow: 0 6px 15px rgba(48, 143, 134, 0.35); }
 
+        /* Nút 3 gạch (Hamburger) trên điện thoại */
+        .btn-hamburger {
+            width: 44px; height: 44px;
+            border-radius: 14px;
+            background: #f0fdfa;
+            border: 2px solid #99f6e4;
+            color: var(--teal-main);
+            display: inline-flex; align-items: center; justify-content: center;
+            font-size: 1.25rem;
+            transition: all 0.2s;
+        }
+        .btn-hamburger:hover, .btn-hamburger:focus {
+            background: var(--teal-main);
+            color: #ffffff;
+            outline: none;
+        }
+        @media (max-width: 991.98px) {
+            .mobile-nav-collapse {
+                background: #ffffff;
+                border-radius: 22px;
+                padding: 14px;
+                margin-top: 12px;
+                border: 2px solid #ccfbf1;
+                box-shadow: 0 12px 30px rgba(0,0,0,0.08);
+            }
+            .mobile-nav-collapse .nav-pills {
+                flex-direction: column;
+                gap: 6px;
+            }
+            .mobile-nav-collapse .nav-link {
+                border-radius: 16px;
+                padding: 11px 16px;
+            }
+        }
+
+        /* Dropdown chọn Kỳ đang xem gọn gàng */
+        .period-dropdown-btn {
+            background: #ffffff;
+            border: 2.5px solid #99f6e4;
+            border-radius: 50px;
+            padding: 8px 18px;
+            font-weight: 800;
+            font-size: 0.88rem;
+            color: #0f172a;
+            box-shadow: 0 6px 18px rgba(48, 143, 134, 0.12);
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            transition: all 0.2s;
+        }
+        .period-dropdown-btn:hover, .period-dropdown-btn:focus {
+            border-color: var(--teal-main);
+            background: #f0fdfa;
+        }
+        .period-dropdown-badge {
+            background: var(--teal-main);
+            color: #ffffff;
+            padding: 4px 12px;
+            border-radius: 50px;
+            font-weight: 900;
+            font-size: 0.82rem;
+        }
+        .period-dropdown-menu {
+            border-radius: 22px;
+            border: 2px solid #ccfbf1;
+            padding: 8px;
+            min-width: 220px;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.12);
+        }
+        .period-dropdown-menu .dropdown-item {
+            border-radius: 14px;
+            font-weight: 800;
+            font-size: 0.86rem;
+            padding: 9px 14px;
+            color: #334155;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 2px;
+        }
+        .period-dropdown-menu .dropdown-item:hover {
+            background: #f0fdfa;
+            color: var(--teal-main);
+        }
+        .period-dropdown-menu .dropdown-item.active {
+            background: var(--teal-main);
+            color: #ffffff;
+        }
+
         .avatar-circle {
             width: 46px; height: 46px;
             background-color: var(--teal-main);
@@ -907,10 +996,10 @@ try {
 </head>
 <body>
 
-    <!-- ================= NAVBAR CHUẨN STAYMATE ================= -->
+    <!-- ================= NAVBAR CHUẨN STAYMATE (CÓ MENU 3 GẠCH TRÊN ĐIỆN THOẠI) ================= -->
     <nav class="navbar navbar-expand-lg navbar-custom sticky-top">
-        <div class="container-fluid px-4 px-xl-5 d-flex justify-content-between align-items-center">
-            <a class="brand-logo me-4" href="index.php?route=dashboard">
+        <div class="container-fluid px-3 px-xl-5">
+            <a class="brand-logo me-3" href="index.php?route=dashboard">
                 <i class="fa-solid fa-house-chimney text-teal-main"></i>
                 <div>
                     <div class="brand-text">StayMate</div>
@@ -918,17 +1007,8 @@ try {
                 </div>
             </a>
 
-            <ul class="nav nav-pills me-auto d-none d-lg-flex">
-                <li class="nav-item"><a class="nav-link" href="index.php?route=dashboard"><i class="fa-solid fa-city"></i> Tòa nhà</a></li>
-                <li class="nav-item"><a class="nav-link" href="index.php?route=overview"><i class="fa-solid fa-border-all"></i> Tổng quan</a></li>
-                <li class="nav-item"><a class="nav-link" href="index.php?route=rooms"><i class="fa-solid fa-bed"></i> Phòng trọ</a></li>
-                <li class="nav-item"><a class="nav-link" href="index.php?route=contracts"><i class="fa-solid fa-file-signature"></i> Hợp đồng</a></li>
-                <li class="nav-item"><a class="nav-link active" href="index.php?route=utilities"><i class="fa-solid fa-bolt"></i> Điện Nước</a></li>
-                <li class="nav-item"><a class="nav-link" href="index.php?route=invoices"><i class="fa-solid fa-file-invoice-dollar"></i> Hóa đơn</a></li>
-                <li class="nav-item"><a class="nav-link" href="TrangXemPhong/" target="_blank"><i class="fa-solid fa-eye"></i> Xem phòng</a></li>
-            </ul>
-
-            <div class="d-flex align-items-center gap-4">
+            <!-- Nhóm Chuông + Avatar + Nút 3 gạch khi ở màn hình điện thoại -->
+            <div class="d-flex align-items-center gap-3 order-lg-3">
                 <div class="position-relative" style="color: #64748b; cursor: pointer;" title="Phòng chưa chốt kỳ <?= htmlspecialchars($activeCheckPeriod) ?>">
                     <i class="fa-solid fa-bell fs-4"></i>
                     <?php if (count($unrecordedRooms) > 0): ?>
@@ -949,6 +1029,24 @@ try {
                         <li><a class="dropdown-item text-danger fw-bold" href="index.php?route=auth/logout"><i class="fa-solid fa-right-from-bracket me-2"></i> Đăng xuất</a></li>
                     </ul>
                 </div>
+
+                <!-- Nút 3 gạch (Hamburger) chỉ hiện trên điện thoại / màn hình nhỏ -->
+                <button class="btn-hamburger d-lg-none" type="button" data-bs-toggle="collapse" data-bs-target="#staymateMobileNav" aria-controls="staymateMobileNav" aria-expanded="false" aria-label="Mở danh mục menu">
+                    <i class="fa-solid fa-bars"></i>
+                </button>
+            </div>
+
+            <!-- Danh mục Menu (Ngang trên máy tính, Xổ dọc trên điện thoại) -->
+            <div class="collapse navbar-collapse mobile-nav-collapse order-lg-2" id="staymateMobileNav">
+                <ul class="nav nav-pills me-auto">
+                    <li class="nav-item"><a class="nav-link" href="index.php?route=dashboard"><i class="fa-solid fa-city"></i> Tòa nhà</a></li>
+                    <li class="nav-item"><a class="nav-link" href="index.php?route=overview"><i class="fa-solid fa-border-all"></i> Tổng quan</a></li>
+                    <li class="nav-item"><a class="nav-link" href="index.php?route=rooms"><i class="fa-solid fa-bed"></i> Phòng trọ</a></li>
+                    <li class="nav-item"><a class="nav-link" href="index.php?route=contracts"><i class="fa-solid fa-file-signature"></i> Hợp đồng</a></li>
+                    <li class="nav-item"><a class="nav-link active" href="index.php?route=utilities"><i class="fa-solid fa-bolt"></i> Điện Nước</a></li>
+                    <li class="nav-item"><a class="nav-link" href="index.php?route=invoices"><i class="fa-solid fa-file-invoice-dollar"></i> Hóa đơn</a></li>
+                    <li class="nav-item"><a class="nav-link" href="TrangXemPhong/" target="_blank"><i class="fa-solid fa-eye"></i> Xem phòng</a></li>
+                </ul>
             </div>
         </div>
     </nav>
@@ -956,24 +1054,33 @@ try {
     <!-- ================= MAIN CONTAINER ================= -->
     <div class="container-fluid px-4 px-xl-5 py-4 position-relative">
 
-        <div class="d-flex flex-wrap justify-content-between align-items-center mb-2 no-print">
-            <a href="index.php?route=overview" class="btn-back-content mb-2">
-                <i class="fa-solid fa-arrow-left me-2"></i> Quay lại Tổng quan
-            </a>
-
-            <!-- Chọn nhanh Kỳ chốt để xem thống kê -->
-            <div class="d-flex flex-wrap align-items-center gap-2 mb-2">
-                <span class="fw-bold text-muted small"><i class="fa-regular fa-calendar-check me-1 text-teal-main"></i> Kỳ đang xem:</span>
-                <?php foreach (array_slice($availablePeriods, 0, 5) as $per): ?>
-                    <a href="index.php?route=utilities&period=<?= urlencode($per) ?>" 
-                       class="btn btn-sm rounded-pill fw-bold px-3 <?= ($selectedPeriod === $per) ? 'btn-teal-custom py-1 px-3' : 'btn-pill-white py-1 px-3' ?>">
-                        Kỳ <?= htmlspecialchars($per) ?>
-                    </a>
-                <?php endforeach; ?>
-                <a href="index.php?route=utilities&period=all" 
-                   class="btn btn-sm rounded-pill fw-bold px-3 <?= ($selectedPeriod === 'all') ? 'btn-teal-custom py-1 px-3' : 'btn-pill-white py-1 px-3' ?>">
-                    Tất cả các kỳ
-                </a>
+        <div class="d-flex flex-wrap justify-content-end align-items-center mb-2 no-print">
+            <!-- Danh mục chọn Kỳ đang xem (Thu gọn thành Dropdown bấm vào mới xổ ra) -->
+            <div class="dropdown">
+                <button class="period-dropdown-btn" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                    <span><i class="fa-regular fa-calendar-check me-1 text-teal-main"></i> Kỳ đang xem:</span>
+                    <span class="period-dropdown-badge">
+                        <?= $selectedPeriod === 'all' ? 'Tất cả các kỳ' : 'Kỳ ' . htmlspecialchars($selectedPeriod) ?>
+                    </span>
+                    <i class="fa-solid fa-chevron-down text-muted small"></i>
+                </button>
+                <ul class="dropdown-menu dropdown-menu-end period-dropdown-menu">
+                    <li>
+                        <a class="dropdown-item <?= $selectedPeriod === 'all' ? 'active' : '' ?>" href="index.php?route=utilities&period=all">
+                            <span><i class="fa-solid fa-layer-group me-2"></i>Tất cả các kỳ</span>
+                            <?php if ($selectedPeriod === 'all'): ?><i class="fa-solid fa-check"></i><?php endif; ?>
+                        </a>
+                    </li>
+                    <li><hr class="dropdown-divider my-1"></li>
+                    <?php foreach ($availablePeriods as $per): ?>
+                        <li>
+                            <a class="dropdown-item <?= $selectedPeriod === $per ? 'active' : '' ?>" href="index.php?route=utilities&period=<?= urlencode($per) ?>">
+                                <span><i class="fa-regular fa-calendar me-2"></i>Kỳ <?= htmlspecialchars($per) ?></span>
+                                <?php if ($selectedPeriod === $per): ?><i class="fa-solid fa-check"></i><?php endif; ?>
+                            </a>
+                        </li>
+                    <?php endforeach; ?>
+                </ul>
             </div>
         </div>
 

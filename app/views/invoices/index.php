@@ -56,6 +56,21 @@ $pendingInPeriod = array_values(array_filter($pendingView, fn($x) => $filters['p
         .nav-pills .nav-link.active { background: var(--teal-main); color: #fff; box-shadow: 0 6px 15px rgba(48,143,134,.35); }
         .avatar-circle { width: 46px; height: 46px; background: var(--teal-main); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: #fff; font-weight: 900; border: 3px solid #fff; box-shadow: 0 6px 15px rgba(48,143,134,.4); }
 
+        .btn-hamburger { width: 44px; height: 44px; border-radius: 14px; background: #f0fdfa; border: 2px solid #99f6e4; color: var(--teal-main); display: inline-flex; align-items: center; justify-content: center; font-size: 1.25rem; transition: .2s; }
+        .btn-hamburger:hover, .btn-hamburger:focus { background: var(--teal-main); color: #fff; outline: none; }
+        @media (max-width: 991.98px) {
+            .mobile-nav-collapse { background: #fff; border-radius: 22px; padding: 14px; margin-top: 12px; border: 2px solid #ccfbf1; box-shadow: 0 12px 30px rgba(0,0,0,.08); }
+            .mobile-nav-collapse .nav-pills { flex-direction: column; gap: 6px; }
+            .mobile-nav-collapse .nav-link { border-radius: 16px; padding: 11px 16px; }
+        }
+        .period-dropdown-btn { background: #fff; border: 2.5px solid #99f6e4; border-radius: 50px; padding: 8px 18px; font-weight: 800; font-size: .88rem; color: #0f172a; box-shadow: 0 6px 18px rgba(48,143,134,.12); display: inline-flex; align-items: center; gap: 10px; transition: .2s; }
+        .period-dropdown-btn:hover, .period-dropdown-btn:focus { border-color: var(--teal-main); background: #f0fdfa; }
+        .period-dropdown-badge { background: var(--teal-main); color: #fff; padding: 4px 12px; border-radius: 50px; font-weight: 900; font-size: .82rem; }
+        .period-dropdown-menu { border-radius: 22px; border: 2px solid #ccfbf1; padding: 8px; min-width: 220px; box-shadow: 0 15px 35px rgba(0,0,0,.12); }
+        .period-dropdown-menu .dropdown-item { border-radius: 14px; font-weight: 800; font-size: .86rem; padding: 9px 14px; color: #334155; display: flex; align-items: center; justify-content: space-between; margin-bottom: 2px; }
+        .period-dropdown-menu .dropdown-item:hover { background: #f0fdfa; color: var(--teal-main); }
+        .period-dropdown-menu .dropdown-item.active { background: var(--teal-main); color: #fff; }
+
         .btn-back-content { background: #fff; border: 3px solid #fff; color: #334155; font-weight: 800; padding: 10px 26px; border-radius: 50px; transition: .2s; text-decoration: none; display: inline-flex; align-items: center; box-shadow: 0 8px 20px rgba(0,0,0,.08); }
         .btn-back-content:hover { border-color: var(--teal-main); color: var(--teal-main); transform: translateY(-3px); }
         .header-title-wrapper { position: relative; z-index: 2; display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 28px; flex-wrap: wrap; gap: 16px; }
@@ -136,21 +151,12 @@ $pendingInPeriod = array_values(array_filter($pendingView, fn($x) => $filters['p
 <body>
 
 <nav class="navbar navbar-expand-lg navbar-custom sticky-top">
-    <div class="container-fluid px-4 px-xl-5 d-flex justify-content-between align-items-center">
-        <a class="brand-logo me-4" href="index.php?route=dashboard">
+    <div class="container-fluid px-3 px-xl-5">
+        <a class="brand-logo me-3" href="index.php?route=dashboard">
             <i class="fa-solid fa-house-chimney"></i>
             <div><div class="brand-text">StayMate</div><div class="brand-sub">Quản Lý Nhà Trọ</div></div>
         </a>
-        <ul class="nav nav-pills me-auto d-none d-lg-flex">
-            <li class="nav-item"><a class="nav-link" href="index.php?route=dashboard"><i class="fa-solid fa-city"></i> Tòa nhà</a></li>
-            <li class="nav-item"><a class="nav-link" href="index.php?route=overview"><i class="fa-solid fa-border-all"></i> Tổng quan</a></li>
-            <li class="nav-item"><a class="nav-link" href="index.php?route=rooms"><i class="fa-solid fa-bed"></i> Phòng trọ</a></li>
-            <li class="nav-item"><a class="nav-link" href="index.php?route=contracts"><i class="fa-solid fa-file-signature"></i> Hợp đồng</a></li>
-            <li class="nav-item"><a class="nav-link" href="index.php?route=utilities"><i class="fa-solid fa-bolt"></i> Điện Nước</a></li>
-            <li class="nav-item"><a class="nav-link active" href="index.php?route=invoices"><i class="fa-solid fa-file-invoice-dollar"></i> Hóa đơn</a></li>
-            <li class="nav-item"><a class="nav-link" href="TrangXemPhong/" target="_blank"><i class="fa-solid fa-eye"></i> Xem phòng</a></li>
-        </ul>
-        <div class="d-flex align-items-center gap-4">
+        <div class="d-flex align-items-center gap-3 order-lg-3">
             <div class="position-relative" style="color:#64748b" title="Hóa đơn quá hạn">
                 <i class="fa-solid fa-bell fs-4"></i>
                 <?php if ($stats['overdue_count'] > 0): ?>
@@ -169,20 +175,50 @@ $pendingInPeriod = array_values(array_filter($pendingView, fn($x) => $filters['p
                     <li><a class="dropdown-item text-danger fw-bold" href="index.php?route=auth/logout"><i class="fa-solid fa-right-from-bracket me-2"></i> Đăng xuất</a></li>
                 </ul>
             </div>
+            <button class="btn-hamburger d-lg-none" type="button" data-bs-toggle="collapse" data-bs-target="#staymateMobileNav" aria-controls="staymateMobileNav" aria-expanded="false" aria-label="Mở danh mục menu">
+                <i class="fa-solid fa-bars"></i>
+            </button>
+        </div>
+        <div class="collapse navbar-collapse mobile-nav-collapse order-lg-2" id="staymateMobileNav">
+            <ul class="nav nav-pills me-auto">
+                <li class="nav-item"><a class="nav-link" href="index.php?route=dashboard"><i class="fa-solid fa-city"></i> Tòa nhà</a></li>
+                <li class="nav-item"><a class="nav-link" href="index.php?route=overview"><i class="fa-solid fa-border-all"></i> Tổng quan</a></li>
+                <li class="nav-item"><a class="nav-link" href="index.php?route=rooms"><i class="fa-solid fa-bed"></i> Phòng trọ</a></li>
+                <li class="nav-item"><a class="nav-link" href="index.php?route=contracts"><i class="fa-solid fa-file-signature"></i> Hợp đồng</a></li>
+                <li class="nav-item"><a class="nav-link" href="index.php?route=utilities"><i class="fa-solid fa-bolt"></i> Điện Nước</a></li>
+                <li class="nav-item"><a class="nav-link active" href="index.php?route=invoices"><i class="fa-solid fa-file-invoice-dollar"></i> Hóa đơn</a></li>
+                <li class="nav-item"><a class="nav-link" href="TrangXemPhong/" target="_blank"><i class="fa-solid fa-eye"></i> Xem phòng</a></li>
+            </ul>
         </div>
     </div>
 </nav>
 
 <div class="container-fluid px-4 px-xl-5 py-4 position-relative">
 
-    <div class="d-flex flex-wrap justify-content-between align-items-center mb-2 no-print">
-        <a href="index.php?route=overview" class="btn-back-content mb-2"><i class="fa-solid fa-arrow-left me-2"></i> Quay lại Tổng quan</a>
-        <div class="d-flex flex-wrap align-items-center gap-2 mb-2">
-            <span class="fw-bold text-muted small"><i class="fa-regular fa-calendar-check me-1 text-teal-main"></i> Kỳ đang xem:</span>
-            <?php foreach (array_slice($periods, 0, 5) as $per): ?>
-                <a href="index.php?route=invoices&period=<?= urlencode($per) ?>" class="<?= $filters['period'] === $per ? 'btn-teal-custom' : 'btn-pill-white' ?> py-1 px-3" style="font-size:.82rem">Kỳ <?= h($per) ?></a>
-            <?php endforeach; ?>
-            <a href="index.php?route=invoices&period=all" class="<?= $filters['period'] === 'all' ? 'btn-teal-custom' : 'btn-pill-white' ?> py-1 px-3" style="font-size:.82rem">Tất cả các kỳ</a>
+    <div class="d-flex flex-wrap justify-content-end align-items-center mb-2 no-print">
+        <div class="dropdown">
+            <button class="period-dropdown-btn" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                <span><i class="fa-regular fa-calendar-check me-1 text-teal-main"></i> Kỳ đang xem:</span>
+                <span class="period-dropdown-badge"><?= $filters['period'] === 'all' ? 'Tất cả các kỳ' : 'Kỳ ' . h($filters['period']) ?></span>
+                <i class="fa-solid fa-chevron-down text-muted small"></i>
+            </button>
+            <ul class="dropdown-menu dropdown-menu-end period-dropdown-menu">
+                <li>
+                    <a class="dropdown-item <?= $filters['period'] === 'all' ? 'active' : '' ?>" href="index.php?route=invoices&period=all">
+                        <span><i class="fa-solid fa-layer-group me-2"></i>Tất cả các kỳ</span>
+                        <?php if ($filters['period'] === 'all'): ?><i class="fa-solid fa-check"></i><?php endif; ?>
+                    </a>
+                </li>
+                <li><hr class="dropdown-divider my-1"></li>
+                <?php foreach ($periods as $per): ?>
+                    <li>
+                        <a class="dropdown-item <?= $filters['period'] === $per ? 'active' : '' ?>" href="index.php?route=invoices&period=<?= urlencode($per) ?>">
+                            <span><i class="fa-regular fa-calendar me-2"></i>Kỳ <?= h($per) ?></span>
+                            <?php if ($filters['period'] === $per): ?><i class="fa-solid fa-check"></i><?php endif; ?>
+                        </a>
+                    </li>
+                <?php endforeach; ?>
+            </ul>
         </div>
     </div>
 
