@@ -1,6 +1,12 @@
 <?php
-$nextMonthFirstDay = date('Y-m-01', strtotime('first day of next month'));
-$nextYearEndDay = date('Y-m-01', strtotime($nextMonthFirstDay . ' +12 months'));
+/**
+ * TRANG QUẢN LÝ HỢP ĐỒNG THUÊ PHÒNG (CONTRACTS MANAGEMENT)
+ * Phụ trách: Hùng Văn Ngọc (Nhóm trưởng - MSSV: 224001738)
+ */
+function h($s) { return htmlspecialchars((string)$s, ENT_QUOTES, 'UTF-8'); }
+$today = date('Y-m-d');
+$nextMonthFirstDay = date('Y-m-01', strtotime('+1 month'));
+$sixMonthsEndDay = date('Y-m-d', strtotime('+6 months'));
 ?>
 <!DOCTYPE html>
 <html lang="vi">
@@ -14,109 +20,117 @@ $nextYearEndDay = date('Y-m-01', strtotime($nextMonthFirstDay . ' +12 months'));
     <style>
         :root {
             --teal-main: #308f86;
-            --teal-hover: #25756d;
-            --bg-page: #f8fafc;
+            --teal-hover: #25726b;
+            --teal-soft: #e6f4f2;
+            --coral-accent: #f97316;
+            --dark-card: #0f172a;
         }
 
         body {
-            background-color: var(--bg-page);
             font-family: 'Nunito', sans-serif;
-            font-size: 0.9rem;
-            color: #334155;
-            min-height: 100vh;
-            display: flex;
-            flex-direction: column;
+            background-color: #e6f0fa;
             background-image: 
-                url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1440 320"><path fill="%23e6f4f1" fill-opacity="0.8" d="M0,160L48,170.7C96,181,192,203,288,197.3C384,192,480,160,576,149.3C672,139,768,149,864,170.7C960,192,1056,224,1152,213.3C1248,203,1344,149,1392,122.7L1440,96L1440,0L1392,0C1344,0,1248,0,1152,0C1056,0,960,0,864,0C768,0,672,0,576,0C480,0,384,0,288,0C192,0,96,0,48,0L0,0Z"></path></svg>'),
-                url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 300"><path d="M0,150 Q50,100 100,250" stroke="%2334d399" stroke-width="4" fill="none"/><path d="M10,120 Q40,90 60,110 Q30,140 10,120" fill="%236ee7b7"/><path d="M30,180 Q80,140 90,170 Q50,200 30,180" fill="%2310b981"/><path d="M60,220 Q100,190 110,220 Q70,250 60,220" fill="%23059669"/></svg>'),
-                url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 300"><path d="M200,150 Q150,100 100,250" stroke="%2334d399" stroke-width="4" fill="none"/><path d="M190,120 Q160,90 140,110 Q170,140 190,120" fill="%236ee7b7"/><path d="M170,180 Q120,140 110,170 Q150,200 170,180" fill="%2310b981"/><path d="M140,220 Q100,190 90,220 Q130,250 140,220" fill="%23059669"/></svg>');
-            background-position: top center, left 20%, right bottom;
-            background-repeat: no-repeat;
-            background-size: 100% auto, 150px, 150px;
-            background-attachment: fixed;
+                radial-gradient(at 0% 0%, rgba(48, 143, 134, 0.12) 0px, transparent 50%),
+                radial-gradient(at 100% 100%, rgba(249, 115, 22, 0.08) 0px, transparent 50%);
+            min-height: 100vh;
+            color: #1e293b;
         }
 
-        /* ================= NAVBAR CHUẨN TRANG ĐIỆN NƯỚC & TỔNG QUAN ================= */
-        .navbar-custom { background: #ffffff; padding: 12px 20px; box-shadow: 0 4px 20px rgba(0, 0, 0, 0.04); z-index: 100; border-bottom: 1px solid #f1f5f9; }
-        .brand-logo { display: flex; align-items: center; gap: 10px; text-decoration: none; }
-        .brand-logo i { color: var(--teal-main); font-size: 2.2rem; }
-        .brand-text { color: var(--teal-main); font-weight: 900; font-size: 1.4rem; line-height: 1; letter-spacing: -0.5px; }
-        .brand-sub { color: #64748b; font-size: 0.75rem; font-weight: 600; }
-        .text-teal-main { color: var(--teal-main) !important; }
-        
-        .nav-pills { gap: 8px; }
-        .nav-pills .nav-link { 
-            color: #475569; font-weight: 800; font-size: 0.92rem; 
-            padding: 10px 18px; border-radius: 50px; transition: all 0.2s; white-space: nowrap; 
+        .navbar-custom {
+            background-color: #ffffff;
+            border-bottom: 2px solid #e2e8f0;
+            padding: 12px 24px;
         }
-        .nav-pills .nav-link i { margin-right: 6px; }
-        .nav-pills .nav-link:hover { color: var(--teal-main); background: #f0fdfa; }
-        .nav-pills .nav-link.active { background-color: var(--teal-main); color: white; box-shadow: 0 6px 15px rgba(48, 143, 134, 0.35); }
+        .navbar-brand {
+            font-weight: 900;
+            font-size: 1.6rem;
+            color: var(--teal-main) !important;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .nav-link {
+            font-weight: 800;
+            color: #475569 !important;
+            padding: 8px 16px !important;
+            border-radius: 12px;
+            font-size: 0.95rem;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.2s;
+        }
+        .nav-link:hover, .nav-link.active {
+            color: var(--teal-main) !important;
+            background-color: var(--teal-soft);
+        }
+        .nav-item-showcase {
+            background: linear-gradient(135deg, #fef3c7, #fde68a);
+            border: 1.5px solid #f59e0b;
+            border-radius: 50px;
+        }
+        .nav-item-showcase .nav-link {
+            color: #92400e !important;
+            font-weight: 900;
+            padding: 7px 18px !important;
+        }
 
-        .avatar-circle {
-            width: 46px; height: 46px;
-            background-color: var(--teal-main);
-            border-radius: 50%;
-            display: flex; align-items: center; justify-content: center;
-            color: white; font-weight: 900; font-size: 1rem;
-            border: 3px solid #ffffff; 
-            box-shadow: 0 6px 15px rgba(48, 143, 134, 0.4);
+        .header-content-wrapper {
+            position: relative;
+            padding: 30px 0 10px 0;
+            margin-bottom: 20px;
+        }
+        .btn-back-content {
+            background: #ffffff;
+            border: 3px solid #ffffff;
+            color: #334155;
+            font-weight: 800;
+            padding: 8px 22px;
+            border-radius: 50px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.06);
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            text-decoration: none;
+            font-size: 0.88rem;
+            margin-bottom: 16px;
             transition: 0.2s;
-        }
-
-        .btn-back-content { 
-            background: white; border: 3px solid #ffffff; color: #334155; font-weight: 800; font-size: 0.9rem; 
-            padding: 10px 26px; border-radius: 50px; transition: 0.2s; text-decoration: none; 
-            display: inline-flex; align-items: center; box-shadow: 0 8px 20px rgba(0,0,0,0.08); margin-bottom: 20px;
-            position: relative; z-index: 2;
         }
         .btn-back-content:hover { background: #f8fafc; border-color: var(--teal-main); color: var(--teal-main); transform: translateY(-2px); }
 
-        .header-title-wrapper { position: relative; z-index: 2; display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 26px;}
-        .main-title { font-weight: 900; color: #0f172a; font-size: 2rem; letter-spacing: -0.5px; display: inline-flex; align-items: center;}
-        .bld-highlight { color: var(--teal-main); margin-left: 8px; position: relative;}
-        .title-sparkle { position: absolute; background-color: #fde047; border-radius: 2px; }
-        .ts-1 { width: 4px; height: 12px; top: -10px; right: -15px; transform: rotate(20deg); }
-        .ts-2 { width: 12px; height: 4px; top: 15px; right: -25px; transform: rotate(15deg); }
-        .bld-address-txt { font-size: 0.95rem; font-weight: 700; color: #64748b; margin-top: 5px;}
-        .date-badge { background: white; border-radius: 50px; padding: 12px 28px; font-weight: 800; color: #475569; font-size: 0.9rem; box-shadow: 0 8px 20px rgba(0,0,0,0.08); border: 3px solid #ffffff; }
+        .main-title { font-size: 2.1rem; font-weight: 900; color: #0f172a; line-height: 1.2; position: relative; display: inline-block; }
+        .bld-highlight { color: var(--teal-main); text-decoration: underline; text-decoration-color: #5eead4; text-underline-offset: 6px; }
 
-        .header-house-graphic {
-            position: absolute; right: 0; top: -50px; width: 300px; height: 200px; z-index: 1; pointer-events: none;
-            background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 200"><path d="M0,180 Q150,150 300,180 L300,200 L0,200 Z" fill="%23dcfce7"/><rect x="120" y="80" width="80" height="100" fill="%23e0f2fe"/><polygon points="100,80 160,30 220,80" fill="%230284c7"/><polygon points="160,30 220,80 250,80 190,30" fill="%2338bdf8"/><rect x="140" y="100" width="15" height="20" fill="%23ffffff"/><rect x="165" y="100" width="15" height="20" fill="%23ffffff"/><rect x="140" y="140" width="15" height="40" fill="%23ffffff"/><circle cx="50" cy="140" r="30" fill="%234ade80"/><circle cx="80" cy="150" r="40" fill="%2322c55e"/><circle cx="240" cy="140" r="35" fill="%2322c55e"/><circle cx="270" cy="150" r="25" fill="%2316a34a"/></svg>');
-            background-size: contain; background-repeat: no-repeat; background-position: bottom right;
-        }
-
-        /* 4 Thẻ thống kê giống hệt Trang Tổng quan */
         .overview-card {
-            border-radius: 30px;
-            padding: 22px 24px; position: relative; overflow: hidden;
-            box-shadow: 0 15px 35px rgba(0,0,0,0.12);
+            border-radius: 26px;
+            padding: 22px;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 12px 30px rgba(0,0,0,0.08);
             border: 4px solid #ffffff;
             height: 100%; transition: transform 0.3s ease, box-shadow 0.3s ease;
         }
         .overview-card:hover { transform: translateY(-6px); box-shadow: 0 22px 42px rgba(0,0,0,0.16); }
         .card-green { background: linear-gradient(135deg, #dcfce7 0%, #bbf7d0 100%); }
-        .card-blue { background: linear-gradient(135deg, #e0f2fe 0%, #bae6fd 100%); }
-        .card-yellow { background: linear-gradient(135deg, #fef9c3 0%, #fef08a 100%); }
+        .card-blue { background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%); }
+        .card-yellow { background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%); }
         .card-purple { background: linear-gradient(135deg, #f3e8ff 0%, #e9d5ff 100%); }
-        .overview-title { font-size: 0.8rem; font-weight: 900; margin-bottom: 8px; display: flex; align-items: center; gap: 8px; text-transform: uppercase; position: relative; z-index: 2;}
-        .overview-val { font-size: 2.2rem; font-weight: 900; line-height: 1; letter-spacing: -1px; position: relative; z-index: 2;}
+        .overview-title { font-size: 0.78rem; font-weight: 900; margin-bottom: 8px; display: flex; align-items: center; gap: 8px; text-transform: uppercase; position: relative; z-index: 2;}
+        .overview-val { font-size: 2.1rem; font-weight: 900; line-height: 1; letter-spacing: -1px; position: relative; z-index: 2;}
 
-        /* Khung chính danh sách hợp đồng */
         .contract-section { 
-            background: rgba(255,255,255,0.96); 
-            border-radius: 30px; 
-            border: 4px solid #ffffff; 
-            padding: 24px; 
-            box-shadow: 0 15px 40px rgba(0,0,0,0.08); 
-            position: relative; z-index: 2;
+            background: #ffffff; 
+            border-radius: 28px; 
+            padding: 24px 28px; 
+            box-shadow: 0 16px 36px rgba(0,0,0,0.06); 
+            border: 4px solid #ffffff;
+            margin-bottom: 40px;
         }
 
         .btn-teal-custom { background: var(--teal-main); border-radius: 50px; font-weight: 800; color: white; padding: 10px 24px; border: 2px solid var(--teal-hover); box-shadow: 0 8px 20px rgba(48, 143, 134, 0.35); font-size: 0.9rem; transition: 0.2s; text-decoration: none; display: inline-flex; align-items: center;}
         .btn-teal-custom:hover { background: var(--teal-hover); color: white; transform: translateY(-2px); }
 
-        .btn-outline-teal { background: #f0fdfa; color: var(--teal-main); border: 1.5px solid #99f6e4; border-radius: 50px; font-weight: 800; padding: 8px 18px; font-size: 0.85rem; transition: 0.2s; text-decoration: none;}
+        .btn-outline-teal { background: transparent; border-radius: 50px; font-weight: 800; color: var(--teal-main); padding: 8px 18px; border: 2px solid var(--teal-main); font-size: 0.88rem; transition: 0.2s; text-decoration: none; display: inline-flex; align-items: center; }
         .btn-outline-teal:hover { background: var(--teal-main); color: white; }
 
         .form-control, .form-select { border-radius: 14px; border: 1.5px solid #e2e8f0; padding: 9px 14px; font-weight: 600; font-size: 0.88rem; }
@@ -126,167 +140,197 @@ $nextYearEndDay = date('Y-m-01', strtotime($nextMonthFirstDay . ' +12 months'));
         .table-custom tbody td { padding: 15px 16px; vertical-align: middle; border-bottom: 1px solid #f1f5f9; font-weight: 600; }
         .table-custom tbody tr:hover { background-color: #f8fafc; }
 
-        .badge-room { background: var(--teal-main); color: white; padding: 5px 12px; border-radius: 50px; font-weight: 800; font-size: 0.8rem; box-shadow: 0 4px 10px rgba(48, 143, 134, 0.25); }
-        .badge-pill { padding: 5px 12px; border-radius: 50px; font-size: 0.75rem; font-weight: 800; display: inline-flex; align-items: center; gap: 4px; }
-        .status-active { background: #dcfce7; color: #15803d; border: 1px solid #86efac; }
-        .status-terminated { background: #f1f5f9; color: #475569; border: 1px solid #cbd5e1; }
-        .status-expired { background: #fef9c3; color: #b45309; border: 1px solid #fde047; }
+        .badge-room { background: #0f172a; color: #fff; font-weight: 900; font-size: 0.85rem; padding: 5px 12px; border-radius: 10px; display: inline-block;}
+        .badge-pill { padding: 5px 12px; border-radius: 50px; font-size: 0.76rem; font-weight: 800; display: inline-flex; align-items: center; gap: 5px;}
+        .badge-hd1 { background: #fef3c7; color: #92400e; border: 1px solid #fde68a; }
+        .badge-hd2 { background: #dcfce7; color: #166534; border: 1px solid #bbf7d0; }
+        .badge-revenue-paid { background: #d1fae5; color: #065f46; font-size: 0.7rem; font-weight: 800; padding: 3px 8px; border-radius: 50px; }
+        .status-active { background: #dcfce7; color: #166534; }
+        .status-terminated { background: #f1f5f9; color: #475569; }
+        .status-expired { background: #fee2e2; color: #991b1b; }
 
-        .btn-act { border-radius: 50px; padding: 5px 12px; font-size: 0.78rem; font-weight: 800; text-decoration: none; display: inline-flex; align-items: center; gap: 4px; border: 1.5px solid transparent; transition: 0.2s; }
-        .btn-act-teal { background: #ccfbf1; color: #0f766e; border-color: #99f6e4; }
-        .btn-act-teal:hover { background: var(--teal-main); color: white; }
-        .btn-act-warn { background: #fef3c7; color: #b45309; border-color: #fde68a; }
-        .btn-act-warn:hover { background: #f59e0b; color: white; }
-        .btn-act-info { background: #e0f2fe; color: #0369a1; border-color: #bae6fd; }
-        .btn-act-info:hover { background: #0284c7; color: white; }
-        .btn-act-danger { background: #fee2e2; color: #dc2626; border-color: #fecaca; }
-        .btn-act-danger:hover { background: #ef4444; color: white; }
+        .btn-act { width: 34px; height: 34px; border-radius: 10px; display: inline-flex; align-items: center; justify-content: center; font-size: 0.85rem; border: none; transition: 0.2s; text-decoration: none;}
+        .btn-act-teal { background: var(--teal-soft); color: var(--teal-main); width: auto; padding: 0 12px; font-weight: 800; border-radius: 50px;}
+        .btn-act-teal:hover { background: var(--teal-main); color: white;}
+        .btn-act-info { background: #e0f2fe; color: #0284c7;}
+        .btn-act-info:hover { background: #0284c7; color: white;}
+        .btn-act-warn { background: #fef3c7; color: #d97706; width: auto; padding: 0 10px; font-weight: 800; border-radius: 50px;}
+        .btn-act-warn:hover { background: #d97706; color: white;}
+        .btn-act-danger { background: #fee2e2; color: #dc2626;}
+        .btn-act-danger:hover { background: #dc2626; color: white;}
+        .btn-act-upgrade { background: linear-gradient(135deg, #10b981, #059669); color: white; width: auto; padding: 0 12px; font-weight: 800; border-radius: 50px; box-shadow: 0 4px 10px rgba(16, 185, 129, 0.3);}
+        .btn-act-upgrade:hover { transform: translateY(-2px); color: white;}
 
-        .footer-custom { background: #ffffff; padding: 20px 0; color: #64748b; font-size: 0.85rem; font-weight: 700; margin-top: auto; border-top: 1px solid #f1f5f9; position: relative; z-index: 10;}
+        .contract-choice-card {
+            border: 2px solid #e2e8f0;
+            border-radius: 18px;
+            padding: 16px;
+            cursor: pointer;
+            transition: all 0.2s;
+            background: #ffffff;
+            height: 100%;
+        }
+        .contract-choice-card:hover {
+            border-color: var(--teal-main);
+            box-shadow: 0 6px 18px rgba(0,0,0,0.06);
+        }
+        .contract-choice-card.selected {
+            border-color: var(--teal-main);
+            background: #f0fdfa;
+            box-shadow: 0 0 0 3px rgba(48, 143, 134, 0.2);
+        }
+
+        .footer-custom { font-size: 0.85rem; font-weight: 700; color: #64748b; padding: 20px 0 40px 0; }
     </style>
 </head>
 <body>
 
-    <!-- ================= NAVBAR CHUẨN STAYMATE (ĐỒNG NHẤT VỚI ĐIỆN NƯỚC) ================= -->
-    <nav class="navbar navbar-expand-lg navbar-custom sticky-top">
-        <div class="container-fluid px-4 px-xl-5 d-flex justify-content-between align-items-center">
-            <a class="brand-logo me-4" href="index.php?route=dashboard">
-                <i class="fa-solid fa-house-chimney text-teal-main"></i>
-                <div>
-                    <div class="brand-text">StayMate</div>
-                    <div class="brand-sub">Quản Lý Nhà Trọ</div>
-                </div>
+    <!-- THANH ĐIỀU HƯỚNG CHÍNH (ĐỒNG NHẤT HỆ THỐNG) -->
+    <nav class="navbar navbar-expand-lg navbar-custom sticky-top shadow-sm">
+        <div class="container-fluid px-4 px-xl-5">
+            <a class="navbar-brand" href="index.php?route=dashboard">
+                <i class="fa-solid fa-house-chimney-user"></i> StayMate
             </a>
 
-            <ul class="nav nav-pills me-auto d-none d-lg-flex">
+            <button class="navbar-toggler border-0" type="button" data-bs-toggle="collapse" data-bs-target="#topNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
 
-                <li class="nav-item"><a class="nav-link" href="index.php?route=overview"><i class="fa-solid fa-border-all"></i> Tổng quan</a></li>
-                <li class="nav-item"><a class="nav-link" href="index.php?route=rooms"><i class="fa-solid fa-bed"></i> Phòng trọ</a></li>
-                <li class="nav-item"><a class="nav-link" href="index.php?route=tenants"><i class="fa-solid fa-users"></i> Khách thuê</a></li>
-                <li class="nav-item"><a class="nav-link active" href="index.php?route=contracts"><i class="fa-solid fa-file-signature"></i> Hợp đồng</a></li>
-                <li class="nav-item"><a class="nav-link" href="index.php?route=utilities"><i class="fa-solid fa-bolt"></i> Điện Nước</a></li>
-                <li class="nav-item"><a class="nav-link" href="TrangXemPhong/" target="_blank"><i class="fa-solid fa-eye"></i> Xem phòng khách</a></li>
-            </ul>
+            <div class="collapse navbar-collapse" id="topNav">
+                <ul class="navbar-nav me-auto mb-2 mb-lg-0 ms-lg-4 gap-2">
+                    <li class="nav-item"><a class="nav-link" href="index.php?route=dashboard"><i class="fa-solid fa-chart-pie"></i> Tổng quan</a></li>
+                    <li class="nav-item"><a class="nav-link" href="index.php?route=rooms"><i class="fa-solid fa-bed"></i> Phòng trọ</a></li>
+                    <li class="nav-item"><a class="nav-link" href="index.php?route=tenants"><i class="fa-solid fa-users"></i> Khách thuê</a></li>
+                    <li class="nav-item"><a class="nav-link active" href="index.php?route=contracts"><i class="fa-solid fa-file-signature"></i> Hợp đồng</a></li>
+                    <li class="nav-item"><a class="nav-link" href="index.php?route=utilities"><i class="fa-solid fa-bolt"></i> Điện Nước</a></li>
+                    <li class="nav-item"><a class="nav-link" href="index.php?route=invoices"><i class="fa-solid fa-receipt"></i> Hóa đơn</a></li>
+                    <li class="nav-item"><a class="nav-link" href="index.php?route=reports"><i class="fa-solid fa-chart-line"></i> Báo cáo</a></li>
+                    <li class="nav-item nav-item-showcase ms-lg-2">
+                        <a class="nav-link" href="index.php?route=showcase">
+                            <i class="fa-solid fa-eye text-warning"></i> Xem &amp; Đặt phòng
+                        </a>
+                    </li>
+                </ul>
 
-            <div class="d-flex align-items-center gap-4">
-                <div class="position-relative" style="color: #64748b; cursor: pointer;" title="Hợp đồng sắp hết hạn">
-                    <i class="fa-solid fa-bell fs-4"></i>
-                    <?php if (($stats['expiring_soon'] ?? 0) > 0): ?>
-                        <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger border border-white">
-                            <?= (int)$stats['expiring_soon'] ?>
-                        </span>
-                    <?php endif; ?>
-                </div>
-                <div class="dropdown">
-                    <div class="d-flex align-items-center gap-2" style="cursor: pointer;" data-bs-toggle="dropdown">
-                        <div class="avatar-circle">AS</div>
-                        <div class="text-start d-none d-sm-block lh-sm">
-                            <div class="fw-bold text-dark" style="font-size: 0.9rem;">Quản trị viên Hệ thống <i class="fa-solid fa-angle-down ms-1 text-muted fs-6"></i></div>
-                            <div class="text-muted" style="font-size: 0.75rem;">Admin</div>
+                <div class="d-flex align-items-center gap-3">
+                    <a href="index.php?route=tenant/contract" class="btn btn-sm btn-outline-teal" title="Cổng xem hợp đồng của khách thuê">
+                        <i class="fa-solid fa-user-shield me-1"></i> Cổng Khách Thuê
+                    </a>
+                    <div class="d-flex align-items-center gap-2">
+                        <div class="rounded-circle bg-teal-main text-white d-flex align-items-center justify-content-center fw-bold" style="width: 38px; height: 38px; background: var(--teal-main);">
+                            <?= strtoupper(substr($_SESSION['user']['username'] ?? 'Admin', 0, 1)) ?>
+                        </div>
+                        <div class="d-none d-xl-block">
+                            <div class="fw-bold small lh-sm"><?= htmlspecialchars($_SESSION['user']['full_name'] ?? 'Quản lý Hệ thống') ?></div>
+                            <div class="text-muted" style="font-size: 0.72rem;">Nhóm 1 - StayMate</div>
                         </div>
                     </div>
-                    <ul class="dropdown-menu dropdown-menu-end shadow border-0 rounded-4 mt-2">
-                        <li><a class="dropdown-item text-danger fw-bold" href="index.php?route=auth/logout"><i class="fa-solid fa-right-from-bracket me-2"></i> Đăng xuất</a></li>
-                    </ul>
                 </div>
             </div>
         </div>
     </nav>
 
-    <div class="container-fluid px-4 px-xl-5 py-4 position-relative">
+    <div class="container-fluid px-4 px-xl-5">
 
-        <!-- Header giống Trang Tổng quan -->
-        <div class="header-title-wrapper">
-            <div>
-                <nav aria-label="breadcrumb">
-                    <ol class="breadcrumb mb-1" style="font-size: 0.85rem; font-weight: 700;">
-                        <li class="breadcrumb-item"><a href="index.php?route=dashboard" class="text-teal-main text-decoration-none"><i class="fa-solid fa-house"></i> Hệ thống Quản lý</a></li>
-                        <li class="breadcrumb-item text-muted" aria-current="page">Phân hệ Hợp đồng Thuê phòng</li>
-                    </ol>
-                </nav>
-                <div class="main-title">
-                    Quản lý Hợp đồng -
-                    <span class="bld-highlight">
-                        Ký Điện tử &amp; Quyết toán Cọc
-                        <span class="title-sparkle ts-1"></span>
-                        <span class="title-sparkle ts-2"></span>
-                    </span>
-                </div>
-                <div class="bld-address-txt">
-                    <i class="fa-solid fa-shield-halved text-teal-main me-1"></i>
-                    Quy tắc chuẩn: Cọc = 1 tháng tiền phòng • Vào ở ≤ ngày 15 tính 100%, sau ngày 15 tính 50% • Rời trước hạn mất cọc
-                </div>
+        <!-- Thông báo Flash Messages -->
+        <?php if (!empty($flash_success)): ?>
+            <div class="alert alert-success alert-dismissible fade show rounded-4 shadow-sm border-0 mt-3" role="alert">
+                <i class="fa-solid fa-circle-check me-2"></i><?= $flash_success ?>
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
             </div>
-
-            <div class="d-flex align-items-center gap-3 position-relative z-2">
-                <div class="date-badge d-none d-md-block">
-                    <i class="fa-regular fa-calendar-days me-2 text-teal-main"></i> Hôm nay, <?= date('d/m/Y') ?>
-                </div>
-            </div>
-
-            <div class="header-house-graphic d-none d-lg-block"></div>
-        </div>
-
-        <!-- Thông báo Flash -->
+        <?php endif; ?>
         <?php if (!empty($flash_error)): ?>
-            <div class="alert alert-danger rounded-4 border-0 shadow-sm fw-bold position-relative z-2"><i class="fa-solid fa-circle-exclamation me-2"></i><?= htmlspecialchars($flash_error) ?></div>
+            <div class="alert alert-danger alert-dismissible fade show rounded-4 shadow-sm border-0 mt-3" role="alert">
+                <i class="fa-solid fa-triangle-exclamation me-2"></i><?= $flash_error ?>
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
         <?php endif; ?>
         <?php if (!empty($flash_warning)): ?>
-            <div class="alert alert-warning rounded-4 border-0 shadow-sm fw-bold position-relative z-2"><i class="fa-solid fa-triangle-exclamation me-2"></i><?= htmlspecialchars($flash_warning) ?></div>
-        <?php endif; ?>
-        <?php if (!empty($flash_success)): ?>
-            <div class="alert alert-success rounded-4 border-0 shadow-sm fw-bold position-relative z-2"><i class="fa-solid fa-circle-check me-2"></i><?= htmlspecialchars($flash_success) ?></div>
+            <div class="alert alert-warning alert-dismissible fade show rounded-4 shadow-sm border-0 mt-3" role="alert">
+                <i class="fa-solid fa-circle-exclamation me-2"></i><?= $flash_warning ?>
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
         <?php endif; ?>
 
-        <!-- 4 Thẻ Thống Kê Hợp Đồng (cùng style với Trang Tổng quan) -->
+        <!-- HEADER TIÊU ĐỀ -->
+        <div class="header-content-wrapper">
+            <div class="d-flex flex-wrap justify-content-between align-items-center gap-3">
+                <div>
+                    <nav aria-label="breadcrumb">
+                        <ol class="breadcrumb mb-1 small fw-bold">
+                            <li class="breadcrumb-item"><a href="index.php?route=dashboard" class="text-teal-main text-decoration-none"><i class="fa-solid fa-house"></i> Hệ thống</a></li>
+                            <li class="breadcrumb-item text-muted" aria-current="page">Quản lý Hợp đồng Thuê phòng</li>
+                        </ol>
+                    </nav>
+                    <div class="main-title">
+                        Quản lý Hợp đồng -
+                        <span class="bld-highlight">StayMate Buildings</span>
+                    </div>
+                    <div class="text-muted fw-bold small mt-1">
+                        HĐ 1 (Đặt cọc giữ chỗ 5 ngày - 50% cọc) &amp; HĐ 2 (Thuê chính thức 6 tháng - Thu trước 1 tháng phòng vào Doanh thu)
+                    </div>
+                </div>
+                <div class="d-flex align-items-center gap-2">
+                    <a href="index.php?route=tenant/contract" class="btn btn-outline-teal rounded-pill px-3 py-2 fw-bold" target="_blank">
+                        <i class="fa-solid fa-link me-1"></i> Link Phân Quyền Khách
+                    </a>
+                    <button type="button" class="btn-teal-custom" data-bs-toggle="modal" data-bs-target="#contractModal" onclick="resetContractModal()">
+                        <i class="fa-solid fa-file-circle-plus me-2"></i> Lập Hợp đồng mới
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 4 Thẻ Thống Kê Hợp Đồng -->
         <div class="row g-4 mb-4 position-relative z-2">
             <div class="col-12 col-md-6 col-lg-3">
                 <div class="overview-card card-green">
-                    <div class="overview-title text-success"><i class="fa-solid fa-file-circle-check fs-6"></i> HỢP ĐỒNG HIỆU LỰC</div>
+                    <div class="overview-title text-success"><i class="fa-solid fa-file-circle-check fs-6"></i> HỢP ĐỒNG ĐANG HIỆU LỰC</div>
                     <div class="d-flex align-items-baseline mt-2">
                         <span class="overview-val text-dark me-2"><?= (int)($stats['active'] ?? 0) ?></span>
                         <span class="fw-bold text-muted small">/ <?= (int)($stats['total'] ?? 0) ?> tổng HĐ</span>
                     </div>
-                    <div class="mt-3 text-success" style="font-size: 0.8rem; font-weight: 800;">
-                        <i class="fa-solid fa-circle-check me-1"></i> Phòng đang có khách ở
+                    <div class="mt-2 text-success" style="font-size: 0.8rem; font-weight: 800;">
+                        <span><i class="fa-solid fa-building me-1"></i> <?= (int)($stats['active_official'] ?? 0) ?> HĐ chính thức</span> |
+                        <span><i class="fa-solid fa-clock me-1"></i> <?= (int)($stats['active_hold'] ?? 0) ?> HĐ cọc 5N</span>
                     </div>
                 </div>
             </div>
 
             <div class="col-12 col-md-6 col-lg-3">
                 <div class="overview-card card-blue">
-                    <div class="overview-title text-primary"><i class="fa-solid fa-vault fs-6"></i> TIỀN CỌC ĐANG GIỮ</div>
+                    <div class="overview-title text-primary"><i class="fa-solid fa-vault fs-6"></i> DOANH THU TIỀN CỌC ĐANG GIỮ</div>
                     <div class="overview-val text-dark mt-2" style="font-size: 1.85rem;">
                         <?= number_format((float)($stats['total_deposit_held'] ?? 0), 0, ',', '.') ?> đ
                     </div>
-                    <div class="mt-3 text-primary" style="font-size: 0.8rem; font-weight: 800;">
-                        <i class="fa-solid fa-coins me-1"></i> Cọc = 01 tháng tiền phòng
+                    <div class="mt-2 text-primary" style="font-size: 0.8rem; font-weight: 800;">
+                        <i class="fa-solid fa-shield-halved me-1"></i> Tiền bảo đảm tài sản nhà trọ
                     </div>
                 </div>
             </div>
 
             <div class="col-12 col-md-6 col-lg-3">
                 <div class="overview-card card-yellow">
-                    <div class="overview-title" style="color: #b45309;"><i class="fa-regular fa-bell fs-6"></i> SẮP HẾT HẠN (≤ 30 NGÀY)</div>
-                    <div class="d-flex align-items-baseline mt-2">
-                        <span class="overview-val me-2" style="color: #b45309;"><?= (int)($stats['expiring_soon'] ?? 0) ?></span>
-                        <span class="fw-bold text-muted small">hợp đồng</span>
+                    <div class="overview-title" style="color: #b45309;"><i class="fa-solid fa-hand-holding-dollar fs-6"></i> ĐÃ THU PHÒNG THÁNG ĐẦU (HĐ 2)</div>
+                    <div class="overview-val text-dark mt-2" style="font-size: 1.85rem;">
+                        <?= number_format((float)($stats['total_first_month_collected'] ?? 0), 0, ',', '.') ?> đ
                     </div>
-                    <div class="mt-3" style="font-size: 0.8rem; font-weight: 800; color: #b45309;">
-                        <i class="fa-regular fa-clock me-1"></i> Nhắc gia hạn trước 1 tháng
+                    <div class="mt-2" style="font-size: 0.8rem; font-weight: 800; color: #b45309;">
+                        <i class="fa-solid fa-receipt me-1"></i> Đã tự động cộng vào Doanh thu
                     </div>
                 </div>
             </div>
 
             <div class="col-12 col-md-6 col-lg-3">
                 <div class="overview-card card-purple">
-                    <div class="overview-title" style="color: #7e22ce;"><i class="fa-solid fa-file-circle-xmark fs-6"></i> ĐÃ THANH LÝ</div>
+                    <div class="overview-title" style="color: #7e22ce;"><i class="fa-solid fa-clock-rotate-left fs-6"></i> LỊCH SỬ HỦY / THANH LÝ</div>
                     <div class="d-flex align-items-baseline mt-2">
-                        <span class="overview-val text-dark me-2"><?= (int)($stats['terminated'] ?? 0) ?></span>
+                        <span class="overview-val text-dark me-2"><?= (int)($stats['expired_hold'] ?? 0) + (int)($stats['terminated'] ?? 0) ?></span>
                         <span class="fw-bold text-muted small">hợp đồng</span>
                     </div>
-                    <div class="mt-3" style="font-size: 0.8rem; font-weight: 800; color: #7e22ce;">
-                        <i class="fa-solid fa-scale-balanced me-1"></i> Tự động hoàn / thu cọc
+                    <div class="mt-2" style="font-size: 0.8rem; font-weight: 800; color: #7e22ce;">
+                        <span><i class="fa-solid fa-triangle-exclamation me-1"></i> <?= (int)($stats['expired_hold'] ?? 0) ?> HĐ quá 5N tự hủy</span> |
+                        <span><?= (int)($stats['terminated'] ?? 0) ?> đã thanh lý</span>
                     </div>
                 </div>
             </div>
@@ -297,96 +341,142 @@ $nextYearEndDay = date('Y-m-01', strtotime($nextMonthFirstDay . ' +12 months'));
             <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 border-bottom border-light pb-3 mb-3">
                 <form action="index.php" method="GET" class="d-flex flex-wrap gap-2 align-items-center">
                     <input type="hidden" name="route" value="contracts">
-                    <div class="input-group" style="width: 260px;">
+                    <div class="input-group" style="width: 250px;">
                         <span class="input-group-text bg-white border-end-0" style="border-radius: 14px 0 0 14px;"><i class="fa-solid fa-magnifying-glass text-muted"></i></span>
-                        <input type="text" name="keyword" class="form-control border-start-0" style="border-radius: 0 14px 14px 0;" placeholder="Tìm mã HĐ, phòng, tên khách..." value="<?= htmlspecialchars($_GET['keyword'] ?? '') ?>">
+                        <input type="text" name="keyword" class="form-control border-start-0" style="border-radius: 0 14px 14px 0;" placeholder="Mã HĐ, phòng, khách..." value="<?= h($_GET['keyword'] ?? '') ?>">
                     </div>
-                    <select name="status" class="form-select" style="width: 185px;">
+
+                    <select name="contract_type" class="form-select" style="width: 210px;">
+                        <option value="">Tất cả loại hợp đồng</option>
+                        <option value="deposit_hold" <?= ($_GET['contract_type'] ?? '') === 'deposit_hold' ? 'selected' : '' ?>>HĐ 1: Đặt cọc giữ chỗ (5 ngày)</option>
+                        <option value="official_lease" <?= ($_GET['contract_type'] ?? '') === 'official_lease' ? 'selected' : '' ?>>HĐ 2: Thuê chính thức (6 tháng)</option>
+                    </select>
+
+                    <select name="status" class="form-select" style="width: 175px;">
                         <option value="">Tất cả trạng thái</option>
                         <?php foreach ($statuses as $val => $label): ?>
                             <option value="<?= $val ?>" <?= ($_GET['status'] ?? '') === $val ? 'selected' : '' ?>><?= $label ?></option>
                         <?php endforeach; ?>
                     </select>
+
                     <button type="submit" class="btn-outline-teal"><i class="fa-solid fa-filter me-1"></i> Lọc</button>
-                    <?php if (!empty($_GET['keyword']) || !empty($_GET['status'])): ?>
+                    <?php if (!empty($_GET['keyword']) || !empty($_GET['status']) || !empty($_GET['contract_type'])): ?>
                         <a href="index.php?route=contracts" class="btn btn-sm btn-light rounded-pill px-3 fw-bold">Xóa lọc</a>
                     <?php endif; ?>
                 </form>
 
-                <button type="button" class="btn-teal-custom" data-bs-toggle="modal" data-bs-target="#contractModal">
-                    <i class="fa-solid fa-file-circle-plus me-2"></i> Lập Hợp đồng mới
-                </button>
+                <div class="small text-muted fw-bold">
+                    Tìm thấy: <strong class="text-teal-main"><?= count($contracts) ?></strong> bản ghi hợp đồng
+                </div>
             </div>
 
             <div class="table-responsive">
                 <table class="table table-custom align-middle mb-0">
                     <thead>
                         <tr>
-                            <th>Mã HĐ</th>
-                            <th>Phòng</th>
-                            <th>Khách thuê</th>
-                            <th>Ngày cọc &amp; Hiệu lực</th>
-                            <th>Giá thuê / Tiền cọc</th>
-                            <th>Hình thức ký</th>
-                            <th>Trạng thái</th>
-                            <th class="text-end">Thao tác</th>
+                            <th>MÃ HĐ &amp; LIÊN KẾT</th>
+                            <th>LOẠI HỢP ĐỒNG</th>
+                            <th>PHÒNG TRỌ</th>
+                            <th>KHÁCH THUÊ</th>
+                            <th>THỜI HẠN &amp; HIỆU LỰC</th>
+                            <th>GIÁ THUÊ &amp; TIỀN CỌC</th>
+                            <th>DOANH THU &amp; SCAN</th>
+                            <th>TRẠNG THÁI</th>
+                            <th class="text-end">THAO TÁC</th>
                         </tr>
                     </thead>
                     <tbody>
                         <?php if (!empty($contracts)): ?>
                             <?php foreach ($contracts as $c): ?>
                                 <?php
+                                $cType = $c['contract_type'] ?? 'official_lease';
+                                $isHold = ($cType === 'deposit_hold');
                                 $depStatus = $c['deposit_status'] ?? 'held';
                                 $renStatus = $c['renewal_status'] ?? 'none';
-                                $sigType = $c['signature_type'] ?? 'online';
-                                $sigStatus = $c['signature_status'] ?? 'pending';
+                                $sigType = $c['signature_type'] ?? 'paper';
                                 $depositDate = !empty($c['deposit_date']) ? $c['deposit_date'] : $c['start_date'];
                                 $monthlyRent = (float)($c['monthly_rent'] ?? $c['room_price'] ?? $c['deposit_amount']);
+                                $firstMonthPaid = !empty($c['first_month_rent_paid']);
                                 ?>
                                 <tr>
                                     <td>
-                                        <a href="index.php?route=contracts/detail&id=<?= (int)$c['id'] ?>" class="fw-bold text-teal-main text-decoration-none">
-                                            <i class="fa-solid fa-file-lines me-1"></i><?= htmlspecialchars($c['contract_code']) ?>
+                                        <a href="index.php?route=contracts/detail&id=<?= (int)$c['id'] ?>" class="fw-bold text-teal-main text-decoration-none d-block">
+                                            <i class="fa-solid fa-file-contract me-1"></i><?= h($c['contract_code']) ?>
                                         </a>
+                                        <div class="small text-muted mt-1">
+                                            <span class="badge bg-light text-secondary border" title="ID hợp đồng">HĐ #<?= (int)$c['id'] ?></span>
+                                            <span class="badge bg-light text-secondary border" title="ID khách thuê">Khách #<?= (int)$c['tenant_id'] ?></span>
+                                        </div>
                                     </td>
                                     <td>
-                                        <span class="badge-room"><?= htmlspecialchars($c['room_number'] ?? 'N/A') ?></span>
+                                        <?php if ($isHold): ?>
+                                            <span class="badge-pill badge-hd1">
+                                                <i class="fa-solid fa-clock me-1"></i> HĐ 1: Cọc 5 ngày
+                                            </span>
+                                            <div class="small text-muted mt-1">(50% tiền cọc)</div>
+                                        <?php else: ?>
+                                            <span class="badge-pill badge-hd2">
+                                                <i class="fa-solid fa-shield-halved me-1"></i> HĐ 2: Chính thức 6T
+                                            </span>
+                                            <?php if (!empty($c['parent_contract_code'])): ?>
+                                                <div class="small text-muted mt-1" title="Kế thừa từ HĐ giữ chỗ">
+                                                    &larr; Từ <?= h($c['parent_contract_code']) ?>
+                                                </div>
+                                            <?php endif; ?>
+                                        <?php endif; ?>
                                     </td>
                                     <td>
-                                        <div class="fw-bold text-dark"><?= htmlspecialchars($c['full_name'] ?? 'Chưa rõ') ?></div>
-                                        <div class="text-muted small"><i class="fa-solid fa-phone me-1"></i><?= htmlspecialchars($c['phone'] ?? '') ?></div>
+                                        <span class="badge-room">P.<?= h($c['room_number'] ?? 'N/A') ?></span>
+                                    </td>
+                                    <td>
+                                        <div class="fw-bold text-dark"><?= h($c['full_name'] ?? 'Chưa rõ') ?></div>
+                                        <div class="text-muted small"><i class="fa-solid fa-phone me-1"></i><?= h($c['phone'] ?? '') ?></div>
                                     </td>
                                     <td class="small">
-                                        <div class="text-muted">Ngày cọc: <strong class="text-dark"><?= date('d/m/Y', strtotime($depositDate)) ?></strong></div>
-                                        <div>Hiệu lực: <strong class="text-teal-main"><?= date('d/m/Y', strtotime($c['start_date'])) ?></strong> &rarr; <strong class="text-danger"><?= date('d/m/Y', strtotime($c['end_date'])) ?></strong></div>
+                                        <div>
+                                            <strong class="text-teal-main"><?= date('d/m/Y', strtotime($c['start_date'])) ?></strong>
+                                            &rarr;
+                                            <strong class="<?= $isHold ? 'text-warning' : 'text-danger' ?>"><?= date('d/m/Y', strtotime($c['end_date'])) ?></strong>
+                                        </div>
+                                        <?php if ($c['status'] === 'active'): ?>
+                                            <?php if ($isHold): ?>
+                                                <span class="badge bg-warning text-dark rounded-pill mt-1">
+                                                    <i class="fa-solid fa-stopwatch me-1"></i> Còn <?= max(0, (int)$c['days_left']) ?> ngày giữ chỗ
+                                                </span>
+                                            <?php else: ?>
+                                                <span class="text-muted"><?= (int)$c['days_left'] ?> ngày còn lại</span>
+                                            <?php endif; ?>
+                                        <?php elseif ($c['status'] === 'expired'): ?>
+                                            <span class="badge bg-danger-subtle text-danger rounded-pill mt-1">Quá 5N - Tự hủy</span>
+                                        <?php endif; ?>
                                     </td>
                                     <td>
                                         <div class="fw-bold text-danger"><?= number_format($monthlyRent, 0, ',', '.') ?> đ/tháng</div>
                                         <div class="small text-muted">
                                             Cọc: <strong><?= number_format((float)$c['deposit_amount'], 0, ',', '.') ?> đ</strong>
-                                            <?php if ($depStatus === 'refunded'): ?>
-                                                <span class="badge bg-success-subtle text-success rounded-pill ms-1">Đã hoàn cọc</span>
-                                            <?php elseif ($depStatus === 'forfeited'): ?>
-                                                <span class="badge bg-danger-subtle text-danger rounded-pill ms-1">Mất cọc</span>
-                                            <?php endif; ?>
+                                            (<?= (int)($c['deposit_paid_percent'] ?? ($isHold ? 50 : 100)) ?>%)
                                         </div>
                                     </td>
                                     <td>
-                                        <?php if ($sigType === 'online'): ?>
-                                            <span class="badge-pill" style="background:#e0f2fe;color:#0369a1;"><i class="fa-solid fa-pen-nib"></i> Điện tử</span>
-                                        <?php else: ?>
-                                            <span class="badge-pill" style="background:#f1f5f9;color:#334155;"><i class="fa-solid fa-print"></i> Ký giấy</span>
+                                        <?php if ($firstMonthPaid): ?>
+                                            <span class="badge-revenue-paid d-inline-block mb-1">
+                                                <i class="fa-solid fa-circle-check me-1"></i> Đã thu tháng đầu (+ Doanh thu)
+                                            </span>
+                                        <?php elseif ($isHold): ?>
+                                            <span class="badge bg-light text-muted border small d-inline-block mb-1">Chưa thu tháng đầu</span>
                                         <?php endif; ?>
 
-                                        <?php if (!empty($c['scan_file'])): ?>
-                                            <a href="<?= htmlspecialchars($c['scan_file']) ?>" target="_blank" class="badge-pill bg-success text-white text-decoration-none ms-1">
-                                                <i class="fa-solid fa-image"></i> Bản Scan
-                                            </a>
-                                        <?php elseif ($sigStatus === 'signed'): ?>
-                                            <span class="badge-pill status-active ms-1"><i class="fa-solid fa-check"></i> Đã ký</span>
-                                        <?php else: ?>
-                                            <span class="badge-pill status-expired ms-1"><i class="fa-regular fa-clock"></i> Chờ ký</span>
-                                        <?php endif; ?>
+                                        <div>
+                                            <?php if (!empty($c['scan_file'])): ?>
+                                                <a href="<?= h($c['scan_file']) ?>" target="_blank" class="badge-pill bg-success text-white text-decoration-none">
+                                                    <i class="fa-solid fa-file-arrow-down me-1"></i> Bản Scan Đã Ký
+                                                </a>
+                                            <?php elseif (!empty($c['tenant_signature'])): ?>
+                                                <span class="badge-pill bg-info text-white"><i class="fa-solid fa-pen-nib"></i> Ký Online</span>
+                                            <?php else: ?>
+                                                <span class="badge-pill bg-light text-muted border"><i class="fa-solid fa-print"></i> Ký giấy A4</span>
+                                            <?php endif; ?>
+                                        </div>
                                     </td>
                                     <td>
                                         <?php
@@ -394,27 +484,38 @@ $nextYearEndDay = date('Y-m-01', strtotime($nextMonthFirstDay . ' +12 months'));
                                         if ($c['status'] === 'terminated') $stClass = 'status-terminated';
                                         elseif ($c['status'] === 'expired') $stClass = 'status-expired';
                                         ?>
-                                        <span class="badge-pill <?= $stClass ?>"><?= htmlspecialchars($statuses[$c['status']] ?? $c['status']) ?></span>
-
-                                        <?php if ($renStatus === 'renewed'): ?>
-                                            <span class="badge-pill ms-1" style="background:#ccfbf1;color:#0f766e;"><i class="fa-solid fa-rotate"></i> Đã gia hạn</span>
-                                        <?php endif; ?>
+                                        <span class="badge-pill <?= $stClass ?>">
+                                            <?= h($statuses[$c['status']] ?? $c['status']) ?>
+                                        </span>
                                     </td>
                                     <td class="text-end">
                                         <div class="d-inline-flex flex-wrap gap-1 justify-content-end">
-                                            <a href="index.php?route=contracts/detail&id=<?= (int)$c['id'] ?>" class="btn-act btn-act-teal" title="Xem điều khoản A4, Ký online, In hoặc tải bản Scan">
-                                                <i class="fa-solid fa-file-signature"></i> Bản HĐ / Ký
-                                            </a>
-                                            <?php if ($c['status'] === 'active'): ?>
-                                                <button type="button" class="btn-act btn-act-warn"
-                                                        onclick="openTerminateModal(<?= (int)$c['id'] ?>, '<?= htmlspecialchars($c['contract_code'], ENT_QUOTES) ?>', '<?= htmlspecialchars($c['room_number'] ?? '', ENT_QUOTES) ?>', '<?= htmlspecialchars($c['end_date'], ENT_QUOTES) ?>', <?= (float)$c['deposit_amount'] ?>)">
-                                                    <i class="fa-solid fa-hand-holding-dollar"></i> Thanh lý
+                                            <!-- Nút Ký tiếp HĐ 2 nếu đang giữ chỗ HĐ 1 -->
+                                            <?php if ($isHold && $c['status'] === 'active'): ?>
+                                                <button type="button" class="btn-act btn-act-upgrade"
+                                                        onclick="upgradeToOfficial(<?= (int)$c['id'] ?>, <?= (int)$c['tenant_id'] ?>, <?= (int)$c['room_id'] ?>, <?= (float)$monthlyRent ?>)"
+                                                        title="Chuyển tiếp lên Hợp đồng 2 (Thuê chính thức 6 tháng - hoàn tất 100% cọc + thu trước 1 tháng phòng)">
+                                                    <i class="fa-solid fa-bolt me-1"></i> Ký tiếp HĐ 2
                                                 </button>
                                             <?php endif; ?>
-                                            <a href="index.php?route=contracts/edit&id=<?= (int)$c['id'] ?>" class="btn-act btn-act-info" title="Sửa hợp đồng">
-                                                <i class="fa-solid fa-pen"></i> Sửa
+
+                                            <a href="index.php?route=contracts/detail&id=<?= (int)$c['id'] ?>" class="btn-act btn-act-teal" title="Xem điều khoản A4, In & Tải Scan">
+                                                <i class="fa-solid fa-eye me-1"></i> Chi tiết
                                             </a>
-                                            <form method="POST" action="index.php?route=contracts/delete" style="display:inline;" onsubmit="return confirm('Bạn có chắc chắn muốn xóa hợp đồng <?= htmlspecialchars($c['contract_code'], ENT_QUOTES) ?> không?');">
+
+                                            <?php if ($c['status'] === 'active'): ?>
+                                                <button type="button" class="btn-act btn-act-warn"
+                                                        onclick="openTerminateModal(<?= (int)$c['id'] ?>, '<?= h($c['contract_code']) ?>', '<?= h($c['room_number'] ?? '') ?>', '<?= h($c['end_date']) ?>', <?= (float)$c['deposit_amount'] ?>)"
+                                                        title="Thanh lý hợp đồng">
+                                                    <i class="fa-solid fa-hand-holding-dollar"></i>
+                                                </button>
+                                            <?php endif; ?>
+
+                                            <a href="index.php?route=contracts/edit&id=<?= (int)$c['id'] ?>" class="btn-act btn-act-info" title="Sửa hợp đồng">
+                                                <i class="fa-solid fa-pen"></i>
+                                            </a>
+
+                                            <form method="POST" action="index.php?route=contracts/delete" style="display:inline;" onsubmit="return confirm('Bạn có chắc chắn muốn xóa hợp đồng <?= h($c['contract_code']) ?> không?');">
                                                 <input type="hidden" name="id" value="<?= (int)$c['id'] ?>">
                                                 <button type="submit" class="btn-act btn-act-danger" title="Xóa hợp đồng"><i class="fa-solid fa-trash"></i></button>
                                             </form>
@@ -424,9 +525,9 @@ $nextYearEndDay = date('Y-m-01', strtotime($nextMonthFirstDay . ' +12 months'));
                             <?php endforeach; ?>
                         <?php else: ?>
                             <tr>
-                                <td colspan="8" class="text-center py-5 text-muted">
+                                <td colspan="9" class="text-center py-5 text-muted">
                                     <i class="fa-regular fa-folder-open fs-1 text-teal-main opacity-50 mb-2 d-block"></i>
-                                    Không tìm thấy hợp đồng nào khớp với yêu cầu.
+                                    Không tìm thấy hợp đồng nào khớp với yêu cầu tìm kiếm.
                                 </td>
                             </tr>
                         <?php endif; ?>
@@ -437,7 +538,7 @@ $nextYearEndDay = date('Y-m-01', strtotime($nextMonthFirstDay . ' +12 months'));
 
     </div>
 
-    <!-- MODAL 1: THANH LÝ HỢP ĐỒNG (Tự động tính hoàn 100% cọc hoặc mất cọc) -->
+    <!-- ================= MODAL 1: THANH LÝ HỢP ĐỒNG ================= -->
     <div class="modal fade" id="terminateContractModal" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">
             <form method="POST" action="index.php?route=contracts/terminate" class="modal-content" style="border-radius: 24px; border: 3px solid #fff;">
@@ -476,75 +577,136 @@ $nextYearEndDay = date('Y-m-01', strtotime($nextMonthFirstDay . ' +12 months'));
         </div>
     </div>
 
-    <!-- MODAL 2: LẬP HỢP ĐỒNG THUÊ PHÒNG MỚI (Giống đầy đủ chức năng quanly-nhatro cũ) -->
+    <!-- ================= MODAL 2: LẬP HỢP ĐỒNG THUÊ PHÒNG (HĐ 1 HOẶC HĐ 2) ================= -->
     <div class="modal fade" id="contractModal" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog modal-lg modal-dialog-centered">
             <form method="POST" action="index.php?route=contracts/store" class="modal-content" style="border-radius: 26px; border: 4px solid #fff;">
+                <input type="hidden" name="parent_contract_id" id="contract_parent_id" value="">
+
                 <div class="modal-header border-bottom-0 pb-0">
                     <h5 class="modal-title fw-bold text-teal-main">
-                        <i class="fa-solid fa-file-circle-plus me-2"></i>Lập Hợp đồng Thuê phòng mới
+                        <i class="fa-solid fa-file-circle-plus me-2"></i>Lập Hợp Đồng Thuê Phòng
                     </h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body">
+
+                    <!-- LỰA CHỌN LOẠI HỢP ĐỒNG: HĐ 1 (5 NGÀY - 50% CỌC) VS HĐ 2 (6 THÁNG - 100% CỌC + THU THÁNG ĐẦU) -->
+                    <div class="mb-3">
+                        <label class="form-label small fw-bold text-uppercase text-teal-main mb-2">
+                            <i class="fa-solid fa-layer-group me-1"></i> Chọn Loại Hợp Đồng <span class="text-danger">*</span>
+                        </label>
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <div class="contract-choice-card" id="card_choice_hd1" onclick="selectContractTypeRadio('deposit_hold')">
+                                    <div class="d-flex align-items-center gap-2 mb-2">
+                                        <input type="radio" name="contract_type" value="deposit_hold" id="radio_hd1" class="form-check-input mt-0" onchange="onContractTypeChanged()">
+                                        <label for="radio_hd1" class="fw-bold mb-0 text-dark cursor-pointer">
+                                            HỢP ĐỒNG 1: ĐẶT CỌC GIỮ CHỖ
+                                        </label>
+                                    </div>
+                                    <div class="small text-muted">
+                                        • Hiệu lực trong <strong>5 ngày</strong>.<br>
+                                        • Khách đóng <strong>1/2 tiền cọc (50%)</strong>.<br>
+                                        • Quá 5 ngày sẽ <strong>tự động hủy</strong> và lưu vào lịch sử.
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="contract-choice-card selected" id="card_choice_hd2" onclick="selectContractTypeRadio('official_lease')">
+                                    <div class="d-flex align-items-center gap-2 mb-2">
+                                        <input type="radio" name="contract_type" value="official_lease" id="radio_hd2" class="form-check-input mt-0" checked onchange="onContractTypeChanged()">
+                                        <label for="radio_hd2" class="fw-bold mb-0 text-success cursor-pointer">
+                                            HỢP ĐỒNG 2: THUÊ CHÍNH THỨC
+                                        </label>
+                                    </div>
+                                    <div class="small text-muted">
+                                        • Hoàn tất <strong>100% tiền cọc</strong> (= 1 tháng tiền phòng).<br>
+                                        • Hiệu lực hợp đồng <strong>6 tháng</strong>.<br>
+                                        • <span class="text-success fw-bold">Thu trước 01 tháng tiền phòng</span> tự động cộng vào Doanh thu.
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- THÔNG TIN PHÒNG VÀ KHÁCH THUÊ -->
                     <div class="row g-3">
                         <div class="col-md-6">
-                            <label class="form-label small fw-bold mb-1">Phòng trọ <span class="text-danger">*</span></label>
-                            <select name="room_id" id="contract_room_id" class="form-select" required onchange="onContractRoomSelect(this)">
-                                <option value="">-- Chọn phòng --</option>
-                                <?php foreach ($rooms as $r): ?>
-                                    <option value="<?= (int)$r['id'] ?>" data-price="<?= (float)$r['price'] ?>">
-                                        <?= htmlspecialchars($r['room_number']) ?> - <?= number_format((float)$r['price'], 0, ',', '.') ?> đ (<?= $r['status'] === 'available' ? 'Đang trống' : 'Đang thuê' ?>)
+                            <label class="form-label small fw-bold mb-1">
+                                Khách thuê <span class="text-danger">*</span>
+                                <span class="text-muted fw-normal" style="font-size:0.75rem;">(Chọn để tự động nhảy phòng đã đặt)</span>
+                            </label>
+                            <select name="tenant_id" id="contract_tenant_id" class="form-select" required onchange="onContractTenantSelect(this)">
+                                <option value="">-- Chọn khách thuê --</option>
+                                <?php foreach ($tenants as $t): ?>
+                                    <option value="<?= (int)$t['id'] ?>"
+                                            data-assigned-room-id="<?= (int)($t['assigned_room_id'] ?? 0) ?>"
+                                            data-assigned-room-price="<?= (float)($t['assigned_room_price'] ?? 0) ?>"
+                                            data-phone="<?= h($t['phone'] ?? '') ?>">
+                                        <?= h($t['full_name']) ?> - <?= h($t['phone']) ?>
+                                        <?= !empty($t['assigned_room_number']) ? ' (Đã chọn P.' . h($t['assigned_room_number']) . ')' : '' ?>
                                     </option>
                                 <?php endforeach; ?>
                             </select>
                         </div>
+
                         <div class="col-md-6">
-                            <label class="form-label small fw-bold mb-1">Khách thuê <span class="text-danger">*</span></label>
-                            <select name="tenant_id" class="form-select" required>
-                                <option value="">-- Chọn khách thuê --</option>
-                                <?php foreach ($tenants as $t): ?>
-                                    <option value="<?= (int)$t['id'] ?>">
-                                        <?= htmlspecialchars($t['full_name']) ?> - <?= htmlspecialchars($t['phone']) ?>
+                            <label class="form-label small fw-bold mb-1">
+                                Phòng trọ chỉ định <span class="text-danger">*</span>
+                            </label>
+                            <select name="room_id" id="contract_room_id" class="form-select" required onchange="onContractRoomSelect(this)">
+                                <option value="">-- Chọn phòng --</option>
+                                <?php foreach ($rooms as $r): ?>
+                                    <option value="<?= (int)$r['id'] ?>" data-price="<?= (float)$r['price'] ?>">
+                                        <?= h($r['room_number']) ?> - <?= number_format((float)$r['price'], 0, ',', '.') ?> đ (<?= $r['status'] === 'available' ? 'Đang trống' : 'Đang thuê' ?>)
                                     </option>
                                 <?php endforeach; ?>
                             </select>
                         </div>
 
                         <div class="col-md-3">
-                            <label class="form-label small fw-bold mb-1">Ngày đặt cọc <span class="text-danger">*</span></label>
-                            <input type="date" name="deposit_date" id="contract_deposit_date" class="form-control" value="<?= date('Y-m-d') ?>" required onchange="onDepositDateChange()">
+                            <label class="form-label small fw-bold mb-1">Ngày lập / Đặt cọc <span class="text-danger">*</span></label>
+                            <input type="date" name="deposit_date" id="contract_deposit_date" class="form-control" value="<?= date('Y-m-d') ?>" required>
                         </div>
+
                         <div class="col-md-3">
-                            <label class="form-label small fw-bold mb-1">Ngày bắt đầu <span class="text-danger">*</span></label>
-                            <input type="date" name="start_date" id="contract_start_date" class="form-control fw-bold text-teal-main" value="<?= $nextMonthFirstDay ?>" required onchange="syncContractEndDate()">
+                            <label class="form-label small fw-bold mb-1">Ngày bắt đầu tính <span class="text-danger">*</span></label>
+                            <input type="date" name="start_date" id="contract_start_date" class="form-control fw-bold text-teal-main" value="<?= date('Y-m-d') ?>" required onchange="syncContractDates()">
                         </div>
-                        <div class="col-md-3">
-                            <label class="form-label small fw-bold mb-1">Thời hạn thuê</label>
-                            <select name="duration_months" id="contract_duration_months" class="form-select" onchange="syncContractEndDate()">
-                                <option value="6">6 tháng</option>
-                                <option value="12" selected>12 tháng</option>
+
+                        <div class="col-md-3" id="duration_select_wrap">
+                            <label class="form-label small fw-bold mb-1">Thời hạn hợp đồng</label>
+                            <select name="duration_months" id="contract_duration_months" class="form-select" onchange="syncContractDates()">
+                                <option value="6" selected>6 tháng (Chuẩn)</option>
+                                <option value="12">12 tháng</option>
                                 <option value="24">24 tháng</option>
                             </select>
                         </div>
+
                         <div class="col-md-3">
                             <label class="form-label small fw-bold mb-1">Ngày kết thúc <span class="text-danger">*</span></label>
-                            <input type="date" name="end_date" id="contract_end_date" class="form-control bg-light fw-bold text-danger" value="<?= $nextYearEndDay ?>" required>
+                            <input type="date" name="end_date" id="contract_end_date" class="form-control bg-light fw-bold text-danger" value="<?= $sixMonthsEndDay ?>" required>
                         </div>
 
                         <div class="col-md-4">
                             <label class="form-label small fw-bold mb-1">Giá thuê/tháng (VNĐ) <span class="text-danger">*</span></label>
                             <input type="number" step="50000" min="0" name="monthly_rent" id="contract_monthly_rent" class="form-control" required oninput="syncDepositAndPreview()">
                         </div>
+
                         <div class="col-md-4">
-                            <label class="form-label small fw-bold mb-1">Tiền cọc (= 1 tháng)</label>
+                            <label class="form-label small fw-bold mb-1">
+                                Tiền đặt cọc thực thu
+                                <span class="badge bg-teal-main text-white rounded-pill ms-1" id="deposit_percent_badge">100% cọc</span>
+                            </label>
                             <input type="number" name="deposit_amount" id="contract_deposit" class="form-control bg-light fw-bold text-teal-main" value="0" readonly>
                         </div>
+
                         <div class="col-md-4">
-                            <label class="form-label small fw-bold mb-1">Hình thức ký hợp đồng</label>
+                            <label class="form-label small fw-bold mb-1">Hình thức thực hiện</label>
                             <select name="signature_type" class="form-select">
-                                <option value="online">Hợp đồng Điện tử (Ký Online)</option>
-                                <option value="paper">Hợp đồng Ký giấy (In &amp; Lưu Scan)</option>
+                                <option value="paper" selected>Ký Giấy A4 Trực Tiếp (Có lưu Scan)</option>
+                                <option value="online">Chữ ký điện tử Online</option>
                             </select>
                         </div>
 
@@ -558,34 +720,38 @@ $nextYearEndDay = date('Y-m-01', strtotime($nextMonthFirstDay . ' +12 months'));
                         </div>
                         <div class="col-md-4">
                             <label class="form-label small fw-bold mb-1">Phí dịch vụ (đ/tháng)</label>
-                            <input type="number" name="service_fee" id="contract_service_fee" class="form-control" value="150000" oninput="previewMoveInCalculation()">
+                            <input type="number" name="service_fee" id="contract_service_fee" class="form-control" value="150000" oninput="syncDepositAndPreview()">
                         </div>
 
+                        <!-- HỘP DỰ TÍNH THU TIỀN VÀ CỘNG VÀO DOANH THU -->
                         <div class="col-12">
                             <div id="move_in_preview_box" class="p-3 rounded-4 small fw-semibold" style="background:#f0fdfa;border:1.5px solid #99f6e4;color:#0f766e;">
-                                <i class="fa-solid fa-calculator me-1"></i> Chọn phòng để tự động tính Tiền cọc 1 tháng và Hóa đơn đầu kỳ (vào ở ≤ ngày 15 tính 100%, sau ngày 15 tính 50% tiền phòng).
+                                <i class="fa-solid fa-calculator me-1"></i> Chọn phòng và khách thuê để tự động tính tiền cọc và tiền phòng đầu kỳ.
                             </div>
                         </div>
 
                         <div class="col-12">
                             <label class="form-label small fw-bold mb-1">Ghi chú thỏa thuận riêng</label>
-                            <input type="text" name="notes" class="form-control" placeholder="VD: Bàn giao 02 thẻ từ, điều hòa, bình nóng lạnh...">
+                            <input type="text" name="notes" id="contract_notes" class="form-control" placeholder="VD: Bàn giao chìa khóa, 02 thẻ từ thang máy...">
                         </div>
                     </div>
                 </div>
                 <div class="modal-footer border-top-0">
                     <button type="button" class="btn btn-light rounded-pill px-4 fw-bold" data-bs-dismiss="modal">Hủy</button>
-                    <button type="submit" class="btn-teal-custom"><i class="fa-solid fa-pen-to-square me-2"></i> Tạo &amp; Mở Bản Hợp đồng để Ký</button>
+                    <button type="submit" class="btn-teal-custom">
+                        <i class="fa-solid fa-pen-to-square me-2"></i> Tạo Hợp Đồng &amp; Mở Bản In Ký
+                    </button>
                 </div>
             </form>
         </div>
     </div>
 
+    <!-- FOOTER -->
     <footer class="footer-custom container-fluid px-4 px-xl-5 d-flex justify-content-between align-items-center mt-4">
         <div><i class="fa-solid fa-building me-1" style="color:var(--teal-main);"></i> © 2026 StayMate - Quản lý Nhà trọ Chuyên nghiệp</div>
         <div class="d-flex gap-4">
-            <span><i class="fa-solid fa-shield-halved me-1" style="color:var(--teal-main);"></i> WAMP MVC Architecture</span>
-            <span><i class="fa-solid fa-file-signature me-1 text-teal-main"></i> Hợp đồng Điện tử &amp; Quyết toán Tự động</span>
+            <span><i class="fa-solid fa-shield-halved me-1" style="color:var(--teal-main);"></i> MVC Architecture</span>
+            <span><i class="fa-solid fa-file-signature me-1 text-teal-main"></i> Hợp đồng 1 (5N) &amp; Hợp đồng 2 (6T)</span>
         </div>
     </footer>
 
@@ -593,6 +759,48 @@ $nextYearEndDay = date('Y-m-01', strtotime($nextMonthFirstDay . ' +12 months'));
     <script>
     function formatVnd(n) {
         return new Intl.NumberFormat('vi-VN').format(Math.round(n || 0)) + ' đ';
+    }
+
+    function selectContractTypeRadio(type) {
+        if (type === 'deposit_hold') {
+            document.getElementById('radio_hd1').checked = true;
+        } else {
+            document.getElementById('radio_hd2').checked = true;
+        }
+        onContractTypeChanged();
+    }
+
+    function onContractTypeChanged() {
+        const isHd1 = document.getElementById('radio_hd1').checked;
+        const card1 = document.getElementById('card_choice_hd1');
+        const card2 = document.getElementById('card_choice_hd2');
+        const durationWrap = document.getElementById('duration_select_wrap');
+
+        if (isHd1) {
+            card1.classList.add('selected');
+            card2.classList.remove('selected');
+            durationWrap.style.display = 'none';
+        } else {
+            card1.classList.remove('selected');
+            card2.classList.add('selected');
+            durationWrap.style.display = 'block';
+        }
+
+        syncContractDates();
+        syncDepositAndPreview();
+    }
+
+    // Tự động nhảy phòng khi chọn khách thuê
+    function onContractTenantSelect(selectEl) {
+        const opt = selectEl.options[selectEl.selectedIndex];
+        if (!opt) return;
+
+        const assignedRoomId = opt.dataset.assignedRoomId;
+        if (assignedRoomId && parseInt(assignedRoomId, 10) > 0) {
+            const roomSelect = document.getElementById('contract_room_id');
+            roomSelect.value = assignedRoomId;
+            onContractRoomSelect(roomSelect);
+        }
     }
 
     function onContractRoomSelect(selectEl) {
@@ -603,61 +811,101 @@ $nextYearEndDay = date('Y-m-01', strtotime($nextMonthFirstDay . ' +12 months'));
         }
     }
 
-    function syncDepositAndPreview() {
-        const rent = parseFloat(document.getElementById('contract_monthly_rent').value || 0);
-        document.getElementById('contract_deposit').value = rent;
+    function syncContractDates() {
+        const startDateVal = document.getElementById('contract_start_date').value || new Date().toISOString().split('T')[0];
+        const isHd1 = document.getElementById('radio_hd1').checked;
+        const start = new Date(startDateVal);
+
+        if (isHd1) {
+            // HĐ 1: Đúng 5 ngày
+            const end = new Date(start);
+            end.setDate(end.getDate() + 5);
+            document.getElementById('contract_end_date').value = end.toISOString().split('T')[0];
+        } else {
+            // HĐ 2: 6 tháng (hoặc thời hạn chọn)
+            const months = parseInt(document.getElementById('contract_duration_months')?.value || '6', 10);
+            const end = new Date(start);
+            end.setMonth(end.getMonth() + months);
+            document.getElementById('contract_end_date').value = end.toISOString().split('T')[0];
+        }
+
         previewMoveInCalculation();
     }
 
-    function onDepositDateChange() {
-        const depVal = document.getElementById('contract_deposit_date').value;
-        if (!depVal) return;
-        const parts = depVal.split('-');
-        let y = parseInt(parts[0], 10);
-        let m = parseInt(parts[1], 10) + 1;
-        if (m > 12) { m = 1; y += 1; }
-        document.getElementById('contract_start_date').value = `${y}-${String(m).padStart(2, '0')}-01`;
-        syncContractEndDate();
-    }
+    function syncDepositAndPreview() {
+        const rent = parseFloat(document.getElementById('contract_monthly_rent').value || 0);
+        const isHd1 = document.getElementById('radio_hd1').checked;
+        const depPercent = isHd1 ? 50 : 100;
+        const deposit = isHd1 ? Math.round(rent * 0.5) : rent;
 
-    function syncContractEndDate() {
-        const startVal = document.getElementById('contract_start_date').value;
-        const months = parseInt(document.getElementById('contract_duration_months')?.value || '12', 10);
-        if (!startVal) return;
+        document.getElementById('contract_deposit').value = deposit;
+        document.getElementById('deposit_percent_badge').textContent = depPercent + '% cọc (' + formatVnd(deposit) + ')';
 
-        const parts = startVal.split('-');
-        let y = parseInt(parts[0], 10);
-        let m = parseInt(parts[1], 10);
-        let d = parts[2] || '01';
-
-        const totalMonths = (y * 12 + (m - 1)) + months;
-        const endY = Math.floor(totalMonths / 12);
-        const endM = (totalMonths % 12) + 1;
-        document.getElementById('contract_end_date').value = `${endY}-${String(endM).padStart(2, '0')}-${d}`;
         previewMoveInCalculation();
     }
 
     function previewMoveInCalculation() {
         const rent = parseFloat(document.getElementById('contract_monthly_rent').value || 0);
         const service = parseFloat(document.getElementById('contract_service_fee').value || 0);
-        const startDate = document.getElementById('contract_start_date').value;
+        const isHd1 = document.getElementById('radio_hd1').checked;
         const box = document.getElementById('move_in_preview_box');
-        if (!startDate || rent <= 0) return;
+        if (rent <= 0) return;
 
-        const day = parseInt(startDate.split('-')[2], 10);
-        const isAfter15 = day > 15;
-        const roomFee = isAfter15 ? (rent / 2) : rent;
-        const deposit = rent;
-        const total = roomFee + service + deposit;
+        if (isHd1) {
+            const deposit = Math.round(rent * 0.5);
+            box.style.background = '#fefce8';
+            box.style.borderColor = '#fef08a';
+            box.style.color = '#854d0e';
+            box.innerHTML = `
+                <i class="fa-solid fa-clock text-warning me-1"></i>
+                <strong>HỢP ĐỒNG 1: ĐẶT CỌC GIỮ CHỖ (HIỆU LỰC 5 NGÀY)</strong><br>
+                • Số tiền khách đóng: <strong>${formatVnd(deposit)}</strong> (50% tiền cọc).<br>
+                • Thời hạn giữ chỗ: <strong>5 ngày</strong> (từ ngày bắt đầu). Quá 5 ngày hợp đồng sẽ <strong>tự động hủy</strong> và lưu vào lịch sử theo quy định.
+            `;
+        } else {
+            const deposit = rent;
+            const totalFirstMonth = deposit + rent;
+            box.style.background = '#f0fdfa';
+            box.style.borderColor = '#99f6e4';
+            box.style.color = '#0f766e';
+            box.innerHTML = `
+                <i class="fa-solid fa-shield-halved text-success me-1"></i>
+                <strong>HỢP ĐỒNG 2: THUÊ CHÍNH THỨC (HIỆU LỰC 6 THÁNG)</strong><br>
+                • Tiền cọc 100%: <strong>${formatVnd(deposit)}</strong> (= 01 tháng tiền phòng, cộng vào Doanh thu cọc).<br>
+                • <strong class="text-success">Thu trước 01 tháng tiền phòng:</strong> <strong>${formatVnd(rent)}</strong> (Tự động tạo hóa đơn ĐÃ THANH TOÁN &amp; cộng vào Doanh thu thực thu).<br>
+                &rarr; <strong>Tổng số tiền thu khi ký HĐ 2:</strong> <span class="fs-6 text-danger fw-black">${formatVnd(totalFirstMonth)}</span>.
+            `;
+        }
+    }
 
-        box.innerHTML = `
-            <i class="fa-solid fa-calculator me-1"></i>
-            <strong>Dự tính Hóa đơn đầu kỳ (vào ở ngày ${day}):</strong>
-            Tiền phòng (${isAfter15 ? '50% - sau ngày 15' : '100% - từ 01→15'}): <strong>${formatVnd(roomFee)}</strong>
-            + Dịch vụ: <strong>${formatVnd(service)}</strong>
-            + Cọc 1 tháng: <strong>${formatVnd(deposit)}</strong>
-            = <strong class="text-danger fs-6">${formatVnd(total)}</strong>
-        `;
+    // Nút Ký tiếp HĐ 2 trên bảng
+    function upgradeToOfficial(contractId, tenantId, roomId, rent) {
+        document.getElementById('contract_parent_id').value = contractId;
+        selectContractTypeRadio('official_lease');
+
+        const tenantSel = document.getElementById('contract_tenant_id');
+        if (tenantSel) {
+            tenantSel.value = tenantId;
+        }
+
+        const roomSel = document.getElementById('contract_room_id');
+        if (roomSel) {
+            roomSel.value = roomId;
+        }
+
+        document.getElementById('contract_monthly_rent').value = rent;
+        document.getElementById('contract_notes').value = 'Kế thừa và chuyển tiếp từ HĐ giữ chỗ #' + contractId + ' (hoàn tất nốt 50% cọc)';
+
+        syncContractDates();
+        syncDepositAndPreview();
+
+        new bootstrap.Modal(document.getElementById('contractModal')).show();
+    }
+
+    function resetContractModal() {
+        document.getElementById('contract_parent_id').value = '';
+        selectContractTypeRadio('official_lease');
+        syncContractDates();
     }
 
     function openTerminateModal(id, code, room, endDate, deposit) {
@@ -686,6 +934,36 @@ $nextYearEndDay = date('Y-m-01', strtotime($nextMonthFirstDay . ' +12 months'));
             alertBox.innerHTML = `<i class="fa-solid fa-circle-xmark me-1"></i> Trả phòng trước hạn HĐ: <strong>Khách thuê mất tiền cọc (${formatVnd(deposit)})</strong> theo điều khoản hợp đồng.`;
         }
     }
+
+    // Auto-open modal if URL parameters exist
+    window.addEventListener('DOMContentLoaded', () => {
+        const urlParams = new URLSearchParams(window.location.search);
+        const preTenant = urlParams.get('tenant_id');
+        const preRoom = urlParams.get('room_id');
+        const preUpgrade = urlParams.get('upgrade_from');
+        const preType = urlParams.get('type');
+
+        if (preTenant || preRoom || preUpgrade) {
+            const modal = new bootstrap.Modal(document.getElementById('contractModal'));
+            if (preUpgrade) {
+                document.getElementById('contract_parent_id').value = preUpgrade;
+                selectContractTypeRadio('official_lease');
+            } else if (preType === 'deposit_hold') {
+                selectContractTypeRadio('deposit_hold');
+            }
+            if (preTenant) {
+                document.getElementById('contract_tenant_id').value = preTenant;
+            }
+            if (preRoom) {
+                const roomSel = document.getElementById('contract_room_id');
+                roomSel.value = preRoom;
+                onContractRoomSelect(roomSel);
+            }
+            syncContractDates();
+            syncDepositAndPreview();
+            modal.show();
+        }
+    });
     </script>
 </body>
 </html>

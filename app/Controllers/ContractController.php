@@ -7,7 +7,12 @@ class ContractController {
     public const STATUSES = [
         'active'     => 'Đang hiệu lực',
         'terminated' => 'Đã thanh lý',
-        'expired'    => 'Hết hạn',
+        'expired'    => 'Hết hạn (Đã hủy)',
+    ];
+
+    public const CONTRACT_TYPES = [
+        'deposit_hold'   => 'HĐ 1: Đặt cọc giữ chỗ (5 ngày - 50% cọc)',
+        'official_lease' => 'HĐ 2: Thuê chính thức (6 tháng - 100% cọc & thu trước 1 tháng phòng)',
     ];
 
     public function __construct() {
@@ -17,13 +22,22 @@ class ContractController {
     public function index() {
         $keyword = trim($_GET['keyword'] ?? '');
         $status = trim($_GET['status'] ?? '');
+        $contractType = trim($_GET['contract_type'] ?? '');
         if (!array_key_exists($status, self::STATUSES)) $status = '';
+        if (!array_key_exists($contractType, self::CONTRACT_TYPES)) $contractType = '';
 
-        $contracts = $this->contractModel->getAllContracts($keyword, $status);
+        $contracts = $this->contractModel->getAllContracts($keyword, $status, $contractType);
         $stats = $this->contractModel->getContractStats();
         $rooms = $this->contractModel->getRooms();
         $tenants = $this->contractModel->getTenants();
         $statuses = self::STATUSES;
+        $contractTypes = self::CONTRACT_TYPES;
+
+        // Xử lý pre-fill nếu được chuyển từ trang Khách thuê hoặc trang Xem phòng
+        $preTenantId = (int)($_GET['tenant_id'] ?? 0);
+        $preRoomId = (int)($_GET['room_id'] ?? 0);
+        $preParentId = (int)($_GET['upgrade_from'] ?? 0);
+        $preContractType = trim($_GET['type'] ?? '');
 
         $flash_error = $_SESSION['flash_error'] ?? '';
         $flash_success = $_SESSION['flash_success'] ?? '';
@@ -33,7 +47,7 @@ class ContractController {
         require_once __DIR__ . '/../views/contracts/index.php';
     }
 
-    // Lập hợp đồng mới (theo quy tắc của quanly-nhatro cũ)
+    // Lập hợp đồng mới (HĐ 1 hoặc HĐ 2)
     public function store() {
         if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
             $this->redirect('index.php?route=contracts');
@@ -48,19 +62,28 @@ class ContractController {
         try {
             $contractId = $this->contractModel->createContract($data);
             $contract = $this->contractModel->getContractById($contractId);
-            $moveInCalc = $this->contractModel->calculateMoveInAmounts(
-                (float)$data['monthly_rent'],
-                (float)$data['service_fee'],
-                (string)$data['start_date']
-            );
-            $_SESSION['flash_success'] = 'Đã lập hợp đồng ' . ($contract['contract_code'] ?? '') . '! ' . $moveInCalc['rule_description'];
+            $code = $contract['contract_code'] ?? ('#' . $contractId);
+
+            if (($data['contract_type'] ?? '') === 'deposit_hold') {
+                $depFmt = number_format((float)$contract['deposit_amount'], 0, ',', '.') . ' đ';
+                $_SESSION['flash_success'] = "Đã lập Hợp đồng 1 (Đặt cọc giữ chỗ 5 ngày) {$code}! Khách đã đóng 50% tiền cọc ({$depFmt}). Hợp đồng có hiệu lực trong 5 ngày và sẽ tự động hủy nếu quá hạn.";
+            } else {
+                $depFmt = number_format((float)$contract['deposit_amount'], 0, ',', '.') . ' đ';
+                $rentFmt = number_format((float)$contract['monthly_rent'], 0, ',', '.') . ' đ';
+                $msg = "Đã lập Hợp đồng 2 (Thuê chính thức 6 tháng) {$code}! Đã hoàn thành 100% tiền cọc ({$depFmt}) và thu trước 01 tháng tiền phòng ({$rentFmt}) tự động cộng vào Doanh thu.";
+                if (!empty($data['parent_contract_id'])) {
+                    $msg .= " (Kế thừa từ HĐ giữ chỗ #" . (int)$data['parent_contract_id'] . ")";
+                }
+                $_SESSION['flash_success'] = $msg;
+            }
+
             $this->redirect('index.php?route=contracts/detail&id=' . $contractId);
         } catch (PDOException $e) {
             $this->redirect('index.php?route=contracts', 'Không thể lưu hợp đồng: ' . $e->getMessage());
         }
     }
 
-    // Xem văn bản hợp đồng đầy đủ điều khoản + Ký điện tử (Online) + In A4 + Lưu bản Scan
+    // Xem văn bản hợp đồng đầy đủ điều khoản + Ký giấy in A4 + Ký online + Lưu bản Scan
     public function detail() {
         $id = (int)($_GET['id'] ?? 0);
         $contract = $id > 0 ? $this->contractModel->getContractById($id) : null;
@@ -69,11 +92,82 @@ class ContractController {
         }
 
         $statuses = self::STATUSES;
+        $contractTypes = self::CONTRACT_TYPES;
         $flash_error = $_SESSION['flash_error'] ?? '';
         $flash_success = $_SESSION['flash_success'] ?? '';
         unset($_SESSION['flash_error'], $_SESSION['flash_success']);
 
         require_once __DIR__ . '/../views/contracts/detail.php';
+    }
+
+    // Trang dành riêng cho phân quyền khách thuê xem hợp đồng
+    public function tenantContract() {
+        $contractId = (int)($_GET['id'] ?? 0);
+        $tenantId = (int)($_GET['tenant_id'] ?? 0);
+
+        if ($contractId > 0) {
+            $contract = $this->contractModel->getContractById($contractId);
+        } elseif ($tenantId > 0) {
+            $contract = $this->contractModel->getContractByTenantId($tenantId);
+        } elseif (!empty($_SESSION['user']['id']) && $_SESSION['user']['role'] === 'tenant') {
+            $contract = $this->contractModel->getContractByTenantId((int)$_SESSION['user']['id']);
+        } else {
+            $contract = null;
+        }
+
+        require_once __DIR__ . '/../views/contracts/tenant_view.php';
+    }
+
+    // REST API endpoint cho bạn làm phân quyền khách thuê gọi lấy dữ liệu hợp đồng
+    public function apiTenantContract() {
+        header('Content-Type: application/json; charset=utf-8');
+        $contractId = (int)($_GET['id'] ?? 0);
+        $tenantId = (int)($_GET['tenant_id'] ?? 0);
+
+        if ($contractId > 0) {
+            $contract = $this->contractModel->getContractById($contractId);
+        } elseif ($tenantId > 0) {
+            $contract = $this->contractModel->getContractByTenantId($tenantId);
+        } else {
+            $contract = null;
+        }
+
+        if (!$contract) {
+            echo json_encode([
+                'success' => false,
+                'message' => 'Không tìm thấy hợp đồng cho khách thuê này.'
+            ], JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT);
+            exit;
+        }
+
+        echo json_encode([
+            'success'               => true,
+            'contract_id'           => (int)$contract['id'],
+            'contract_code'         => $contract['contract_code'],
+            'contract_type'         => $contract['contract_type'],
+            'contract_type_label'   => $contract['contract_type'] === 'deposit_hold' ? 'HĐ 1 (Đặt cọc giữ chỗ 5 ngày)' : 'HĐ 2 (Thuê chính thức 6 tháng)',
+            'room_id'               => (int)$contract['room_id'],
+            'room_number'           => $contract['room_number'],
+            'tenant_id'             => (int)$contract['tenant_id'],
+            'tenant_name'           => $contract['full_name'],
+            'tenant_phone'          => $contract['phone'],
+            'tenant_email'          => $contract['email'],
+            'start_date'            => $contract['start_date'],
+            'end_date'              => $contract['end_date'],
+            'monthly_rent'          => (float)$contract['monthly_rent'],
+            'deposit_amount'        => (float)$contract['deposit_amount'],
+            'deposit_paid_percent'  => (int)$contract['deposit_paid_percent'],
+            'deposit_status'        => $contract['deposit_status'],
+            'first_month_rent_paid' => (int)($contract['first_month_rent_paid'] ?? 0),
+            'first_month_invoice_id'=> $contract['first_month_invoice_id'],
+            'signature_type'        => $contract['signature_type'],
+            'signature_status'      => $contract['signature_status'],
+            'scan_file'             => $contract['scan_file'],
+            'has_scan'              => !empty($contract['scan_file']),
+            'status'                => $contract['status'],
+            'days_left'             => (int)($contract['days_left'] ?? 0),
+        ], JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT);
+        exit;
     }
 
     // Ký hợp đồng điện tử (Online Canvas)
@@ -110,7 +204,7 @@ class ContractController {
         }
 
         if (empty($_FILES['scan_file']['tmp_name']) || $_FILES['scan_file']['error'] !== UPLOAD_ERR_OK) {
-            $this->redirect('index.php?route=contracts/detail&id=' . $id, 'Vui lòng chọn file ảnh hoặc PDF bản scan hợp đồng.');
+            $this->redirect('index.php?route=contracts/detail&id=' . $id, 'Vui lòng chọn file ảnh hoặc PDF bản scan hợp đồng đã ký.');
         }
 
         $ext = strtolower(pathinfo($_FILES['scan_file']['name'], PATHINFO_EXTENSION));
@@ -130,14 +224,14 @@ class ContractController {
 
         if (move_uploaded_file($_FILES['scan_file']['tmp_name'], $targetPath)) {
             $this->contractModel->saveScanFile($id, 'public/uploads/contracts/' . $fileName);
-            $_SESSION['flash_success'] = 'Đã lưu bản Scan hợp đồng ký giấy thành công!';
+            $_SESSION['flash_success'] = 'Đã lưu bản Scan hợp đồng ký giấy thành công! Khách thuê có thể xem ngay trên cổng khách thuê.';
         } else {
-            $_SESSION['flash_error'] = 'Không thể lưu file tải lên.';
+            $_SESSION['flash_error'] = 'Không thể lưu file tải lên vào máy chủ.';
         }
         $this->redirect('index.php?route=contracts/detail&id=' . $id);
     }
 
-    // Thanh lý hợp đồng (tự động tính hoàn cọc 100% hoặc mất cọc)
+    // Thanh lý hợp đồng
     public function terminate() {
         if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
             $this->redirect('index.php?route=contracts');
@@ -165,7 +259,7 @@ class ContractController {
             $this->redirect('index.php?route=contracts');
         }
         $id = (int)($_POST['id'] ?? 0);
-        $months = (int)($_POST['renewal_months'] ?? 12);
+        $months = (int)($_POST['renewal_months'] ?? 6);
         if ($this->contractModel->renewContract($id, $months)) {
             $c = $this->contractModel->getContractById($id);
             $_SESSION['flash_success'] = 'Đã gia hạn hợp đồng ' . ($c['contract_code'] ?? '') . ' thêm ' . $months . ' tháng (đến ngày ' . date('d/m/Y', strtotime($c['end_date'])) . ')!';
@@ -186,6 +280,7 @@ class ContractController {
         $rooms = $this->contractModel->getRooms();
         $tenants = $this->contractModel->getTenants();
         $statuses = self::STATUSES;
+        $contractTypes = self::CONTRACT_TYPES;
         $flash_error = $_SESSION['flash_error'] ?? '';
         unset($_SESSION['flash_error']);
 
@@ -207,14 +302,14 @@ class ContractController {
 
         try {
             $this->contractModel->updateContract($id, $data);
-            $_SESSION['flash_success'] = 'Cập nhật hợp đồng thành công (Tiền cọc = 1 tháng tiền phòng)!';
+            $_SESSION['flash_success'] = 'Cập nhật thông tin hợp đồng thành công!';
         } catch (PDOException $e) {
             $_SESSION['flash_error'] = 'Không thể cập nhật hợp đồng: ' . $e->getMessage();
         }
         $this->redirect('index.php?route=contracts');
     }
 
-    // Xóa hợp đồng (POST)
+    // Xóa hợp đồng
     public function delete() {
         $id = (int)($_POST['id'] ?? ($_GET['id'] ?? 0));
         if ($id > 0) {
@@ -222,7 +317,7 @@ class ContractController {
                 $this->contractModel->deleteContract($id);
                 $_SESSION['flash_success'] = 'Đã xóa hợp đồng thành công.';
             } catch (PDOException $e) {
-                $_SESSION['flash_error'] = 'Không thể xóa hợp đồng đã phát sinh hóa đơn.';
+                $_SESSION['flash_error'] = 'Không thể xóa hợp đồng đã phát sinh hóa đơn liên quan.';
             }
         }
         $this->redirect('index.php?route=contracts');
@@ -231,25 +326,39 @@ class ContractController {
     // ===== Hàm hỗ trợ =====
 
     private function getFormData() {
-        $monthlyRent = (float)($_POST['monthly_rent'] ?? ($_POST['deposit_amount'] ?? 0));
-        $depositAmount = isset($_POST['deposit_amount']) && $_POST['deposit_amount'] !== ''
-            ? (float)$_POST['deposit_amount']
-            : $monthlyRent;
+        $contractType = trim($_POST['contract_type'] ?? 'official_lease');
+        $monthlyRent = (float)($_POST['monthly_rent'] ?? 0);
+        $parentContractId = !empty($_POST['parent_contract_id']) ? (int)$_POST['parent_contract_id'] : null;
+
+        $startDate = trim($_POST['start_date'] ?? date('Y-m-d'));
+        if ($contractType === 'deposit_hold') {
+            $endDate = date('Y-m-d', strtotime($startDate . ' + 5 days'));
+            $depositAmount = round($monthlyRent * 0.5, 2);
+            $depositPaidPercent = 50;
+        } else {
+            $endDate = trim($_POST['end_date'] ?? date('Y-m-d', strtotime($startDate . ' + 6 months')));
+            $depositAmount = $monthlyRent;
+            $depositPaidPercent = 100;
+        }
 
         return [
-            'room_id'          => (int)($_POST['room_id'] ?? 0),
-            'tenant_id'        => (int)($_POST['tenant_id'] ?? 0),
-            'deposit_date'     => trim($_POST['deposit_date'] ?? date('Y-m-d')),
-            'start_date'       => trim($_POST['start_date'] ?? ''),
-            'end_date'         => trim($_POST['end_date'] ?? ''),
-            'monthly_rent'     => $monthlyRent,
-            'deposit_amount'   => $depositAmount,
-            'electricity_rate' => (float)($_POST['electricity_rate'] ?? 3500),
-            'water_rate'       => (float)($_POST['water_rate'] ?? 20000),
-            'service_fee'      => (float)($_POST['service_fee'] ?? 150000),
-            'signature_type'   => trim($_POST['signature_type'] ?? 'online'),
-            'status'           => trim($_POST['status'] ?? 'active'),
-            'notes'            => trim($_POST['notes'] ?? ''),
+            'contract_code'        => trim($_POST['contract_code'] ?? ''),
+            'contract_type'        => $contractType,
+            'parent_contract_id'   => $parentContractId,
+            'room_id'              => (int)($_POST['room_id'] ?? 0),
+            'tenant_id'            => (int)($_POST['tenant_id'] ?? 0),
+            'deposit_date'         => trim($_POST['deposit_date'] ?? date('Y-m-d')),
+            'start_date'           => $startDate,
+            'end_date'             => $endDate,
+            'monthly_rent'         => $monthlyRent,
+            'deposit_amount'       => $depositAmount,
+            'deposit_paid_percent' => $depositPaidPercent,
+            'electricity_rate'     => (float)($_POST['electricity_rate'] ?? 3500),
+            'water_rate'           => (float)($_POST['water_rate'] ?? 20000),
+            'service_fee'          => (float)($_POST['service_fee'] ?? 150000),
+            'signature_type'       => trim($_POST['signature_type'] ?? 'paper'),
+            'status'               => trim($_POST['status'] ?? 'active'),
+            'notes'                => trim($_POST['notes'] ?? ''),
         ];
     }
 
@@ -272,10 +381,15 @@ class ContractController {
         if (!array_key_exists($data['status'], self::STATUSES)) {
             return 'Trạng thái hợp đồng không hợp lệ.';
         }
+
+        // Kiểm tra trùng lặp phòng nếu hợp đồng đang active
         if ($data['status'] === 'active') {
-            $active = $this->contractModel->findActiveByRoomId($data['room_id'], $exclude_id);
-            if ($active && $this->contractModel->hasOverlap($data['room_id'], $data['start_date'], $data['end_date'], $exclude_id)) {
-                return 'Phòng này đang có hợp đồng hiệu lực (' . ($active['contract_code'] ?? ('#' . $active['id'])) . '). Vui lòng thanh lý trước khi tạo mới.';
+            $parentContractId = (int)($data['parent_contract_id'] ?? 0);
+            $effectiveExcludeId = $exclude_id ?: $parentContractId;
+
+            $active = $this->contractModel->findActiveByRoomId($data['room_id'], $effectiveExcludeId);
+            if ($active && $this->contractModel->hasOverlap($data['room_id'], $data['start_date'], $data['end_date'], $effectiveExcludeId)) {
+                return 'Phòng này đang có hợp đồng hiệu lực (' . ($active['contract_code'] ?? ('#' . $active['id'])) . '). Vui lòng thanh lý hoặc nâng cấp hợp đồng trước khi tạo mới.';
             }
         }
         return '';
