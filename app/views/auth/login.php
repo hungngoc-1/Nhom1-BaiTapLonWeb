@@ -390,14 +390,7 @@
                     <button type="submit" class="btn-login">Đăng nhập <i class="bi bi-arrow-right"></i></button>
                 </form>
 
-                <!-- Thanh điền nhanh tài khoản từ CSDL -->
-                <div class="quick-accounts">
-                    <span class="quick-accounts-label"><i class="bi bi-database-check"></i> Tài khoản CSDL:</span>
-                    <div style="display:flex; gap:6px; flex-wrap:wrap;">
-                        <button type="button" class="btn-quick-fill" onclick="fillLogin('admin01', 'admin01')">Admin (admin01)</button>
-                        <button type="button" class="btn-quick-fill" onclick="openForgotModal()">DS Tài khoản & Khôi phục MK</button>
-                    </div>
-                </div>
+                
                 
                 <div class="card-footer-text">© <?= date('Y') ?> StayMate. Hệ thống quản lý phòng trọ.</div>
             </div>

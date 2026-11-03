@@ -25,11 +25,18 @@ require_once __DIR__ . '/app/Controllers/TenantController.php';
 require_once __DIR__ . '/app/Controllers/ContractController.php';
 require_once __DIR__ . '/app/Controllers/UtilitiesController.php';
 require_once __DIR__ . '/app/Controllers/InvoiceController.php';
+require_once __DIR__ . '/app/Controllers/AccountController.php';
 
 // ==========================================
 // 2. BỘ ĐIỀU HƯỚNG CÁC TRANG (ROUTER)
 // ==========================================
 switch ($route) {
+    // --- QUẢN LÝ TÀI KHOẢN (ADMIN & QUẢN LÝ) ---
+    case 'accounts':
+    case 'users':
+        (new AccountController())->index();
+        break;
+
     case 'dashboard':
         $dashboardController = new DashboardController();
         $dashboardController->index();
@@ -113,6 +120,16 @@ switch ($route) {
     case 'contracts/delete': // Xử lý khi bấm nút Xóa (POST)
         $contractController = new ContractController();
         $contractController->delete();
+        break;
+
+    case 'tenant/contract': // Xem hợp đồng dành cho phân quyền khách thuê
+        $contractController = new ContractController();
+        $contractController->tenantContract();
+        break;
+
+    case 'api/tenant/contract': // API JSON dành cho phân quyền khách thuê
+        $contractController = new ContractController();
+        $contractController->apiTenantContract();
         break;
 
     // --- PHÂN HỆ ĐIỆN NƯỚC ---
