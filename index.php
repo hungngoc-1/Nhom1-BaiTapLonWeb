@@ -21,6 +21,7 @@ if ($route === 'auth/logout') {
 require_once __DIR__ . '/app/Controllers/DashboardController.php';
 require_once __DIR__ . '/app/Controllers/AuthController.php';
 require_once __DIR__ . '/app/Controllers/RoomController.php';
+require_once __DIR__ . '/app/Controllers/TenantController.php';
 require_once __DIR__ . '/app/Controllers/ContractController.php';
 require_once __DIR__ . '/app/Controllers/UtilitiesController.php';
 require_once __DIR__ . '/app/Controllers/InvoiceController.php';
@@ -58,7 +59,7 @@ switch ($route) {
 
     // --- PHÂN HỆ QUẢN LÝ KHÁCH THUÊ (ĐANG XÂY DỰNG) ---
     case 'tenants':
-        showPlaceholder('Quản lý Khách thuê');
+        (new TenantController())->index();
         break;
         
     // ==========================================
@@ -155,7 +156,13 @@ switch ($route) {
         break;
 
     case 'reports':
-        showPlaceholder('Báo cáo thống kê');
+        header("Location: index.php?route=overview");
+        exit;
+
+    case 'web360':
+    case 'xemphong':
+        header("Location: TrangXemPhong/");
+        exit;
         break;
 
     default:
