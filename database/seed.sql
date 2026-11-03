@@ -1,4 +1,4 @@
-﻿USE `quan_ly_nha_tro`;
+USE `quan_ly_nha_tro`;
 
 -- 1. TÀI KHOẢN (Thêm nhiều khách để luân chuyển phòng)
 INSERT INTO `users` (`username`, `password`, `full_name`, `phone`, `email`, `role`) VALUES
@@ -25,13 +25,19 @@ INSERT INTO `services` (`service_name`, `unit_price`, `unit`) VALUES
 ('Rác', 50000, 'Tháng'),
 ('Internet', 100000, 'Tháng');
 
--- 4. HỢP ĐỒNG (Tạo kịch bản khách thuê dài, khách vừa vào, khách đã đi)
-INSERT INTO `contracts` (`room_id`, `tenant_id`, `start_date`, `end_date`, `deposit_amount`, `status`) VALUES
-(1, 2, '2023-01-01', '2023-12-31', 3000000, 'active'),       -- P101 ở lâu dài
-(3, 3, '2023-05-01', '2024-05-01', 3500000, 'active'),       -- P201 ở từ tháng 5
-(2, 4, '2022-01-01', '2023-06-30', 2500000, 'terminated'),   -- Khách cũ P102 đi hồi tháng 6
-(2, 5, '2023-08-01', '2024-08-01', 2500000, 'active'),       -- Khách mới P102 vào từ tháng 8
-(5, 6, '2023-03-01', '2024-03-01', 4000000, 'active');       -- P301 ở lâu dài
+-- 4. HỢP ĐỒNG (Đầy đủ các trường mới: Mã HĐ, Ngày cọc, Trạng thái cọc, Giá thuê, Ký điện tử/Ký giấy, Thanh lý)
+INSERT INTO `contracts` (
+  `contract_code`, `room_id`, `tenant_id`, `start_date`, `end_date`,
+  `deposit_amount`, `deposit_date`, `deposit_status`, `monthly_rent`,
+  `electricity_rate`, `water_rate`, `service_fee`,
+  `signature_type`, `signature_status`, `signed_at`,
+  `terminated_at`, `termination_reason`, `notes`, `status`
+) VALUES
+('HD-2026-001', 1, 2, '2026-01-01', '2026-12-31', 3000000, '2025-12-28', 'held', 3000000, 3500, 20000, 150000, 'online', 'signed', '2026-01-01 09:00:00', NULL, NULL, 'Khách vào ở đầu tháng (<= ngày 15: thu 100% phí dịch vụ)', 'active'),
+('HD-2026-002', 3, 3, '2026-05-01', '2027-05-01', 3500000, '2026-04-25', 'held', 3500000, 3500, 20000, 150000, 'paper',  'signed', '2026-05-01 10:30:00', NULL, NULL, 'Hợp đồng ký giấy đã lưu hồ sơ', 'active'),
+('HD-2025-003', 2, 4, '2025-01-01', '2026-06-30', 2500000, '2024-12-29', 'refunded', 2500000, 3500, 20000, 150000, 'online', 'signed', '2025-01-01 08:15:00', '2026-06-30', 'Hết hạn hợp đồng, bàn giao phòng tốt, hoàn 100% tiền cọc', 'Đã thanh lý hoàn cọc', 'terminated'),
+('HD-2026-004', 2, 5, '2026-08-18', '2027-08-18', 2500000, '2026-08-15', 'held', 2500000, 3500, 20000, 150000, 'online', 'pending', NULL, NULL, NULL, 'Khách vào sau ngày 15 (> ngày 15: giảm 50% phí dịch vụ tháng đầu)', 'active'),
+('HD-2026-005', 5, 6, '2026-03-01', '2027-03-01', 4000000, '2026-02-26', 'held', 4000000, 3500, 20000, 150000, 'online', 'signed', '2026-03-01 14:00:00', NULL, NULL, 'Căn hộ Studio Full nội thất tầng 3', 'active');
 
 -- 5. CHỈ SỐ ĐIỆN NƯỚC (Trải dài 6 tháng: T5, T6, T7, T8, T9, T10)
 INSERT INTO `utilities_readings` (`room_id`, `month_year`, `electric_old`, `electric_new`, `water_old`, `water_new`) VALUES

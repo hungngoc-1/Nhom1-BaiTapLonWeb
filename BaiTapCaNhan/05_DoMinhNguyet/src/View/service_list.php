@@ -29,9 +29,10 @@
     </style>
 </head>
 <body>
+    <?php $rootUrl = (strpos($_SERVER['SCRIPT_NAME'] ?? '', '/BaiTapCaNhan/') !== false) ? '../../../index.php' : 'index.php'; ?>
     <nav class="navbar navbar-expand-lg navbar-custom sticky-top">
         <div class="container-fluid px-3 px-xl-4">
-            <a class="brand-logo d-flex align-items-center gap-2 text-decoration-none me-3" href="#">
+            <a class="brand-logo d-flex align-items-center gap-2 text-decoration-none me-3" href="<?= $rootUrl ?>?route=dashboard">
                 <i class="fa-solid fa-house-chimney"></i>
                 <div>
                     <div class="brand-text lh-1">StayMate</div>
@@ -39,11 +40,15 @@
                 </div>
             </a>
             <ul class="nav nav-pills me-auto d-none d-lg-flex">
-                <li class="nav-item"><a class="nav-link" href="#"><i class="fa-solid fa-city"></i> Tòa nhà</a></li>
-                <li class="nav-item"><a class="nav-link" href="#"><i class="fa-solid fa-chart-pie"></i> Tổng quan</a></li>
-                <li class="nav-item"><a class="nav-link active" href="#"><i class="fa-solid fa-money-bill-wave"></i> Cấu hình Đơn giá</a></li>
+                <li class="nav-item"><a class="nav-link" href="<?= $rootUrl ?>?route=dashboard"><i class="fa-solid fa-city"></i> Tòa nhà</a></li>
+                <li class="nav-item"><a class="nav-link" href="<?= $rootUrl ?>?route=overview"><i class="fa-solid fa-chart-pie"></i> Tổng quan</a></li>
+                <li class="nav-item"><a class="nav-link" href="<?= $rootUrl ?>?route=rooms"><i class="fa-solid fa-bed"></i> Phòng trọ</a></li>
+                <li class="nav-item"><a class="nav-link" href="<?= $rootUrl ?>?route=contracts"><i class="fa-solid fa-file-signature"></i> Hợp đồng</a></li>
+                <li class="nav-item"><a class="nav-link" href="<?= $rootUrl ?>?route=utilities"><i class="fa-solid fa-bolt"></i> Điện Nước</a></li>
+                <li class="nav-item"><a class="nav-link active" href="<?= $rootUrl ?>?route=services"><i class="fa-solid fa-money-bill-wave"></i> Cấu hình Đơn giá</a></li>
+                <li class="nav-item"><a class="nav-link" href="<?= $rootUrl ?>?route=reports"><i class="fa-solid fa-chart-simple"></i> Báo cáo</a></li>
             </ul>
-            <a href="../../index.php?route=utilities" class="btn btn-outline-secondary rounded-pill fw-bold text-xs"><i class="fa-solid fa-arrow-left me-1"></i> Quay lại Điện Nước</a>
+            <a href="<?= $rootUrl ?>?route=utilities" class="btn btn-outline-secondary rounded-pill fw-bold text-xs"><i class="fa-solid fa-arrow-left me-1"></i> Quay lại Điện Nước</a>
         </div>
     </nav>
 

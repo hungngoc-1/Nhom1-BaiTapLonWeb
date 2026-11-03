@@ -121,6 +121,13 @@ switch ($route) {
         $utilitiesController->index();
         break;
 
+    // --- XEM PHÒNG ---
+    case 'showcase':
+    case 'web360':
+    case 'xemphong':
+        header('Location: TrangXemPhong/index.php');
+        exit;
+
     case 'api/utilities/search':
         $utilitiesController = new UtilitiesController();
         $utilitiesController->searchApi();

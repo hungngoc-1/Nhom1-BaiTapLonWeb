@@ -36,18 +36,18 @@ $nextYearEndDay = date('Y-m-01', strtotime($nextMonthFirstDay . ' +12 months'));
             background-attachment: fixed;
         }
 
-        /* Navbar chuẩn Trang Tổng quan */
-        .navbar-custom { background: #ffffff; padding: 12px 20px; box-shadow: 0 4px 20px rgba(0, 0, 0, 0.04); z-index: 10; border-bottom: 1px solid #f1f5f9;}
+        /* ================= NAVBAR CHUẨN TRANG ĐIỆN NƯỚC & TỔNG QUAN ================= */
+        .navbar-custom { background: #ffffff; padding: 12px 20px; box-shadow: 0 4px 20px rgba(0, 0, 0, 0.04); z-index: 100; border-bottom: 1px solid #f1f5f9; }
         .brand-logo { display: flex; align-items: center; gap: 10px; text-decoration: none; }
         .brand-logo i { color: var(--teal-main); font-size: 2.2rem; }
-        .brand-text { color: var(--teal-main); font-weight: 900; font-size: 1.4rem; line-height: 1; letter-spacing: -0.5px;}
+        .brand-text { color: var(--teal-main); font-weight: 900; font-size: 1.4rem; line-height: 1; letter-spacing: -0.5px; }
         .brand-sub { color: #64748b; font-size: 0.75rem; font-weight: 600; }
         .text-teal-main { color: var(--teal-main) !important; }
         
-        .nav-pills { gap: 10px; }
+        .nav-pills { gap: 8px; }
         .nav-pills .nav-link { 
-            color: #475569; font-weight: 800; font-size: 0.95rem; 
-            padding: 10px 20px; border-radius: 50px; transition: all 0.2s; white-space: nowrap; 
+            color: #475569; font-weight: 800; font-size: 0.92rem; 
+            padding: 10px 18px; border-radius: 50px; transition: all 0.2s; white-space: nowrap; 
         }
         .nav-pills .nav-link i { margin-right: 6px; }
         .nav-pills .nav-link:hover { color: var(--teal-main); background: #f0fdfa; }
@@ -61,6 +61,7 @@ $nextYearEndDay = date('Y-m-01', strtotime($nextMonthFirstDay . ' +12 months'));
             color: white; font-weight: 900; font-size: 1rem;
             border: 3px solid #ffffff; 
             box-shadow: 0 6px 15px rgba(48, 143, 134, 0.4);
+            transition: 0.2s;
         }
 
         .btn-back-content { 
@@ -146,10 +147,10 @@ $nextYearEndDay = date('Y-m-01', strtotime($nextMonthFirstDay . ' +12 months'));
 </head>
 <body>
 
-    <!-- Navbar chuẩn StayMate -->
+    <!-- ================= NAVBAR CHUẨN STAYMATE (ĐỒNG NHẤT VỚI ĐIỆN NƯỚC) ================= -->
     <nav class="navbar navbar-expand-lg navbar-custom sticky-top">
         <div class="container-fluid px-4 px-xl-5 d-flex justify-content-between align-items-center">
-            <a class="brand-logo me-5" href="index.php?route=dashboard">
+            <a class="brand-logo me-4" href="index.php?route=dashboard">
                 <i class="fa-solid fa-house-chimney text-teal-main"></i>
                 <div>
                     <div class="brand-text">StayMate</div>
@@ -164,21 +165,28 @@ $nextYearEndDay = date('Y-m-01', strtotime($nextMonthFirstDay . ' +12 months'));
                 <li class="nav-item"><a class="nav-link" href="index.php?route=tenants"><i class="fa-solid fa-users"></i> Khách thuê</a></li>
                 <li class="nav-item"><a class="nav-link active" href="index.php?route=contracts"><i class="fa-solid fa-file-signature"></i> Hợp đồng</a></li>
                 <li class="nav-item"><a class="nav-link" href="index.php?route=utilities"><i class="fa-solid fa-bolt"></i> Điện Nước</a></li>
-                <li class="nav-item"><a class="nav-link" href="index.php?route=invoices"><i class="fa-solid fa-file-invoice-dollar"></i> Hóa đơn</a></li>
-
+                <li class="nav-item"><a class="nav-link" href="TrangXemPhong/" target="_blank"><i class="fa-solid fa-eye"></i> Xem phòng khách</a></li>
             </ul>
 
             <div class="d-flex align-items-center gap-4">
+                <div class="position-relative" style="color: #64748b; cursor: pointer;" title="Hợp đồng sắp hết hạn">
+                    <i class="fa-solid fa-bell fs-4"></i>
+                    <?php if (($stats['expiring_soon'] ?? 0) > 0): ?>
+                        <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger border border-white">
+                            <?= (int)$stats['expiring_soon'] ?>
+                        </span>
+                    <?php endif; ?>
+                </div>
                 <div class="dropdown">
-                    <div class="d-flex align-items-center gap-2" style="cursor:pointer;" data-bs-toggle="dropdown">
-                        <div class="avatar-circle">HN</div>
+                    <div class="d-flex align-items-center gap-2" style="cursor: pointer;" data-bs-toggle="dropdown">
+                        <div class="avatar-circle">AS</div>
                         <div class="text-start d-none d-sm-block lh-sm">
                             <div class="fw-bold text-dark" style="font-size: 0.9rem;">Quản trị viên Hệ thống <i class="fa-solid fa-angle-down ms-1 text-muted fs-6"></i></div>
-                            <div class="text-muted" style="font-size: 0.75rem;">Hủng Văn Ngọc (Admin)</div>
+                            <div class="text-muted" style="font-size: 0.75rem;">Admin</div>
                         </div>
                     </div>
-                    <ul class="dropdown-menu dropdown-menu-end shadow border-0 mt-2">
-                        <li><a class="dropdown-item text-danger" href="index.php?route=auth/logout"><i class="fa-solid fa-right-from-bracket me-2"></i> Đăng xuất</a></li>
+                    <ul class="dropdown-menu dropdown-menu-end shadow border-0 rounded-4 mt-2">
+                        <li><a class="dropdown-item text-danger fw-bold" href="index.php?route=auth/logout"><i class="fa-solid fa-right-from-bracket me-2"></i> Đăng xuất</a></li>
                     </ul>
                 </div>
             </div>
@@ -186,10 +194,6 @@ $nextYearEndDay = date('Y-m-01', strtotime($nextMonthFirstDay . ' +12 months'));
     </nav>
 
     <div class="container-fluid px-4 px-xl-5 py-4 position-relative">
-
-        <a href="index.php?route=overview" class="btn-back-content">
-            <i class="fa-solid fa-arrow-left me-2"></i> Quay lại Tổng quan
-        </a>
 
         <!-- Header giống Trang Tổng quan -->
         <div class="header-title-wrapper">

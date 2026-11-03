@@ -40,15 +40,20 @@
     </style>
 </head>
 <body>
+    <?php $rootUrl = (strpos($_SERVER['SCRIPT_NAME'] ?? '', '/BaiTapCaNhan/') !== false) ? '../../../index.php' : 'index.php'; ?>
     <nav class="navbar navbar-expand-lg navbar-custom sticky-top mb-4 py-3">
-        <div class="container-fluid px-4 px-xl-5 d-flex justify-content-between">
+        <div class="container-fluid px-4 px-xl-5 d-flex justify-content-between align-items-center">
             <div class="d-flex align-items-center gap-3">
-                <a href="index.php?route=dashboard" class="text-decoration-none text-muted fw-bold text-sm bg-light px-3 py-2 rounded-pill hover-bg">
-                    <i class="fa-solid fa-arrow-left me-1"></i> Quay lại
+                <a href="<?= $rootUrl ?>?route=dashboard" class="text-decoration-none text-muted fw-bold text-sm bg-light px-3 py-2 rounded-pill hover-bg">
+                    <i class="fa-solid fa-arrow-left me-1"></i> Quay lại Tòa nhà
                 </a>
                 <h5 class="fw-bold mb-0 text-dark"><i class="fa-solid fa-chart-pie me-2 text-primary"></i>Phân tích & Báo cáo Chuyên sâu</h5>
             </div>
-            <div class="d-flex align-items-center gap-2">
+            <div class="d-flex align-items-center gap-2 flex-wrap">
+                <a href="<?= $rootUrl ?>?route=overview" class="btn btn-sm btn-light border rounded-pill fw-bold px-3">Tổng quan</a>
+                <a href="<?= $rootUrl ?>?route=rooms" class="btn btn-sm btn-light border rounded-pill fw-bold px-3">Phòng trọ</a>
+                <a href="<?= $rootUrl ?>?route=contracts" class="btn btn-sm btn-light border rounded-pill fw-bold px-3">Hợp đồng</a>
+                <a href="<?= $rootUrl ?>?route=utilities" class="btn btn-sm btn-light border rounded-pill fw-bold px-3">Điện Nước</a>
                 <span class="badge bg-light text-dark border px-3 py-2 rounded-pill"><i class="fa-regular fa-calendar me-2"></i>Thống kê 6 tháng gần nhất</span>
             </div>
         </div>
