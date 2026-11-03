@@ -24,7 +24,7 @@ if ($route === 'auth/logout') {
 $currentUserRole = $_SESSION['role'] ?? null;
 $isLoggedIn = !empty($_SESSION['user_id']) || !empty($_SESSION['username']);
 
-// Danh sách các route công khai (Khách chưa đăng nhập được phép truy cập)
+// Danh sách các route công khai (Khách vãng lai / Postman test API được phép truy cập)
 $publicRoutes = [
     'login',
     'auth/login',
@@ -32,7 +32,11 @@ $publicRoutes = [
     'auth/logout',
     'showcase',
     'web360',
-    'xemphong'
+    'xemphong',
+    'api/reports/summary',
+    'api/reports/revenue',
+    'api/reports/debt',
+    'api/reports/utilities'
 ];
 
 // Nếu đã đăng nhập mà truy cập trang đăng nhập -> Tự động chuyển hướng về trang chủ phù hợp
@@ -64,6 +68,10 @@ if ($isLoggedIn && $currentUserRole === 'tenant') {
         'tenant/invoice-detail',
         'tenant/contract',
         'api/tenant/contract',
+        'api/reports/summary',
+        'api/reports/revenue',
+        'api/reports/debt',
+        'api/reports/utilities',
         'auth/logout',
         'showcase',
         'web360',
@@ -87,6 +95,7 @@ require_once __DIR__ . '/app/Controllers/UtilitiesController.php';
 require_once __DIR__ . '/app/Controllers/InvoiceController.php';
 require_once __DIR__ . '/app/Controllers/AccountController.php';
 require_once __DIR__ . '/app/Controllers/TenantPortalController.php';
+require_once __DIR__ . '/app/Controllers/ReportApiController.php';
 
 // ==========================================
 // 3. BỘ ĐIỀU HƯỚNG CÁC TRANG (ROUTER)
@@ -270,6 +279,25 @@ switch ($route) {
     case 'reports':
         header("Location: index.php?route=overview");
         exit;
+
+    // ==============================================================================
+    // PHÂN HỆ API BÁO CÁO DOANH THU, CÔNG NỢ, ĐIỆN NƯỚC (NGƯỜI 5 — ĐỖ MINH NGUYỆT)
+    // ==============================================================================
+    case 'api/reports/summary':
+        (new ReportApiController())->summary();
+        break;
+
+    case 'api/reports/revenue':
+        (new ReportApiController())->revenue();
+        break;
+
+    case 'api/reports/debt':
+        (new ReportApiController())->debt();
+        break;
+
+    case 'api/reports/utilities':
+        (new ReportApiController())->utilities();
+        break;
 
     default:
         $dashboardController = new DashboardController();
