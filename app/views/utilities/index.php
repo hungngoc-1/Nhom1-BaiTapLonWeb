@@ -985,6 +985,21 @@ try {
         .meter-input-card.elec { background: linear-gradient(135deg, #fffbeb 0%, #fef9c3 100%); border-color: #fde047; }
         .meter-input-card.water { background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%); border-color: #bae6fd; }
 
+        /* Bảng Nhập & Tính Tiền Nhanh */
+        .table-quick-calc th { background: #f8fafc; font-size: 0.76rem; text-transform: uppercase; color: #64748b; font-weight: 800; }
+        .table-quick-calc td { vertical-align: middle; }
+        .calc-result-box {
+            background: linear-gradient(135deg, #f0fdfa 0%, #e6fffa 100%);
+            border: 2px solid #99f6e4;
+            border-radius: 18px;
+            padding: 10px 14px;
+            transition: all 0.3s ease;
+        }
+        .calc-result-box.highlight {
+            border-color: var(--teal-main);
+            box-shadow: 0 0 0 3px rgba(48,143,134,0.2);
+        }
+
         .footer-custom { background: #ffffff; padding: 20px 0; color: #64748b; font-size: 0.85rem; font-weight: 700; margin-top: auto; border-top: 1px solid #f1f5f9; position: relative; z-index: 10; }
 
         @media print {
@@ -1137,33 +1152,302 @@ try {
             </div>
         <?php endif; ?>
 
-        <!-- ================= 4 THẺ OVERVIEW CARDS ĐỒNG BỘ TRANG TỔNG QUAN ================= -->
-        <div class="row g-4 mb-4 position-relative z-2">
-            <!-- Card 1: Tiến độ chốt số -->
-            <div class="col-12 col-md-6 col-lg-3">
-                <div class="overview-card card-green">
-                    <div class="card-bg-pattern pattern-house"></div>
-                    <div class="overview-title text-success">
-                        <i class="fa-solid fa-clipboard-check fs-6"></i> TIẾN ĐỘ CHỐT KỲ <?= htmlspecialchars($activeCheckPeriod) ?>
+        <!-- ================= BẢNG LẬP SỐ ĐIỆN NƯỚC & TỰ ĐỘNG HIỆN TIỀN (THAY THẾ TIẾN ĐỘ CHỐT KỲ) ================= -->
+        <div class="section-box no-print mb-4" id="tableLapSoDienNuoc">
+            <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3 pb-2 border-bottom border-light">
+                <div class="d-flex align-items-center gap-2">
+                    <div class="rounded-circle d-flex align-items-center justify-content-center" style="width: 44px; height: 44px; background: rgba(48,143,134,0.12); color: var(--teal-main);">
+                        <i class="fa-solid fa-calculator fs-4"></i>
                     </div>
-                    <div class="d-flex align-items-baseline mb-2 position-relative z-2">
-                        <span class="overview-val text-dark me-2"><?= $recordedRentedCount ?> / <?= $totalRentedCount ?></span>
-                        <span class="fw-bold text-muted small">phòng đang thuê</span>
+                    <div>
+                        <h5 class="fw-black mb-0 text-dark" style="font-weight: 900; font-size: 1.15rem;">
+                            Bảng Lập Số Điện Nước &amp; Tính Tiền Tự Động
+                        </h5>
+                        <div class="text-muted small fw-semibold">
+                            Quản lý nhập số điện, số nước — Sau đó ấn <strong class="text-teal-main">"Hoàn tất"</strong> để hệ thống tự động hiện số tiền tương ứng
+                        </div>
                     </div>
-                    <div class="progress mb-2 position-relative z-2" style="height: 9px; background-color: rgba(255,255,255,0.75); border-radius: 10px;">
-                        <div class="progress-bar bg-success" style="width: <?= $progressPercent ?>%; border-radius: 10px;"></div>
-                    </div>
-                    <div class="d-flex justify-content-between text-success position-relative z-2" style="font-size: 0.8rem; font-weight: 800;">
-                        <span><i class="fa-solid fa-circle-check"></i> <?= $progressPercent ?>% hoàn tất</span>
-                        <span class="<?= count($unrecordedRooms) > 0 ? 'text-danger' : 'text-muted' ?>">
-                            <?= count($unrecordedRooms) ?> phòng chưa ghi
-                        </span>
-                    </div>
+                </div>
+                <div class="d-flex align-items-center gap-2 flex-wrap">
+                    <span class="badge rounded-pill bg-warning-subtle text-warning-emphasis border border-warning fw-bold px-3 py-2">
+                        <i class="fa-solid fa-bolt me-1"></i> Điện: <?= number_format($elecPrice, 0, ',', '.') ?> đ/kWh
+                    </span>
+                    <span class="badge rounded-pill bg-info-subtle text-info-emphasis border border-info fw-bold px-3 py-2">
+                        <i class="fa-solid fa-droplet me-1"></i> Nước: <?= number_format($waterPrice, 0, ',', '.') ?> đ/m³
+                    </span>
+                    <ul class="nav nav-pills p-1 bg-light rounded-pill border" id="topCalcTabs" role="tablist">
+                        <li class="nav-item">
+                            <button class="nav-link active py-1 px-3 rounded-pill fw-bold" id="top-single-tab" data-bs-toggle="pill" data-bs-target="#tab-top-single" type="button" style="font-size: 0.82rem;">
+                                <i class="fa-solid fa-pen-to-square me-1"></i> Lập theo phòng
+                            </button>
+                        </li>
+                        <li class="nav-item">
+                            <button class="nav-link py-1 px-3 rounded-pill fw-bold" id="top-multi-tab" data-bs-toggle="pill" data-bs-target="#tab-top-multi" type="button" style="font-size: 0.82rem;">
+                                <i class="fa-solid fa-table-list me-1"></i> Bảng các phòng (<?= count($unrecordedRooms) ?>)
+                            </button>
+                        </li>
+                    </ul>
                 </div>
             </div>
 
-            <!-- Card 2: Tổng Điện tiêu thụ -->
-            <div class="col-12 col-md-6 col-lg-3">
+            <!-- TAB CONTENT -->
+            <div class="tab-content">
+                <!-- TAB 1: NHẬP THEO PHÒNG -->
+                <div class="tab-pane fade show active" id="tab-top-single" role="tabpanel">
+                    <form method="POST" action="index.php?route=utilities" id="singleCalcForm" onsubmit="return handleSingleCalcSubmit(event)">
+                        <input type="hidden" name="action" value="add">
+                        <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($_SESSION['csrf_token']) ?>">
+
+                        <div class="table-responsive rounded-4 border bg-white shadow-sm p-3 mb-3">
+                            <table class="table table-borderless table-quick-calc align-middle mb-0" id="quickCalcTable">
+                                <thead>
+                                    <tr style="border-bottom: 2px solid #e2e8f0;">
+                                        <th style="min-width: 190px;">1. Phòng Trọ</th>
+                                        <th style="min-width: 110px;">2. Kỳ Chốt</th>
+                                        <th style="min-width: 200px;">3. Nhập Số Điện (kWh)</th>
+                                        <th style="min-width: 200px;">4. Nhập Số Nước (m³)</th>
+                                        <th style="min-width: 130px;" class="text-center">5. Thao Tác</th>
+                                        <th style="min-width: 230px;">6. Số Tiền Tương Ứng</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <!-- Cột 1: Phòng Trọ -->
+                                        <td>
+                                            <select class="form-select filter-control fw-bold" id="sc_room_id" name="room_id" required onchange="onSingleCalcRoomChange()">
+                                                <option value="">-- Chọn phòng --</option>
+                                                <?php foreach ($allRooms as $r): ?>
+                                                    <option value="<?= (int)$r['id'] ?>"
+                                                            data-room-number="<?= htmlspecialchars($r['room_number']) ?>"
+                                                            data-room-price="<?= (float)$r['price'] ?>"
+                                                            data-tenant="<?= htmlspecialchars($r['tenant_name'] ?? 'Chưa có khách') ?>"
+                                                            data-last-elec="<?= (int)($r['last_electric'] ?? 0) ?>"
+                                                            data-last-water="<?= (int)($r['last_water'] ?? 0) ?>"
+                                                            data-last-period="<?= htmlspecialchars($r['last_period'] ?? '') ?>">
+                                                        Phòng <?= htmlspecialchars($r['room_number']) ?> (<?= htmlspecialchars($r['tenant_name'] ?? ($r['status'] === 'rented' ? 'Đang thuê' : 'Trống')) ?>)
+                                                    </option>
+                                                <?php endforeach; ?>
+                                            </select>
+                                            <div id="sc_room_info" class="small fw-semibold text-muted mt-1" style="font-size: 0.75rem;">
+                                                <i class="fa-solid fa-circle-info me-1"></i> Chọn phòng để lấy số cũ
+                                            </div>
+                                        </td>
+
+                                        <!-- Cột 2: Kỳ chốt -->
+                                        <td>
+                                            <input type="text" class="form-control filter-control fw-bold text-center" 
+                                                   id="sc_month_year" name="month_year" 
+                                                   value="<?= htmlspecialchars($activeCheckPeriod) ?>" required>
+                                            <div class="text-muted text-center mt-1" style="font-size: 0.72rem;">MM-YYYY</div>
+                                        </td>
+
+                                        <!-- Cột 3: Điện Cũ & Mới -->
+                                        <td>
+                                            <div class="d-flex align-items-center gap-1">
+                                                <div class="flex-fill">
+                                                    <label class="form-label text-muted mb-0 fw-bold" style="font-size: 0.7rem;">Số cũ</label>
+                                                    <input type="number" class="form-control form-control-sm text-center fw-bold bg-light" 
+                                                           id="sc_elec_old" name="electric_old" value="0" min="0" required oninput="resetCalculatedPreview()">
+                                                </div>
+                                                <i class="fa-solid fa-arrow-right text-warning small mt-3"></i>
+                                                <div class="flex-fill">
+                                                    <label class="form-label text-dark mb-0 fw-bold" style="font-size: 0.7rem;">Số mới *</label>
+                                                    <input type="number" class="form-control form-control-sm text-center fw-black border-warning border-2" 
+                                                           id="sc_elec_new" name="electric_new" placeholder="Nhập số..." min="0" required oninput="resetCalculatedPreview()">
+                                                </div>
+                                            </div>
+                                            <div class="d-flex justify-content-between mt-1 text-muted" style="font-size: 0.75rem; font-weight: 700;">
+                                                <span id="sc_elec_used_text">Tiêu thụ: -- kWh</span>
+                                            </div>
+                                        </td>
+
+                                        <!-- Cột 4: Nước Cũ & Mới -->
+                                        <td>
+                                            <div class="d-flex align-items-center gap-1">
+                                                <div class="flex-fill">
+                                                    <label class="form-label text-muted mb-0 fw-bold" style="font-size: 0.7rem;">Số cũ</label>
+                                                    <input type="number" class="form-control form-control-sm text-center fw-bold bg-light" 
+                                                           id="sc_water_old" name="water_old" value="0" min="0" required oninput="resetCalculatedPreview()">
+                                                </div>
+                                                <i class="fa-solid fa-arrow-right text-info small mt-3"></i>
+                                                <div class="flex-fill">
+                                                    <label class="form-label text-dark mb-0 fw-bold" style="font-size: 0.7rem;">Số mới *</label>
+                                                    <input type="number" class="form-control form-control-sm text-center fw-black border-info border-2" 
+                                                           id="sc_water_new" name="water_new" placeholder="Nhập số..." min="0" required oninput="resetCalculatedPreview()">
+                                                </div>
+                                            </div>
+                                            <div class="d-flex justify-content-between mt-1 text-muted" style="font-size: 0.75rem; font-weight: 700;">
+                                                <span id="sc_water_used_text">Tiêu thụ: -- m³</span>
+                                            </div>
+                                        </td>
+
+                                        <!-- Cột 5: Nút Hoàn tất -->
+                                        <td class="text-center">
+                                            <button type="button" id="btnSingleComplete" class="btn-teal-custom w-100 py-2 fw-bold rounded-pill shadow-sm" style="font-size: 0.88rem;" onclick="onManagerClickComplete()">
+                                                <i class="fa-solid fa-circle-check me-1"></i> Hoàn tất
+                                            </button>
+                                            <div class="text-muted small mt-1" style="font-size: 0.7rem;">Ấn để hiện số tiền</div>
+                                        </td>
+
+                                        <!-- Cột 6: Số tiền tương ứng (Tự động hiện khi ấn Hoàn tất) -->
+                                        <td>
+                                            <div class="calc-result-box text-center" id="sc_calc_box" style="min-height: 78px; display: flex; flex-direction: column; justify-content: center;">
+                                                <div class="text-muted fw-bold" id="sc_calc_status_title" style="font-size: 0.75rem;">
+                                                    <i class="fa-regular fa-clock me-1 text-muted"></i> CHƯA TÍNH TIỀN
+                                                </div>
+                                                <div class="fw-black text-secondary" id="sc_total_money_display" style="font-size: 1.15rem; font-weight: 900;">
+                                                    -- đ
+                                                </div>
+                                                <div class="text-muted" id="sc_calc_breakdown" style="font-size: 0.7rem;">
+                                                    Nhập số điện, nước &amp; ấn "Hoàn tất"
+                                                </div>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <!-- Khung thông báo thành công sau khi ấn Hoàn tất -->
+                        <div id="sc_result_alert" class="p-3 rounded-4 mb-3 d-flex flex-wrap justify-content-between align-items-center gap-2" style="background: #ecfdf5; border: 2px solid #308f86; display: none;">
+                            <div class="d-flex align-items-center gap-3">
+                                <div class="rounded-circle d-flex align-items-center justify-content-center" style="width: 40px; height: 40px; background: #308f86; color: white;">
+                                    <i class="fa-solid fa-check fs-5"></i>
+                                </div>
+                                <div>
+                                    <div class="fw-black text-dark" id="sc_result_title" style="font-weight: 900; font-size: 1rem;">
+                                        ĐÃ TỰ ĐỘNG HIỆN SỐ TIỀN TƯƠNG ỨNG!
+                                    </div>
+                                    <div class="small fw-bold text-teal-main" id="sc_result_desc">
+                                        Chi tiết thành tiền điện nước đã được tính xong.
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="d-flex align-items-center gap-3">
+                                <div class="form-check form-switch mb-0">
+                                    <input class="form-check-input" type="checkbox" id="sc_auto_invoice" name="auto_create_invoice" value="1" checked>
+                                    <label class="form-check-label fw-bold text-dark small" for="sc_auto_invoice">
+                                        Tự động lập Hóa đơn
+                                    </label>
+                                </div>
+                                <button type="submit" id="btnSaveToDB" class="btn btn-teal-custom rounded-pill fw-bold px-4 py-2">
+                                    <i class="fa-solid fa-floppy-disk me-1"></i> Lưu Vào Cơ Sở Dữ Liệu
+                                </button>
+                            </div>
+                        </div>
+
+                        <div id="sc_error_alert" class="alert alert-danger rounded-4 py-2 px-3 small fw-bold mb-3" style="display: none;"></div>
+                    </form>
+                </div>
+
+                <!-- TAB 2: BẢNG NHẬP NHANH TẤT CẢ PHÒNG ĐANG THUÊ CHƯA CHỐT -->
+                <div class="tab-pane fade" id="tab-top-multi" role="tabpanel">
+                    <?php if (count($unrecordedRooms) === 0): ?>
+                        <div class="p-4 text-center rounded-4 border bg-white text-muted">
+                            <i class="fa-solid fa-circle-check text-success fs-2 mb-2 d-block"></i>
+                            <h6 class="fw-bold text-dark">Tất cả các phòng đang thuê đã được chốt chỉ số kỳ <?= htmlspecialchars($activeCheckPeriod) ?>!</h6>
+                            <p class="small mb-0">Bạn có thể chọn kỳ khác hoặc xem chi tiết ở bảng bên dưới.</p>
+                        </div>
+                    <?php else: ?>
+                        <form method="POST" action="index.php?route=utilities" id="multiCalcForm">
+                            <input type="hidden" name="action" value="batch_add">
+                            <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($_SESSION['csrf_token']) ?>">
+                            <input type="hidden" name="batch_month_year" value="<?= htmlspecialchars($activeCheckPeriod) ?>">
+
+                            <div class="table-responsive rounded-4 border bg-white shadow-sm p-3 mb-2">
+                                <table class="table table-hover align-middle mb-0" id="multiCalcTable">
+                                    <thead style="background: #f8fafc; font-size: 0.76rem; text-transform: uppercase; color: #64748b; font-weight: 800;">
+                                        <tr>
+                                            <th style="width: 40px;" class="text-center">
+                                                <input type="checkbox" class="form-check-input" id="checkAllMulti" checked onchange="toggleAllMulti(this)">
+                                            </th>
+                                            <th>Phòng &amp; Khách Thuê</th>
+                                            <th style="min-width: 130px;">Điện Cũ (kWh)</th>
+                                            <th style="min-width: 140px;">Điện Mới (kWh)</th>
+                                            <th style="min-width: 130px;">Nước Cũ (m³)</th>
+                                            <th style="min-width: 140px;">Nước Mới (m³)</th>
+                                            <th style="min-width: 110px;" class="text-center">Thao Tác</th>
+                                            <th style="min-width: 160px;" class="text-end">Số Tiền Tương Ứng</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <?php foreach ($unrecordedRooms as $uRm): 
+                                            $uId = (int)$uRm['id'];
+                                            $eOld = (int)($uRm['last_electric'] ?? 0);
+                                            $wOld = (int)($uRm['last_water'] ?? 0);
+                                            $rPrice = (float)($uRm['price'] ?? 0);
+                                        ?>
+                                            <tr id="multi_row_<?= $uId ?>" data-room-id="<?= $uId ?>" data-room-price="<?= $rPrice ?>">
+                                                <td class="text-center">
+                                                    <input type="checkbox" class="form-check-input multi-chk" 
+                                                           name="batch[<?= $uId ?>][enable]" value="1" checked>
+                                                </td>
+                                                <td>
+                                                    <div class="d-flex align-items-center gap-2">
+                                                        <span class="badge-room-pill"><i class="fa-solid fa-door-closed"></i> <?= htmlspecialchars($uRm['room_number']) ?></span>
+                                                        <div>
+                                                            <div class="fw-bold text-dark small"><?= htmlspecialchars($uRm['tenant_name'] ?? 'Đang thuê') ?></div>
+                                                            <div class="text-muted" style="font-size: 0.72rem;">Giá phòng: <?= number_format($rPrice, 0, ',', '.') ?>đ</div>
+                                                        </div>
+                                                    </div>
+                                                </td>
+                                                <td>
+                                                    <input type="number" class="form-control form-control-sm text-center fw-bold bg-light" 
+                                                           name="batch[<?= $uId ?>][electric_old]" id="m_e_old_<?= $uId ?>" value="<?= $eOld ?>" min="0">
+                                                </td>
+                                                <td>
+                                                    <input type="number" class="form-control form-control-sm text-center fw-black border-warning border-2" 
+                                                           name="batch[<?= $uId ?>][electric_new]" id="m_e_new_<?= $uId ?>" placeholder="Nhập số mới..." min="0">
+                                                </td>
+                                                <td>
+                                                    <input type="number" class="form-control form-control-sm text-center fw-bold bg-light" 
+                                                           name="batch[<?= $uId ?>][water_old]" id="m_w_old_<?= $uId ?>" value="<?= $wOld ?>" min="0">
+                                                </td>
+                                                <td>
+                                                    <input type="number" class="form-control form-control-sm text-center fw-black border-info border-2" 
+                                                           name="batch[<?= $uId ?>][water_new]" id="m_w_new_<?= $uId ?>" placeholder="Nhập số mới..." min="0">
+                                                </td>
+                                                <td class="text-center">
+                                                    <button type="button" class="btn btn-sm btn-teal-custom rounded-pill px-3 py-1 fw-bold" 
+                                                            title="Ấn hoàn tất để hiện số tiền tương ứng và lưu"
+                                                            onclick="completeMultiRow(<?= $uId ?>, '<?= htmlspecialchars($uRm['room_number']) ?>')">
+                                                        <i class="fa-solid fa-check"></i> Hoàn tất
+                                                    </button>
+                                                </td>
+                                                <td class="text-end">
+                                                    <div class="fw-black text-teal-main" id="m_total_<?= $uId ?>" style="font-weight: 900; font-size: 0.95rem;">-- đ</div>
+                                                    <div class="text-muted" id="m_sub_<?= $uId ?>" style="font-size: 0.72rem;">Chờ ấn Hoàn tất</div>
+                                                </td>
+                                            </tr>
+                                        <?php endforeach; ?>
+                                    </tbody>
+                                    <tfoot>
+                                        <tr style="background: #f0fdfa; border-top: 2px solid #99f6e4;">
+                                            <th colspan="6" class="text-end py-3 fw-black text-dark" style="font-size: 0.95rem;">
+                                                TỔNG TIỀN ĐIỆN NƯỚC CÁC PHÒNG:
+                                            </th>
+                                            <th class="text-center py-3">
+                                                <button type="button" class="btn btn-sm btn-teal-custom fw-bold rounded-pill px-3 py-2 w-100" onclick="completeAllMulti()">
+                                                    <i class="fa-solid fa-circle-check me-1"></i> Hoàn tất tất cả
+                                                </button>
+                                            </th>
+                                            <th class="text-end py-3 fw-black text-teal-main" id="multi_grand_total" style="font-size: 1.15rem; font-weight: 900;">
+                                                -- đ
+                                            </th>
+                                        </tr>
+                                    </tfoot>
+                                </table>
+                            </div>
+                        </form>
+                    <?php endif; ?>
+                </div>
+            </div>
+        </div>
+
+        <!-- ================= 3 THẺ OVERVIEW CARDS (ĐIỆN, NƯỚC, TỔNG THU - BỎ TIẾN ĐỘ CHỐT KỲ) ================= -->
+        <div class="row g-4 mb-4 position-relative z-2">
+            <!-- Card 1: Tổng Điện tiêu thụ -->
+            <div class="col-12 col-md-4">
                 <div class="overview-card card-yellow">
                     <div class="card-bg-pattern pattern-wave-yellow"></div>
                     <div class="overview-icon-bg icon-yellow"><i class="fa-solid fa-bolt"></i></div>
@@ -1180,8 +1464,8 @@ try {
                 </div>
             </div>
 
-            <!-- Card 3: Tổng Nước tiêu thụ -->
-            <div class="col-12 col-md-6 col-lg-3">
+            <!-- Card 2: Tổng Nước tiêu thụ -->
+            <div class="col-12 col-md-4">
                 <div class="overview-card card-blue">
                     <div class="card-bg-pattern pattern-wave"></div>
                     <div class="overview-icon-bg icon-blue"><i class="fa-solid fa-droplet"></i></div>
@@ -1198,8 +1482,8 @@ try {
                 </div>
             </div>
 
-            <!-- Card 4: Tổng tiền Điện Nước & Hóa đơn -->
-            <div class="col-12 col-md-6 col-lg-3">
+            <!-- Card 3: Tổng tiền Điện Nước & Hóa đơn -->
+            <div class="col-12 col-md-4">
                 <div class="overview-card card-purple">
                     <div class="card-bg-pattern pattern-people"></div>
                     <div class="overview-icon-bg icon-purple"><i class="fa-solid fa-sack-dollar"></i></div>
@@ -1287,7 +1571,7 @@ try {
             </div>
         </div>
 
-        <!-- ================= KHU VỰC 2: BỘ LỌC, TÌM KIẾM LIVE API & BẢNG DỮ LIỆU ================= -->
+<!-- ================= KHU VỰC 2: BỘ LỌC, TÌM KIẾM LIVE API & BẢNG DỮ LIỆU ================= -->
         <div class="section-box">
             <!-- Thanh công cụ lọc -->
             <div class="row g-3 align-items-end mb-4 pb-3 border-bottom border-light no-print">
@@ -1915,89 +2199,320 @@ try {
         }
 
         // Mở Modal Thêm mới chung
-        function openAddModal() {
-            const modalEl = document.getElementById('addUtilityModal');
-            new bootstrap.Modal(modalEl).show();
-        }
-
-        // Mở Modal Thêm mới và chọn sẵn phòng + tự động lấy chỉ số cũ
-        function openAddModalForRoom(roomId, periodStr) {
-            const selectEl = document.getElementById('add_room_id');
-            selectEl.value = String(roomId);
-            if (periodStr && periodStr !== 'all') {
-                document.getElementById('add_month_year').value = periodStr;
-            }
-            onRoomSelectChange();
-            new bootstrap.Modal(document.getElementById('addUtilityModal')).show();
-        }
-
-        // Khi chọn phòng trong Modal Thêm mới -> Tự động điền chỉ số cũ kỳ trước
-        function onRoomSelectChange() {
-            const selectEl = document.getElementById('add_room_id');
+        // ===============================================================
+        // XỬ LÝ BẢNG NHẬP SỐ LIỆU ĐIỆN NƯỚC & TỰ ĐỘNG TÍNH TIỀN
+        // ===============================================================
+        function onSingleCalcRoomChange() {
+            const selectEl = document.getElementById('sc_room_id');
             const opt = selectEl.options[selectEl.selectedIndex];
-            const hintEl = document.getElementById('add_room_hint');
+            const infoEl = document.getElementById('sc_room_info');
             if (!opt || !opt.value) {
-                hintEl.textContent = '';
+                infoEl.innerHTML = '<i class="fa-solid fa-circle-info me-1"></i> Chọn phòng để lấy số cũ';
+                document.getElementById('sc_elec_old').value = 0;
+                document.getElementById('sc_water_old').value = 0;
+                resetCalculatedPreview();
                 return;
             }
+
             const lastElec = parseInt(opt.getAttribute('data-last-elec') || '0', 10);
             const lastWater = parseInt(opt.getAttribute('data-last-water') || '0', 10);
             const lastPeriod = opt.getAttribute('data-last-period') || '';
             const tenant = opt.getAttribute('data-tenant') || '';
+            const price = parseFloat(opt.getAttribute('data-room-price') || '0');
 
-            document.getElementById('add_elec_old').value = lastElec;
-            document.getElementById('add_water_old').value = lastWater;
-            document.getElementById('add_elec_new').min = lastElec;
-            document.getElementById('add_water_new').min = lastWater;
+            document.getElementById('sc_elec_old').value = lastElec;
+            document.getElementById('sc_water_old').value = lastWater;
+            document.getElementById('sc_elec_new').value = '';
+            document.getElementById('sc_water_new').value = '';
+            document.getElementById('sc_elec_new').min = lastElec;
+            document.getElementById('sc_water_new').min = lastWater;
 
-            hintEl.innerHTML = `<i class="fa-solid fa-wand-magic-sparkles me-1"></i>Khách: <strong>${tenant}</strong> • Tự động lấy chỉ số cũ từ kỳ gần nhất (${lastPeriod}): Điện <strong>${lastElec}</strong>, Nước <strong>${lastWater}</strong>`;
-            calcLivePreview('add');
+            infoEl.innerHTML = `<span class="text-teal-main fw-bold"><i class="fa-solid fa-user me-1"></i>${tenant}</span> • Giá phòng: <strong>${formatVND(price)}</strong>` + (lastPeriod ? ` • Số cũ kỳ ${lastPeriod}` : '');
+            
+            resetCalculatedPreview();
+            document.getElementById('sc_elec_new').focus();
         }
 
-        // Tính nhẩm trực tiếp số tiêu thụ & thành tiền trong Modal Add / Edit
-        function calcLivePreview(mode) {
-            const eOld = parseInt(document.getElementById(mode === 'add' ? 'add_elec_old' : 'edit_electric_old').value || '0', 10);
-            const eNewRaw = document.getElementById(mode === 'add' ? 'add_elec_new' : 'edit_electric_new').value;
-            const wOld = parseInt(document.getElementById(mode === 'add' ? 'add_water_old' : 'edit_water_old').value || '0', 10);
-            const wNewRaw = document.getElementById(mode === 'add' ? 'add_water_new' : 'edit_water_new').value;
+        function resetCalculatedPreview() {
+            const errAlert = document.getElementById('sc_error_alert');
+            if (errAlert) errAlert.style.display = 'none';
 
-            const eNew = eNewRaw === '' ? eOld : parseInt(eNewRaw, 10);
-            const wNew = wNewRaw === '' ? wOld : parseInt(wNewRaw, 10);
+            const calcBox = document.getElementById('sc_calc_box');
+            if (calcBox) {
+                calcBox.style.background = '#f8fafc';
+                calcBox.style.borderColor = '#e2e8f0';
+            }
+            const statusTitle = document.getElementById('sc_calc_status_title');
+            if (statusTitle) {
+                statusTitle.innerHTML = '<i class="fa-regular fa-clock me-1 text-muted"></i> CHƯA TÍNH TIỀN';
+                statusTitle.className = 'text-muted fw-bold small';
+            }
+            const displayEl = document.getElementById('sc_total_money_display');
+            if (displayEl) {
+                displayEl.textContent = '-- đ';
+                displayEl.className = 'fw-black text-secondary';
+            }
+            const breakdownEl = document.getElementById('sc_calc_breakdown');
+            if (breakdownEl) breakdownEl.textContent = 'Nhập số điện, nước & ấn "Hoàn tất"';
 
-            const warnEl = document.getElementById(mode + '_live_warning');
-            const submitBtn = document.getElementById(mode + '_submit_btn');
+            const resAlert = document.getElementById('sc_result_alert');
+            if (resAlert) resAlert.style.display = 'none';
 
-            if ((eNewRaw !== '' && eNew < eOld) || (wNewRaw !== '' && wNew < wOld)) {
-                warnEl.style.display = 'block';
-                warnEl.innerHTML = '<i class="fa-solid fa-triangle-exclamation me-1"></i> Lỗi: Chỉ số MỚI không được nhỏ hơn chỉ số CŨ!';
-                submitBtn.disabled = true;
-            } else {
-                submitBtn.disabled = false;
-                const eDiff = Math.max(0, eNew - eOld);
-                const wDiff = Math.max(0, wNew - wOld);
-                if (eDiff >= 300 || wDiff >= 35) {
-                    warnEl.style.display = 'block';
-                    warnEl.className = 'alert alert-warning rounded-4 py-2 px-3 small fw-bold mb-3';
-                    warnEl.innerHTML = `<i class="fa-solid fa-bell me-1"></i> Cảnh báo: Mức tiêu thụ khá cao (+${eDiff} kWh, +${wDiff} m³). Vui lòng kiểm tra kỹ tránh nhập nhầm số đồng hồ!`;
+            // Cập nhật tiêu thụ tạm
+            const eOld = parseInt(document.getElementById('sc_elec_old')?.value || '0', 10);
+            const eNewRaw = document.getElementById('sc_elec_new')?.value || '';
+            const wOld = parseInt(document.getElementById('sc_water_old')?.value || '0', 10);
+            const wNewRaw = document.getElementById('sc_water_new')?.value || '';
+
+            const eUsedEl = document.getElementById('sc_elec_used_text');
+            if (eUsedEl) {
+                if (eNewRaw !== '') {
+                    const eUsed = Math.max(0, parseInt(eNewRaw, 10) - eOld);
+                    eUsedEl.innerHTML = `<span class="text-warning-emphasis fw-bold"><i class="fa-solid fa-bolt me-1"></i>+${eUsed} kWh</span>`;
                 } else {
-                    warnEl.style.display = 'none';
-                    warnEl.className = 'alert alert-danger rounded-4 py-2 px-3 small fw-bold mb-3';
+                    eUsedEl.textContent = 'Tiêu thụ: -- kWh';
                 }
+            }
+
+            const wUsedEl = document.getElementById('sc_water_used_text');
+            if (wUsedEl) {
+                if (wNewRaw !== '') {
+                    const wUsed = Math.max(0, parseInt(wNewRaw, 10) - wOld);
+                    wUsedEl.innerHTML = `<span class="text-info-emphasis fw-bold"><i class="fa-solid fa-droplet me-1"></i>+${wUsed} m³</span>`;
+                } else {
+                    wUsedEl.textContent = 'Tiêu thụ: -- m³';
+                }
+            }
+        }
+
+        // KHI QUẢN LÝ ẤN NÚT "HOÀN TẤT" -> TỰ ĐỘNG HIỆN SỐ TIỀN TƯƠNG ỨNG
+        function onManagerClickComplete() {
+            const roomId = document.getElementById('sc_room_id').value;
+            const eOld = parseInt(document.getElementById('sc_elec_old').value || '0', 10);
+            const eNewRaw = document.getElementById('sc_elec_new').value;
+            const wOld = parseInt(document.getElementById('sc_water_old').value || '0', 10);
+            const wNewRaw = document.getElementById('sc_water_new').value;
+
+            const errAlert = document.getElementById('sc_error_alert');
+            const resAlert = document.getElementById('sc_result_alert');
+            const calcBox = document.getElementById('sc_calc_box');
+
+            if (!roomId) {
+                errAlert.style.display = 'block';
+                errAlert.innerHTML = '<i class="fa-solid fa-circle-exclamation me-1"></i> Vui lòng chọn phòng trọ!';
+                return;
+            }
+
+            if (eNewRaw === '' || wNewRaw === '') {
+                errAlert.style.display = 'block';
+                errAlert.innerHTML = '<i class="fa-solid fa-circle-exclamation me-1"></i> Quản lý vui lòng nhập đủ số Điện mới và số Nước mới!';
+                return;
+            }
+
+            const eNew = parseInt(eNewRaw, 10);
+            const wNew = parseInt(wNewRaw, 10);
+
+            if (eNew < eOld || wNew < wOld) {
+                errAlert.style.display = 'block';
+                errAlert.innerHTML = '<i class="fa-solid fa-triangle-exclamation me-1"></i> Lỗi: Số mới không được nhỏ hơn số cũ (Điện cũ: ' + eOld + ', Nước cũ: ' + wOld + ')!';
+                return;
+            }
+
+            errAlert.style.display = 'none';
+
+            // Tính số tiêu thụ & thành tiền
+            const eUsed = Math.max(0, eNew - eOld);
+            const wUsed = Math.max(0, wNew - wOld);
+            const eCost = eUsed * ELEC_PRICE;
+            const wCost = wUsed * WATER_PRICE;
+            const totalUtility = eCost + wCost;
+
+            const selectEl = document.getElementById('sc_room_id');
+            const opt = selectEl.options[selectEl.selectedIndex];
+            const roomName = opt.getAttribute('data-room-number') || '';
+            const tenantName = opt.getAttribute('data-tenant') || 'Khách thuê';
+            const roomPrice = opt ? parseFloat(opt.getAttribute('data-room-price') || '0') : 0;
+            const totalRoom = roomPrice + totalUtility + OTHER_SERVICES_TOTAL;
+
+            // HIỆN SỐ TIỀN TƯƠNG ỨNG TRÊN Ô KẾT QUẢ
+            calcBox.style.background = 'linear-gradient(135deg, #f0fdfa 0%, #e6fffa 100%)';
+            calcBox.style.borderColor = '#308f86';
+            calcBox.classList.add('highlight');
+
+            document.getElementById('sc_calc_status_title').innerHTML = '<i class="fa-solid fa-circle-check text-success me-1"></i> TỔNG TIỀN TƯƠNG ỨNG:';
+            document.getElementById('sc_calc_status_title').className = 'text-success fw-black small';
+
+            const displayEl = document.getElementById('sc_total_money_display');
+            displayEl.textContent = formatVND(totalUtility);
+            displayEl.className = 'fw-black text-teal-main fs-4';
+
+            document.getElementById('sc_calc_breakdown').innerHTML = `Điện: <strong>${formatVND(eCost)}</strong> (+${eUsed} kWh) • Nước: <strong>${formatVND(wCost)}</strong> (+${wUsed} m³)`;
+
+            // HIỆN KHUNG THÔNG BÁO HOÀN TẤT & LƯU CSDL
+            resAlert.style.display = 'flex';
+            document.getElementById('sc_result_title').innerHTML = `HOÀN TẤT PHÒNG ${roomName} (${tenantName}) — SỐ TIỀN: <span class="text-teal-main fs-5">${formatVND(totalUtility)}</span>`;
+            document.getElementById('sc_result_desc').innerHTML = `Điện (+${eUsed} kWh = ${formatVND(eCost)}) + Nước (+${wUsed} m³ = ${formatVND(wCost)}). Tạm tính cả phòng: <strong>${formatVND(totalRoom)}</strong>. Bấm nút bên phải để lưu.`;
+
+            // Đổi nút Hoàn tất thành trạng thái đã tính
+            const btn = document.getElementById('btnSingleComplete');
+            btn.innerHTML = '<i class="fa-solid fa-check-double me-1"></i> Đã tính xong!';
+            btn.className = 'btn btn-success w-100 py-2 fw-bold rounded-pill shadow-sm';
+            setTimeout(() => {
+                btn.innerHTML = '<i class="fa-solid fa-circle-check me-1"></i> Hoàn tất';
+                btn.className = 'btn-teal-custom w-100 py-2 fw-bold rounded-pill shadow-sm';
+            }, 3000);
+        }
+
+        function handleSingleCalcSubmit(event) {
+            const roomId = document.getElementById('sc_room_id').value;
+            const eNewRaw = document.getElementById('sc_elec_new').value;
+            const wNewRaw = document.getElementById('sc_water_new').value;
+            const errAlert = document.getElementById('sc_error_alert');
+
+            if (!roomId || eNewRaw === '' || wNewRaw === '') {
+                event.preventDefault();
+                errAlert.style.display = 'block';
+                errAlert.innerHTML = '<i class="fa-solid fa-circle-exclamation me-1"></i> Vui lòng chọn phòng và nhập đủ số điện, nước!';
+                return false;
+            }
+
+            const eOld = parseInt(document.getElementById('sc_elec_old').value || '0', 10);
+            const wOld = parseInt(document.getElementById('sc_water_old').value || '0', 10);
+            if (parseInt(eNewRaw, 10) < eOld || parseInt(wNewRaw, 10) < wOld) {
+                event.preventDefault();
+                errAlert.style.display = 'block';
+                errAlert.innerHTML = '<i class="fa-solid fa-triangle-exclamation me-1"></i> Số mới không được nhỏ hơn số cũ!';
+                return false;
+            }
+
+            const btnSave = document.getElementById('btnSaveToDB');
+            if (btnSave) {
+                btnSave.disabled = true;
+                btnSave.innerHTML = '<i class="fa-solid fa-spinner fa-spin me-1"></i> Đang lưu...';
+            }
+            return true;
+        }
+
+        // BẢNG TẤT CẢ PHÒNG (TAB 2)
+        function completeMultiRow(roomId, roomNumber) {
+            const eOld = parseInt(document.getElementById('m_e_old_' + roomId).value || '0', 10);
+            const eNewRaw = document.getElementById('m_e_new_' + roomId).value;
+            const wOld = parseInt(document.getElementById('m_w_old_' + roomId).value || '0', 10);
+            const wNewRaw = document.getElementById('m_w_new_' + roomId).value;
+
+            if (eNewRaw === '' || wNewRaw === '') {
+                alert(`Quản lý vui lòng nhập đủ số Điện mới và Nước mới cho phòng ${roomNumber}!`);
+                return;
+            }
+
+            const eNew = parseInt(eNewRaw, 10);
+            const wNew = parseInt(wNewRaw, 10);
+
+            if (eNew < eOld || wNew < wOld) {
+                alert(`Lỗi phòng ${roomNumber}: Số mới không được nhỏ hơn số cũ!`);
+                return;
             }
 
             const eUsed = Math.max(0, eNew - eOld);
             const wUsed = Math.max(0, wNew - wOld);
             const eCost = eUsed * ELEC_PRICE;
             const wCost = wUsed * WATER_PRICE;
+            const total = eCost + wCost;
 
-            document.getElementById(mode + '_elec_used').textContent = eUsed + ' kWh';
-            document.getElementById(mode + '_elec_cost').textContent = formatVND(eCost);
-            document.getElementById(mode + '_water_used').textContent = wUsed + ' m³';
-            document.getElementById(mode + '_water_cost').textContent = formatVND(wCost);
-            document.getElementById(mode + '_total_utility').textContent = formatVND(eCost + wCost);
+            // HIỆN SỐ TIỀN TƯƠNG ỨNG TRỰC TIẾP TRÊN DÒNG PHÒNG ĐÓ
+            const totalEl = document.getElementById('m_total_' + roomId);
+            totalEl.textContent = formatVND(total);
+            totalEl.className = 'fw-black text-teal-main fs-6';
+
+            const subEl = document.getElementById('m_sub_' + roomId);
+            subEl.innerHTML = `Đ: <strong>${formatVND(eCost)}</strong> | N: <strong>${formatVND(wCost)}</strong>`;
+
+            const row = document.getElementById('multi_row_' + roomId);
+            if (row) {
+                row.style.background = '#f0fdfa';
+                setTimeout(() => row.style.background = '', 2000);
+            }
+
+            // Gán dữ liệu sang form single và submit lưu vào CSDL
+            if (confirm(`Phòng ${roomNumber}: Số tiền điện nước tương ứng là ${formatVND(total)}.\nBạn có muốn lưu ngay vào cơ sở dữ liệu không?`)) {
+                document.getElementById('sc_room_id').value = String(roomId);
+                document.getElementById('sc_elec_old').value = eOld;
+                document.getElementById('sc_elec_new').value = eNew;
+                document.getElementById('sc_water_old').value = wOld;
+                document.getElementById('sc_water_new').value = wNew;
+                document.getElementById('singleCalcForm').submit();
+            }
         }
 
-        // Mở Modal Sửa chỉ số
+        function completeAllMulti() {
+            let hasValid = false;
+            let grandTotal = 0;
+            document.querySelectorAll('#multiCalcTable tbody tr').forEach(tr => {
+                const rId = tr.getAttribute('data-room-id');
+                const eOld = parseInt(document.getElementById('m_e_old_' + rId)?.value || '0', 10);
+                const eNewRaw = document.getElementById('m_e_new_' + rId)?.value;
+                const wOld = parseInt(document.getElementById('m_w_old_' + rId)?.value || '0', 10);
+                const wNewRaw = document.getElementById('m_w_new_' + rId)?.value;
+
+                if (eNewRaw !== '' && wNewRaw !== '') {
+                    const eNew = parseInt(eNewRaw, 10);
+                    const wNew = parseInt(wNewRaw, 10);
+                    if (eNew >= eOld && wNew >= wOld) {
+                        hasValid = true;
+                        const eCost = (eNew - eOld) * ELEC_PRICE;
+                        const wCost = (wNew - wOld) * WATER_PRICE;
+                        const total = eCost + wCost;
+                        grandTotal += total;
+
+                        document.getElementById('m_total_' + rId).textContent = formatVND(total);
+                        document.getElementById('m_sub_' + rId).innerHTML = `Đ: ${formatVND(eCost)} | N: ${formatVND(wCost)}`;
+                    }
+                }
+            });
+
+            const grandTotalEl = document.getElementById('multi_grand_total');
+            if (grandTotalEl) grandTotalEl.textContent = formatVND(grandTotal);
+
+            if (!hasValid) {
+                alert('Vui lòng nhập số điện và nước cho ít nhất một phòng!');
+                return;
+            }
+
+            if (confirm(`Tổng số tiền tương ứng cho các phòng là ${formatVND(grandTotal)}.\nXác nhận lưu tất cả vào cơ sở dữ liệu?`)) {
+                document.getElementById('multiCalcForm').submit();
+            }
+        }
+
+        function toggleAllMulti(master) {
+            document.querySelectorAll('.multi-chk').forEach(c => c.checked = master.checked);
+        }
+
+        // Mở Modal Thêm mới chung
+        function openAddModal() {
+            const modalEl = document.getElementById('addUtilityModal');
+            new bootstrap.Modal(modalEl).show();
+        }
+
+        // Mở Bảng Lập Số khi click "Ghi số" ở Sơ đồ phòng
+        function openAddModalForRoom(roomId, periodStr) {
+            const scSelect = document.getElementById('sc_room_id');
+            if (scSelect) {
+                scSelect.value = String(roomId);
+                if (periodStr && periodStr !== 'all') {
+                    const my = document.getElementById('sc_month_year');
+                    if (my) my.value = periodStr;
+                }
+                onSingleCalcRoomChange();
+                const sec = document.getElementById('tableLapSoDienNuoc');
+                if (sec) sec.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                setTimeout(() => {
+                    const eNewInput = document.getElementById('sc_elec_new');
+                    if (eNewInput) eNewInput.focus();
+                }, 300);
+            }
+        }
+
+        
         function openEditModal(id, room, month, e_old, e_new, w_old, w_new) {
             document.getElementById('edit_id').value = id;
             document.getElementById('edit_title').textContent = 'Phòng ' + room + ' — Kỳ ' + month;
