@@ -5,6 +5,7 @@ class DashboardController {
     private ReportModel $reportModel;
 
     public function __construct() {
+        date_default_timezone_set('Asia/Ho_Chi_Minh');
         $this->reportModel = new ReportModel();
     }
 
@@ -65,6 +66,7 @@ class DashboardController {
             } elseif ($action === 'pay_invoice') {
                 $invoiceId = (int)($_POST['invoice_id'] ?? 0);
                 if ($invoiceId > 0 && $this->reportModel->markInvoiceStatus($invoiceId, 'paid')) {
+                    $this->reportModel->logActivity("Đã xác nhận thu tiền hóa đơn #{$invoiceId}", 'success');
                     $_SESSION['flash_success'] = "Đã xác nhận thu tiền hóa đơn #{$invoiceId} thành công!";
                 }
                 header("Location: index.php?route=dashboard");
@@ -104,7 +106,6 @@ class DashboardController {
         if ($reqBld !== '' && $reqBld !== 'all' && isset($buildings[$reqBld])) {
             $_SESSION['selected_building_id'] = $reqBld;
             $building_id = $reqBld;
-            $this->reportModel->logActivity("Đã chọn xem Tổng quan: " . ($buildings[$reqBld]['name'] ?? "Tòa {$reqBld}"), 'info');
         } elseif (!empty($_SESSION['selected_building_id']) && isset($buildings[$_SESSION['selected_building_id']])) {
             $building_id = $_SESSION['selected_building_id'];
         } else {
@@ -127,6 +128,7 @@ class DashboardController {
 
                 $res = $this->reportModel->createNewInvoice($roomId, $monthYear, $elecOld, $elecNew, $waterOld, $waterNew);
                 if ($res['ok']) {
+                    $this->reportModel->logActivity("Đã lập hóa đơn mới cho phòng ID {$roomId} (Kỳ {$monthYear})", 'success');
                     $_SESSION['flash_success'] = $res['msg'];
                 } else {
                     $_SESSION['flash_error'] = $res['msg'];
@@ -136,6 +138,7 @@ class DashboardController {
             } elseif ($action === 'pay_invoice') {
                 $invoiceId = (int)($_POST['invoice_id'] ?? 0);
                 if ($invoiceId > 0 && $this->reportModel->markInvoiceStatus($invoiceId, 'paid')) {
+                    $this->reportModel->logActivity("Đã thu tiền hóa đơn #{$invoiceId}", 'success');
                     $_SESSION['flash_success'] = "Đã thu tiền hóa đơn #{$invoiceId} thành công! Doanh thu thực thu đã được cập nhật.";
                 }
                 header("Location: " . $redirectUrl . "#invoice-section");
@@ -143,6 +146,7 @@ class DashboardController {
             } elseif ($action === 'unpay_invoice') {
                 $invoiceId = (int)($_POST['invoice_id'] ?? 0);
                 if ($invoiceId > 0 && $this->reportModel->markInvoiceStatus($invoiceId, 'unpaid')) {
+                    $this->reportModel->logActivity("Đã hoàn tác hóa đơn #{$invoiceId} về trạng thái Chưa thu", 'warning');
                     $_SESSION['flash_success'] = "Đã chuyển trạng thái hóa đơn #{$invoiceId} về Chưa thu.";
                 }
                 header("Location: " . $redirectUrl . "#invoice-section");
@@ -150,6 +154,7 @@ class DashboardController {
             } elseif ($action === 'delete_invoice') {
                 $invoiceId = (int)($_POST['invoice_id'] ?? 0);
                 if ($invoiceId > 0 && $this->reportModel->deleteInvoice($invoiceId)) {
+                    $this->reportModel->logActivity("Đã xóa hóa đơn #{$invoiceId} khỏi CSDL", 'warning');
                     $_SESSION['flash_success'] = "Đã xóa hóa đơn #{$invoiceId} khỏi CSDL.";
                 }
                 header("Location: " . $redirectUrl . "#invoice-section");

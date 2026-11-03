@@ -5,6 +5,8 @@ class ReportModel {
     private PDO $conn;
 
     public function __construct() {
+        // Đặt múi giờ máy tính Việt Nam (GMT+7) để đảm bảo giờ hiển thị chính xác theo giờ hệ thống
+        date_default_timezone_set('Asia/Ho_Chi_Minh');
         $this->conn = Database::getConnection();
         if (session_status() === PHP_SESSION_NONE) {
             session_start();
@@ -408,7 +410,7 @@ class ReportModel {
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
-    // 8. Ghi nhận & Lấy danh sách Thông báo Thao tác của người dùng (Activity Logs)
+    // 8. Ghi nhận & Lấy danh sách Nhật ký Hoạt động (chỉ ghi khi có thay đổi dữ liệu, ghi rõ tài khoản thực hiện)
     public function logActivity(string $title, string $type = 'info'): void {
         if (session_status() === PHP_SESSION_NONE) {
             session_start();
@@ -416,32 +418,29 @@ class ReportModel {
         if (!isset($_SESSION['activity_logs']) || !is_array($_SESSION['activity_logs'])) {
             $_SESSION['activity_logs'] = [];
         }
+        $userFullName = $_SESSION['full_name'] ?? 'Quản trị viên';
+        $userRole     = $_SESSION['role'] ?? 'admin';
+        $userName     = $_SESSION['username'] ?? 'admin';
+
         array_unshift($_SESSION['activity_logs'], [
-            'id'    => uniqid('act_'),
-            'title' => $title,
-            'time'  => date('H:i:s - d/m/Y'),
-            'type'  => $type,
-            'link'  => '#'
+            'id'       => uniqid('act_'),
+            'user'     => $userFullName,
+            'username' => $userName,
+            'role'     => $userRole,
+            'title'    => $title,
+            'time'     => date('H:i:s - d/m/Y'),
+            'type'     => $type
         ]);
-        // Giữ tối đa 30 thao tác gần nhất trong session
-        $_SESSION['activity_logs'] = array_slice($_SESSION['activity_logs'], 0, 30);
+        // Giữ tối đa 50 thao tác gần nhất trong session
+        $_SESSION['activity_logs'] = array_slice($_SESSION['activity_logs'], 0, 50);
     }
 
     public function getNotifications(string $buildingId = 'all'): array {
         if (session_status() === PHP_SESSION_NONE) {
             session_start();
         }
-        if (empty($_SESSION['activity_logs'])) {
-            $user = $_SESSION['full_name'] ?? 'Quản trị viên';
-            $_SESSION['activity_logs'] = [
-                [
-                    'id'    => uniqid('act_'),
-                    'title' => "{$user} đã đăng nhập và kết nối CSDL thành công",
-                    'time'  => date('H:i:s - d/m/Y'),
-                    'type'  => 'success',
-                    'link'  => '#'
-                ]
-            ];
+        if (!isset($_SESSION['activity_logs']) || !is_array($_SESSION['activity_logs'])) {
+            $_SESSION['activity_logs'] = [];
         }
         return $_SESSION['activity_logs'];
     }

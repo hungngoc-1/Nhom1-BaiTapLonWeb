@@ -4,6 +4,7 @@ require_once __DIR__ . '/../Config/Database.php';
 class AuthController {
     // Hàm hiển thị form đăng nhập
     public function showLoginForm() {
+        date_default_timezone_set('Asia/Ho_Chi_Minh');
         if (session_status() === PHP_SESSION_NONE) session_start();
         if (empty($_SESSION['csrf_token'])) {
             $_SESSION['csrf_token'] = bin2hex(random_bytes(32));

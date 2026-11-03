@@ -1,4 +1,5 @@
 <?php
+date_default_timezone_set('Asia/Ho_Chi_Minh');
 $userFullName = $_SESSION['full_name'] ?? 'Quản trị viên Hệ thống';
 $userRole     = $_SESSION['role'] ?? 'admin';
 $userName     = $_SESSION['username'] ?? 'admin01';
@@ -996,62 +997,8 @@ if (!empty($filterBuilding) && $filterBuilding !== 'all' && isset($buildings[$fi
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
-        const SERVER_ACTIVITIES = <?= json_encode($notifications ?? [], JSON_UNESCAPED_UNICODE) ?>;
-
-        function getStoredActivities() {
-            try {
-                const raw = localStorage.getItem('staymate_activity_logs');
-                return raw ? JSON.parse(raw) : [];
-            } catch (e) {
-                return [];
-            }
-        }
-
-        function saveStoredActivities(list) {
-            try {
-                localStorage.setItem('staymate_activity_logs', JSON.stringify(list.slice(0, 50)));
-            } catch (e) {}
-        }
-
-        function nowTimeStr() {
-            const d = new Date();
-            return d.toLocaleTimeString('vi-VN', { hour12: false }) + ' - ' + d.toLocaleDateString('vi-VN');
-        }
-
-        function pushUserActivity(title, type = 'info') {
-            let list = getStoredActivities();
-            if (list.length === 0 && Array.isArray(SERVER_ACTIVITIES)) {
-                list = SERVER_ACTIVITIES;
-            }
-            if (list.length > 0 && list[0].title === title) return;
-            list.unshift({
-                id: 'act_' + Date.now() + '_' + Math.random().toString(36).slice(2, 6),
-                title: title,
-                time: nowTimeStr(),
-                type: type
-            });
-            saveStoredActivities(list);
-        }
-
-        document.addEventListener('DOMContentLoaded', function() {
-            pushUserActivity('Đang xem trang Quản lý Hệ thống Tòa nhà', 'success');
-
-            document.querySelectorAll('.overview-card').forEach(card => {
-                card.addEventListener('click', function() {
-                    const titleEl = this.querySelector('.overview-title');
-                    const name = titleEl ? titleEl.textContent.trim() : 'Thống kê';
-                    pushUserActivity('Đã bấm xem thẻ tổng hợp: ' + name, 'info');
-                });
-            });
-
-            document.querySelectorAll('.btn-manage-bld').forEach(btn => {
-                btn.addEventListener('click', function() {
-                    const card = this.closest('.building-card');
-                    const bldName = card ? (card.querySelector('.bld-title')?.textContent.trim() || 'Tòa nhà') : 'Tòa nhà';
-                    pushUserActivity('Đã chọn Quản lý Tòa nhà: ' + bldName, 'success');
-                });
-            });
-        });
+        // Xóa sạch bộ nhớ tạm trình duyệt cũ lưu những hành động xem trang trước đây
+        try { localStorage.removeItem("staymate_activity_logs"); } catch(e) {}
     </script>
 </body>
 </html>
