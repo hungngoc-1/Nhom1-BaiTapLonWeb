@@ -18,12 +18,16 @@ INSERT INTO `rooms` (`room_number`, `price`, `status`, `description`) VALUES
 ('P301', 4000000, 'rented', 'Phòng tầng 3, studio full nội thất'),
 ('P302', 4500000, 'rented', 'Phòng tầng 3, 2 phòng ngủ mini');
 
--- 3. DỊCH VỤ (Giữ nguyên)
-INSERT INTO `services` (`service_name`, `unit_price`, `unit`) VALUES
-('Điện', 3500, 'kWh'),
-('Nước', 20000, 'Khối'),
-('Rác', 50000, 'Tháng'),
-('Internet', 100000, 'Tháng');
+-- 3. DỊCH VỤ (Đã cập nhật đa dạng và thêm trạng thái Bật/Tắt)
+-- Lưu ý: Nếu báo lỗi trùng lặp khi chạy, bạn hãy làm trống bảng services trước (TRUNCATE TABLE services;)
+INSERT INTO `services` (`service_name`, `unit_price`, `unit`, `is_active`) VALUES
+('Tiền điện', 3500, 'kWh', 1),
+('Tiền nước', 80000, 'Người', 1),             -- Đã đổi thành tính theo Người
+('Internet', 100000, 'Phòng', 1),
+('Phí dịch vụ chung (Thang máy)', 150000, 'Phòng', 1),
+('Vệ sinh', 30000, 'Phòng', 1),
+('Gửi xe', 100000, 'Xe', 0),                  -- Trạng thái tắt (0) giống thiết kế
+('Máy giặt', 50000, 'Người', 0);              -- Trạng thái tắt (0) giống thiết kế
 
 -- 4. HỢP ĐỒNG (Tạo kịch bản khách thuê dài, khách vừa vào, khách đã đi)
 INSERT INTO `contracts` (`room_id`, `tenant_id`, `start_date`, `end_date`, `deposit_amount`, `status`) VALUES
