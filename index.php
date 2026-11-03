@@ -199,6 +199,14 @@ switch ($route) {
         (new InvoiceController())->delete();
         break;
 
+    case 'invoices/update-deposit':
+        (new InvoiceController())->updateDeposit();
+        break;
+
+    case 'invoices/add-expense':
+        (new InvoiceController())->addExpense();
+        break;
+
     case 'invoices/export':
         (new InvoiceController())->export();
         break;

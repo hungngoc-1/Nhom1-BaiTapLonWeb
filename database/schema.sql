@@ -112,3 +112,20 @@ CREATE TABLE `invoice_details` (
   FOREIGN KEY (`invoice_id`) REFERENCES `invoices`(`id`) ON DELETE CASCADE,
   FOREIGN KEY (`service_id`) REFERENCES `services`(`id`) ON DELETE SET NULL
 ) ENGINE=InnoDB;
+
+CREATE TABLE IF NOT EXISTS `third_party_expenses` (
+  `id` INT AUTO_INCREMENT PRIMARY KEY,
+  `month_year` VARCHAR(7) NOT NULL,
+  `expense_type` VARCHAR(30) NOT NULL,
+  `title` VARCHAR(150) NOT NULL,
+  `provider_name` VARCHAR(150) NOT NULL,
+  `quantity` DECIMAL(10,2) DEFAULT 0,
+  `unit` VARCHAR(30) DEFAULT '',
+  `unit_price` DECIMAL(10,2) DEFAULT 0,
+  `amount` DECIMAL(10,2) NOT NULL,
+  `customer_amount` DECIMAL(10,2) DEFAULT 0,
+  `status` ENUM('paid', 'pending') DEFAULT 'paid',
+  `paid_at` DATE NULL,
+  `notes` VARCHAR(255) NULL,
+  `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB;
