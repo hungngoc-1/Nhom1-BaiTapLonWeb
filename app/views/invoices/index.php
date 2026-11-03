@@ -37,8 +37,8 @@ $pendingInPeriod = array_values(array_filter($pendingView, fn($x) => $filters['p
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         :root { --teal-main: #308f86; --teal-hover: #25756d; --bg-page: #f8fafc; }
-        body {
-            background-color: var(--bg-page); font-family: 'Nunito', sans-serif; font-size: 0.9rem; color: #334155;
+        body { 
+            background-color: var(--bg-page); font-family: 'Nunito', sans-serif; font-size: 0.95rem; color: #334155;
             min-height: 100vh; display: flex; flex-direction: column;
             background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1440 320"><path fill="%23e6f4f1" fill-opacity="0.8" d="M0,160L48,170.7C96,181,192,203,288,197.3C384,192,480,160,576,149.3C672,139,768,149,864,170.7C960,192,1056,224,1152,213.3C1248,203,1344,149,1392,122.7L1440,96L1440,0L1392,0C1344,0,1248,0,1152,0C1056,0,960,0,864,0C768,0,672,0,576,0C480,0,384,0,288,0C192,0,96,0,48,0L0,0Z"></path></svg>');
             background-position: top center; background-repeat: no-repeat; background-size: 100% auto; background-attachment: fixed;
@@ -77,7 +77,7 @@ $pendingInPeriod = array_values(array_filter($pendingView, fn($x) => $filters['p
         .btn-back-content { background: #fff; border: 3px solid #fff; color: #334155; font-weight: 800; padding: 10px 26px; border-radius: 50px; transition: .2s; text-decoration: none; display: inline-flex; align-items: center; box-shadow: 0 8px 20px rgba(0,0,0,.08); }
         .btn-back-content:hover { border-color: var(--teal-main); color: var(--teal-main); transform: translateY(-3px); }
         .header-title-wrapper { position: relative; z-index: 2; display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 28px; flex-wrap: wrap; gap: 16px; }
-        .main-title { font-weight: 800; color: #0f172a; font-size: 1.25rem; letter-spacing: -0.3px; display: inline-flex; align-items: center; flex-wrap: wrap; }
+        .main-title {  font-weight: 800; color: #0f172a; font-size: 1.45rem; letter-spacing: -0.3px; display: inline-flex; align-items: center; flex-wrap: wrap; }
         .bld-highlight { color: var(--teal-main); margin-left: 8px; position: relative; }
         .title-sparkle { position: absolute; background: #fde047; border-radius: 2px; }
         .ts-1 { width: 4px; height: 12px; top: -10px; right: -15px; transform: rotate(20deg); }
@@ -93,8 +93,8 @@ $pendingInPeriod = array_values(array_filter($pendingView, fn($x) => $filters['p
             height: 100%; transition: transform 0.2s ease, box-shadow 0.2s ease;
         }
         .overview-card:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(0,0,0,0.06); }
-        .overview-title { font-size: 0.8125rem; font-weight: 700; margin-bottom: 6px; display: flex; align-items: center; gap: 6px; text-transform: uppercase; color: #475569; position: relative; z-index: 2; }
-        .overview-val { font-size: 1.25rem; font-weight: 800; line-height: 1.2; letter-spacing: -0.3px; position: relative; z-index: 2; color: #0f172a; }
+        .overview-title {  font-size: 0.85rem; font-weight: 700; margin-bottom: 6px; display: flex; align-items: center; gap: 6px; text-transform: uppercase; color: #475569; position: relative; z-index: 2; }
+        .overview-val {  font-size: 1.55rem; font-weight: 800; line-height: 1.2; letter-spacing: -0.3px; position: relative; z-index: 2; color: #0f172a; }
         .overview-icon-bg {
             position: absolute; right: 18px; top: 18px;
             width: 38px; height: 38px; border-radius: 50%;
@@ -126,13 +126,17 @@ $pendingInPeriod = array_values(array_filter($pendingView, fn($x) => $filters['p
         .table-staymate tbody td:last-child { background: #fff; }
         .table-staymate tbody tr:hover td:last-child { background: #f8fafc; }
         .table-staymate .tenant-name { white-space: normal; min-width: 110px; max-width: 150px; line-height: 1.25; }
-        .sub-note { font-size: .72rem; color: #64748b; font-weight: 700; }
+        .sub-note { font-size: 0.82rem; color: #64748b; font-weight: 700; }
 
-        .badge-room-pill { background: var(--teal-main); color: #fff; padding: 6px 12px; border-radius: 50px; font-weight: 900; font-size: .8rem; box-shadow: 0 4px 10px rgba(48,143,134,.25); display: inline-flex; }
-        .badge-period-pill { background: #f1f5f9; color: #334155; border: 2px solid #cbd5e1; padding: 5px 11px; border-radius: 50px; font-weight: 800; font-size: .78rem; display: inline-flex; gap: 6px; align-items: center; white-space: nowrap; }
-        .code-pill { font-weight: 900; color: var(--teal-main); background: #f0fdfa; border: 1.5px solid #99f6e4; border-radius: 12px; padding: 4px 10px; font-size: .8rem; text-decoration: none; }
+        .badge-room-pill {
+            font-size: 0.88rem; box-shadow: 0 4px 10px rgba(48,143,134,.25); display: inline-flex; }
+        .badge-period-pill {
+            font-size: 0.86rem; display: inline-flex; gap: 6px; align-items: center; white-space: nowrap; }
+        .code-pill {
+            font-size: 0.88rem; text-decoration: none; }
         .code-pill:hover { background: var(--teal-main); color: #fff; }
-        .st-pill { display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px; border-radius: 50px; font-weight: 800; font-size: .76rem; white-space: nowrap; border: 1.5px solid; }
+        .st-pill {
+            font-size: 0.85rem; white-space: nowrap; border: 1.5px solid; }
         .st-paid { background: #dcfce7; color: #15803d; border-color: #86efac; }
         .st-unpaid { background: #fef3c7; color: #b45309; border-color: #fde68a; }
         .st-overdue { background: #fee2e2; color: #b91c1c; border-color: #fecaca; }
@@ -176,7 +180,7 @@ $pendingInPeriod = array_values(array_filter($pendingView, fn($x) => $filters['p
                         <div class="avatar-circle">AS</div>
                         <div class="text-start d-none d-sm-block lh-sm">
                             <div class="fw-bold text-dark" style="font-size: 0.9rem;"><?= htmlspecialchars($_SESSION['full_name'] ?? 'Quản trị viên Hệ thống') ?> <i class="fa-solid fa-angle-down ms-1 text-muted fs-6"></i></div>
-                            <div class="text-muted text-capitalize" style="font-size: 0.75rem;"><?= htmlspecialchars($_SESSION['role'] ?? 'admin') ?></div>
+                            <div class="text-muted text-capitalize" style="font-size: 0.82rem;"><?= htmlspecialchars($_SESSION['role'] ?? 'admin') ?></div>
                         </div>
                     </div>
                     <ul class="dropdown-menu dropdown-menu-end shadow border-0 rounded-4 mt-2 p-2">
@@ -296,13 +300,13 @@ $pendingInPeriod = array_values(array_filter($pendingView, fn($x) => $filters['p
                         <span class="fw-bold text-success text-uppercase" style="font-size: 0.8125rem; letter-spacing: 0.3px;">
                             <i class="fa-solid fa-arrow-down-left-and-arrow-up-right-to-center me-1"></i> TỔNG KHOẢN THU (KHÁCH THUÊ)
                         </span>
-                        <span class="badge rounded-pill bg-success-subtle text-success fw-bold" style="font-size: 0.75rem;">Doanh thu</span>
+                        <span class="badge rounded-pill bg-success-subtle text-success fw-bold" style="font-size: 0.82rem;">Doanh thu</span>
                     </div>
-                    <div class="fw-bold text-dark my-1" style="font-size: 1.25rem;">
+                    <div class="fw-bold text-dark my-1" style="font-size: 1.55rem;">
                         <?= money($stats['total']) ?>
                     </div>
                 </div>
-                <div class="mt-2 pt-2 border-top border-light d-flex justify-content-between" style="font-size: 0.8125rem;">
+                <div class="mt-2 pt-2 border-top border-light d-flex justify-content-between" style="font-size: 0.88rem;">
                     <span class="text-success fw-bold"><i class="fa-solid fa-circle-check me-1"></i> Đã thu: <?= money($stats['paid']) ?></span>
                     <span class="text-danger fw-bold"><i class="fa-solid fa-clock me-1"></i> Còn nợ: <?= money($stats['unpaid']) ?></span>
                 </div>
@@ -316,13 +320,13 @@ $pendingInPeriod = array_values(array_filter($pendingView, fn($x) => $filters['p
                         <span class="fw-bold text-danger text-uppercase" style="font-size: 0.8125rem; letter-spacing: 0.3px;">
                             <i class="fa-solid fa-money-bill-transfer me-1"></i> TỔNG CHI BÊN THỨ 3 (HÀNG THÁNG)
                         </span>
-                        <span class="badge rounded-pill bg-danger-subtle text-danger fw-bold" style="font-size: 0.75rem;">Chi phí gốc</span>
+                        <span class="badge rounded-pill bg-danger-subtle text-danger fw-bold" style="font-size: 0.82rem;">Chi phí gốc</span>
                     </div>
-                    <div class="fw-bold text-danger my-1" style="font-size: 1.25rem;">
+                    <div class="fw-bold text-danger my-1" style="font-size: 1.55rem;">
                         <?= money($thirdPartyFinance['total_cost']) ?>
                     </div>
                 </div>
-                <div class="mt-2 pt-2 border-top border-light d-flex justify-content-between text-muted" style="font-size: 0.8125rem;">
+                <div class="mt-2 pt-2 border-top border-light d-flex justify-content-between text-muted" style="font-size: 0.88rem;">
                     <span><i class="fa-solid fa-bolt text-warning me-1"></i> Điện EVN: <?= money($thirdPartyFinance['total_elec_cost']) ?></span>
                     <span><i class="fa-solid fa-droplet text-info me-1"></i> Nước: <?= money($thirdPartyFinance['total_water_cost']) ?></span>
                 </div>
@@ -338,11 +342,11 @@ $pendingInPeriod = array_values(array_filter($pendingView, fn($x) => $filters['p
                         </span>
                         <span class="badge rounded-pill text-white fw-bold" style="background: var(--teal-main); font-size: 0.75rem;">Lãi ròng</span>
                     </div>
-                    <div class="fw-bold text-teal-main my-1" style="font-size: 1.25rem;">
+                    <div class="fw-bold text-teal-main my-1" style="font-size: 1.55rem;">
                         <?= money($stats['total'] - $thirdPartyFinance['total_cost']) ?>
                     </div>
                 </div>
-                <div class="mt-2 pt-2 border-top border-light d-flex justify-content-between" style="font-size: 0.8125rem;">
+                <div class="mt-2 pt-2 border-top border-light d-flex justify-content-between" style="font-size: 0.88rem;">
                     <span class="text-teal-main fw-bold"><i class="fa-solid fa-coins me-1"></i> Lãi DV Điện Nước: +<?= money($thirdPartyFinance['service_profit']) ?></span>
                     <span class="text-muted fw-bold"><?= round((($stats['total'] - $thirdPartyFinance['total_cost']) / max(1, $stats['total'])) * 100) ?>% tỷ suất</span>
                 </div>
@@ -458,7 +462,7 @@ $pendingInPeriod = array_values(array_filter($pendingView, fn($x) => $filters['p
                         <td>
                             <div class="d-flex align-items-center gap-2">
                                 <span class="badge-room-pill"><?= h($inv['room_number']) ?></span>
-                                <div class="fw-bold tenant-name" style="font-size:.85rem"><?= h($inv['tenant_name'] ?? 'Khách thuê') ?></div>
+                                <div class="fw-bold tenant-name" style="font-size:0.92rem"><?= h($inv['tenant_name'] ?? 'Khách thuê') ?></div>
                             </div>
                         </td>
                         <td><span class="badge-period-pill"><i class="fa-regular fa-calendar text-teal-main"></i><?= h($inv['month_year']) ?></span></td>
@@ -469,7 +473,7 @@ $pendingInPeriod = array_values(array_filter($pendingView, fn($x) => $filters['p
                                         <i class="<?= $inv['deposit_icon'] ?> me-1"></i> <?= h($inv['deposit_label']) ?>
                                     </span>
                                 </div>
-                                <div class="small fw-bold text-muted" style="font-size:.74rem">
+                                <div class="small fw-bold text-muted" style="font-size:0.82rem">
                                     <?= h($inv['deposit_sub']) ?>
                                 </div>
                                 <?php if (!empty($inv['contract_id_val'])): ?>
@@ -649,7 +653,7 @@ $pendingInPeriod = array_values(array_filter($pendingView, fn($x) => $filters['p
                                         <i class="fa-solid fa-circle-check me-1"></i> Đã thanh toán
                                     </span>
                                     <?php if (!empty($exp['paid_at'])): ?>
-                                        <div class="text-muted small" style="font-size:.72rem"><?= date('d/m/Y', strtotime($exp['paid_at'])) ?></div>
+                                        <div class="text-muted small" style="font-size:0.82rem"><?= date('d/m/Y', strtotime($exp['paid_at'])) ?></div>
                                     <?php endif; ?>
                                 </td>
                             </tr>
@@ -708,7 +712,7 @@ $pendingInPeriod = array_values(array_filter($pendingView, fn($x) => $filters['p
                                     <td>
                                         <div class="d-flex align-items-center gap-2">
                                             <span class="badge-room-pill"><?= h($pv['room_number']) ?></span>
-                                            <span class="tenant-name fw-bold" style="font-size:.85rem"><?= h($pv['tenant_name'] ?? 'Chưa có hợp đồng') ?></span>
+                                            <span class="tenant-name fw-bold" style="font-size:0.92rem"><?= h($pv['tenant_name'] ?? 'Chưa có hợp đồng') ?></span>
                                         </div>
                                     </td>
                                     <td><span class="badge-period-pill"><?= h($pv['month_year']) ?></span></td>

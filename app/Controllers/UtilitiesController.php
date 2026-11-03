@@ -44,8 +44,8 @@ class UtilitiesController {
                         SELECT usr.full_name 
                         FROM contracts c 
                         JOIN users usr ON c.tenant_id = usr.id 
-                        WHERE c.room_id = r.id AND c.status = 'active' 
-                        ORDER BY c.id DESC LIMIT 1
+                        WHERE c.room_id = r.id 
+                        ORDER BY (c.status = 'active') DESC, c.id DESC LIMIT 1
                     ) AS tenant_name,
                     inv.id AS invoice_id,
                     inv.status AS invoice_status,
@@ -59,11 +59,18 @@ class UtilitiesController {
             $params = [];
 
             if ($keyword !== '') {
-                $sql .= " AND (r.room_number LIKE ? OR u.month_year LIKE ? OR EXISTS (
-                    SELECT 1 FROM contracts c2 JOIN users usr2 ON c2.tenant_id = usr2.id
-                    WHERE c2.room_id = r.id AND usr2.full_name LIKE ?
-                ))";
+                $cleanRoom = preg_replace('/^[pP]/', '', $keyword);
+                $sql .= " AND (
+                    r.room_number LIKE ? 
+                    OR r.room_number LIKE ? 
+                    OR u.month_year LIKE ? 
+                    OR EXISTS (
+                        SELECT 1 FROM contracts c2 JOIN users usr2 ON c2.tenant_id = usr2.id
+                        WHERE c2.room_id = r.id AND usr2.full_name LIKE ?
+                    )
+                )";
                 $params[] = '%' . $keyword . '%';
+                $params[] = '%' . $cleanRoom . '%';
                 $params[] = '%' . $keyword . '%';
                 $params[] = '%' . $keyword . '%';
             }
@@ -107,12 +114,14 @@ class UtilitiesController {
                 'water_price' => $waterPrice,
                 'data' => $data
             ], JSON_UNESCAPED_UNICODE);
-
+            exit;
         } catch (Exception $e) {
             http_response_code(500);
-            echo json_encode(['ok' => false, 'message' => 'Lỗi kết nối CSDL: ' . $e->getMessage()]);
+            echo json_encode([
+                'ok' => false,
+                'msg' => $e->getMessage()
+            ], JSON_UNESCAPED_UNICODE);
+            exit;
         }
-        exit;
     }
 }
-?>
