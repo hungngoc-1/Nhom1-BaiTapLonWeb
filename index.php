@@ -17,6 +17,66 @@ if ($route === 'auth/logout') {
     exit;
 }
 
+// ==============================================================================
+// 2. BẢO MẬT & PHÂN QUYỀN TRUY CẬP (ACCESS CONTROL & ROUTE GUARDING)
+// Ngăn chặn lỗ hổng Broken Access Control (OWASP Top 10)
+// ==============================================================================
+$currentUserRole = $_SESSION['role'] ?? null;
+$isLoggedIn = !empty($_SESSION['user_id']) || !empty($_SESSION['username']);
+
+// Danh sách các route công khai (Khách chưa đăng nhập được phép truy cập)
+$publicRoutes = [
+    'login',
+    'auth/login',
+    'auth/process',
+    'auth/logout',
+    'showcase',
+    'web360',
+    'xemphong'
+];
+
+// Nếu đã đăng nhập mà truy cập trang đăng nhập -> Tự động chuyển hướng về trang chủ phù hợp
+if ($isLoggedIn && in_array($route, ['login', 'auth/login'], true)) {
+    if ($currentUserRole === 'tenant') {
+        header("Location: index.php?route=tenant/portal");
+    } else {
+        header("Location: index.php?route=dashboard");
+    }
+    exit;
+}
+
+// Nếu CHƯA đăng nhập mà cố tình truy cập các trang nội bộ -> Chặn và đẩy về trang login
+if (!$isLoggedIn && !in_array($route, $publicRoutes, true)) {
+    $_SESSION['flash_error'] = "Vui lòng đăng nhập để truy cập hệ thống!";
+    header("Location: index.php?route=auth/login");
+    exit;
+}
+
+// Phân quyền chặt chẽ cho Khách thuê (role === 'tenant')
+// Khách chỉ được xem Cổng Khách Thuê và các route con của mình, tuyệt đối cấm vào trang quản lý
+if ($isLoggedIn && $currentUserRole === 'tenant') {
+    $tenantAllowedRoutes = [
+        'tenant',
+        'tenant/portal',
+        'tenant/dashboard',
+        'tenant/request',
+        'tenant/contract-pdf',
+        'tenant/invoice-detail',
+        'tenant/contract',
+        'api/tenant/contract',
+        'auth/logout',
+        'showcase',
+        'web360',
+        'xemphong'
+    ];
+
+    if (!in_array($route, $tenantAllowedRoutes, true)) {
+        $_SESSION['flash_error'] = "Tài khoản khách thuê không có quyền truy cập vào khu vực quản trị nội bộ!";
+        header("Location: index.php?route=tenant/portal");
+        exit;
+    }
+}
+
 // Nạp các Controller cần thiết
 require_once __DIR__ . '/app/Controllers/DashboardController.php';
 require_once __DIR__ . '/app/Controllers/AuthController.php';
@@ -29,7 +89,7 @@ require_once __DIR__ . '/app/Controllers/AccountController.php';
 require_once __DIR__ . '/app/Controllers/TenantPortalController.php';
 
 // ==========================================
-// 2. BỘ ĐIỀU HƯỚNG CÁC TRANG (ROUTER)
+// 3. BỘ ĐIỀU HƯỚNG CÁC TRANG (ROUTER)
 // ==========================================
 switch ($route) {
     // --- QUẢN LÝ TÀI KHOẢN (ADMIN & QUẢN LÝ) ---
@@ -39,10 +99,6 @@ switch ($route) {
         break;
 
     case 'dashboard':
-        if (isset($_SESSION['role']) && $_SESSION['role'] === 'tenant') {
-            header("Location: index.php?route=tenant/portal");
-            exit;
-        }
         $dashboardController = new DashboardController();
         $dashboardController->index();
         break;
@@ -69,13 +125,13 @@ switch ($route) {
         $roomController->index();
         break;
 
-    // --- PHÂN HỆ QUẢN LÝ KHÁCH THUÊ (ĐANG XÂY DỰNG) ---
+    // --- PHÂN HỆ QUẢN LÝ KHÁCH THUÊ ---
     case 'tenants':
         (new TenantController())->index();
         break;
         
     // ==========================================
-    // PHÂN HỆ QUẢN LÝ HỢP ĐỒNG (HỦNG NGỌC PHỤ TRÁCH)
+    // PHÂN HỆ QUẢN LÝ HỢP ĐỒNG
     // ==========================================
     case 'contracts':
         $contractController = new ContractController();
@@ -174,7 +230,7 @@ switch ($route) {
         $utilitiesController->searchApi();
         break;
 
-    // --- CÁC PHÂN HỆ ĐANG XÂY DỰNG ---
+    // --- PHÂN HỆ HÓA ĐƠN ---
     case 'invoices':
         (new InvoiceController())->index();
         break;
@@ -214,12 +270,6 @@ switch ($route) {
     case 'reports':
         header("Location: index.php?route=overview");
         exit;
-
-    case 'web360':
-    case 'xemphong':
-        header("Location: TrangXemPhong/");
-        exit;
-        break;
 
     default:
         $dashboardController = new DashboardController();
