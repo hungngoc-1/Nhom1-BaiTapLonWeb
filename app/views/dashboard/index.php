@@ -1,9 +1,22 @@
+<?php
+$userFullName = $_SESSION['full_name'] ?? 'Quản trị viên Hệ thống';
+$userRole     = $_SESSION['role'] ?? 'admin';
+$userName     = $_SESSION['username'] ?? 'admin01';
+$userEmail    = $_SESSION['email'] ?? 'admin@nhatro.com';
+$userPhone    = $_SESSION['phone'] ?? '0901234567';
+
+$totalBuildingsCount = count($buildings ?? []);
+$displayedBuildings = $buildings ?? [];
+if (!empty($filterBuilding) && $filterBuilding !== 'all' && isset($buildings[$filterBuilding])) {
+    $displayedBuildings = [$filterBuilding => $buildings[$filterBuilding]];
+}
+?>
 <!DOCTYPE html>
 <html lang="vi">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>StayMate - Quản Lý Nhà Trọ</title>
+    <title>StayMate - Quản Lý Tòa Nhà & Nhà Trọ</title>
     <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -34,6 +47,9 @@
             background-attachment: fixed;
         }
 
+        .text-teal-main { color: var(--teal-main) !important; }
+        .cursor-pointer { cursor: pointer; }
+
         /* Navbar */
         .navbar-custom { background: transparent; padding: 15px 20px; }
         .brand-logo { display: flex; align-items: center; gap: 10px; text-decoration: none; }
@@ -58,20 +74,18 @@
             justify-content: space-between;
         }
         
-        /* Họa tiết Lá cây góc trái */
         .deco-leaf-left {
             position: absolute; left: -10px; top: -20px; width: 100px; height: 150px;
             background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 150"><path d="M-10,30 Q40,50 60,160" stroke="%2316a34a" stroke-width="2" fill="none"/><path d="M10,40 Q30,20 50,35 Q30,50 10,40" fill="%234ade80"/><path d="M25,70 Q55,50 65,75 Q45,90 25,70" fill="%2322c55e"/><path d="M40,110 Q65,90 75,115 Q50,130 40,110" fill="%2315803d"/></svg>');
             background-size: contain; background-repeat: no-repeat;
-            z-index: 1; opacity: 0.9;
+            z-index: 1; opacity: 0.9; pointer-events: none;
         }
 
-        /* Họa tiết Ngôi nhà góc phải */
         .deco-house-right {
             position: absolute; right: 20px; bottom: 0; width: 220px; height: 130px;
             background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 150"><circle cx="160" cy="110" r="30" fill="%23a7dcd6" opacity="0.4"/><rect x="50" y="60" width="80" height="70" fill="%23ffffff"/><rect x="130" y="70" width="30" height="60" fill="%23f1f5f9"/><polygon points="40,60 90,20 140,60" fill="%23308f86"/><polygon points="90,20 140,60 170,60 120,20" fill="%2375c2b9"/><rect x="70" y="80" width="12" height="15" fill="%23a7dcd6" rx="2"/><rect x="95" y="80" width="12" height="15" fill="%23a7dcd6" rx="2"/><rect x="70" y="105" width="12" height="15" fill="%23a7dcd6" rx="2"/><rect x="95" y="105" width="12" height="15" fill="%23a7dcd6" rx="2"/><rect x="140" y="90" width="10" height="15" fill="%23a7dcd6" rx="2"/><circle cx="45" cy="120" r="15" fill="%2322c55e"/><circle cx="65" cy="125" r="20" fill="%2316a34a"/><circle cx="150" cy="125" r="18" fill="%2315803d"/><circle cx="175" cy="120" r="12" fill="%2322c55e"/></svg>');
             background-size: contain; background-repeat: no-repeat; background-position: bottom right;
-            z-index: 1;
+            z-index: 1; pointer-events: none;
         }
 
         .welcome-icon-wrapper {
@@ -84,7 +98,6 @@
             position: relative; z-index: 2; margin-left: 30px;
         }
         
-        /* Tia chớp vàng (sparkles) quanh icon */
         .sparkle { position: absolute; background-color: #fde047; border-radius: 4px; z-index: 2; }
         .sp-1 { width: 4px; height: 12px; top: -12px; right: 10px; transform: rotate(15deg); }
         .sp-2 { width: 12px; height: 4px; top: 10px; right: -14px; transform: rotate(15deg); }
@@ -100,6 +113,7 @@
             border: 3px solid #ffffff;
             height: 100%; transition: transform 0.3s ease, box-shadow 0.3s ease;
             backdrop-filter: blur(5px);
+            cursor: pointer;
         }
         .overview-card:hover { transform: translateY(-5px); box-shadow: 0 18px 35px rgba(0,0,0,0.15); }
         
@@ -118,12 +132,12 @@
         .pattern-purple { background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><circle cx="50" cy="30" r="15" fill="%237e22ce"/><path d="M20 90 Q 50 60 80 90" fill="%237e22ce"/></svg>'); }
         
         .overview-title { font-size: 0.75rem; font-weight: 900; margin-bottom: 8px; display: flex; align-items: center; gap: 6px; text-transform: uppercase;}
-        .overview-val { font-size: 2.2rem; font-weight: 900; line-height: 1; letter-spacing: -1px;}
+        .overview-val { font-size: 2rem; font-weight: 900; line-height: 1; letter-spacing: -1px;}
         .overview-icon-bg {
-            position: absolute; right: 24px; top: 50%; transform: translateY(-50%);
-            width: 54px; height: 54px; border-radius: 50%;
+            position: absolute; right: 20px; top: 50%; transform: translateY(-50%);
+            width: 50px; height: 50px; border-radius: 50%;
             display: flex; align-items: center; justify-content: center;
-            color: white; font-size: 1.4rem;
+            color: white; font-size: 1.3rem;
             box-shadow: 0 10px 20px rgba(0,0,0,0.15);
             z-index: 2;
         }
@@ -133,9 +147,12 @@
         .icon-purple { background-color: #a855f7; }
 
         /* Toolbar */
-        .toolbar-select { background: white; border-radius: 20px; padding: 10px 24px; font-weight: 800; color: var(--teal-main); display: inline-flex; align-items: center; gap: 10px; box-shadow: 0 6px 15px rgba(0,0,0,0.06); border: 2px solid #e2e8f0; }
-        .btn-outline-custom { background: white; border-radius: 20px; font-weight: 700; color: #475569; padding: 10px 24px; border: 2px solid #e2e8f0; box-shadow: 0 6px 15px rgba(0,0,0,0.06); }
-        .btn-teal-custom { background: var(--teal-main); border-radius: 20px; font-weight: 700; color: white; padding: 10px 24px; border: none; box-shadow: 0 8px 20px rgba(48, 143, 134, 0.4); }
+        .toolbar-select { background: white; border-radius: 20px; padding: 10px 24px; font-weight: 800; color: var(--teal-main); display: inline-flex; align-items: center; gap: 10px; box-shadow: 0 6px 15px rgba(0,0,0,0.06); border: 2px solid #e2e8f0; cursor: pointer; text-decoration: none; }
+        .toolbar-select:hover { border-color: var(--teal-main); background: #f0fdfa; }
+        .btn-outline-custom { background: white; border-radius: 20px; font-weight: 700; color: #475569; padding: 10px 22px; border: 2px solid #e2e8f0; box-shadow: 0 6px 15px rgba(0,0,0,0.06); text-decoration: none; display: inline-flex; align-items: center; transition: 0.2s; }
+        .btn-outline-custom:hover { border-color: var(--teal-main); color: var(--teal-main); background: #f0fdfa; }
+        .btn-teal-custom { background: var(--teal-main); border-radius: 20px; font-weight: 700; color: white; padding: 10px 24px; border: none; box-shadow: 0 8px 20px rgba(48, 143, 134, 0.4); transition: 0.2s; }
+        .btn-teal-custom:hover { background: var(--teal-hover); color: white; transform: translateY(-2px); }
 
         /* Building Cards */
         .building-card {
@@ -149,18 +166,20 @@
         
         .badge-bld { background: #dcfce7; color: #166534; font-weight: 900; font-size: 0.75rem; padding: 6px 14px; border-radius: 12px; display: inline-block; margin-bottom: 12px; border: 1px solid #86efac;}
         .bld-title { font-weight: 900; font-size: 1.3rem; color: #0f172a; margin-bottom: 6px; letter-spacing: -0.5px;}
-        .bld-address { font-size: 0.8rem; color: #64748b; font-weight: 700; margin-bottom: 20px; }
+        .bld-address { font-size: 0.8rem; color: #64748b; font-weight: 700; margin-bottom: 16px; }
         
-        .manager-info { font-size: 0.8rem; display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+        .manager-info { font-size: 0.8rem; display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
         
         /* Stats inside Building Card */
-        .stat-group { display: flex; gap: 10px; margin-bottom: 24px; }
+        .stat-group { display: flex; gap: 10px; margin-bottom: 16px; }
         .stat-item {
             flex: 1; border-radius: 16px; padding: 14px 8px; text-align: center;
             display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px;
             border: 2px solid;
             box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+            cursor: pointer; transition: 0.2s;
         }
+        .stat-item:hover { transform: scale(1.03); }
         .stat-total { background-color: #e0f2fe; border-color: #bae6fd;}
         .stat-total .stat-val, .stat-total i { color: #0284c7; }
         
@@ -173,6 +192,12 @@
         .stat-val { font-size: 1.6rem; font-weight: 900; line-height: 1; }
         .stat-label { font-size: 0.7rem; font-weight: 800; text-transform: uppercase; color: #475569;}
 
+        .bld-finance-bar {
+            background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 14px;
+            padding: 10px 14px; margin-bottom: 18px;
+            display: flex; justify-content: space-between; align-items: center; font-size: 0.78rem; font-weight: 700;
+        }
+
         /* Building Card Buttons */
         .btn-bld-main {
             background: var(--teal-main); color: white; border-radius: 16px;
@@ -183,12 +208,12 @@
         .btn-bld-folder {
             background: white; color: var(--teal-main); border: 2px solid var(--teal-main);
             border-radius: 16px; width: 54px; display: flex; align-items: center; justify-content: center;
-            box-shadow: 0 6px 15px rgba(0,0,0,0.08); transition: 0.2s;
+            box-shadow: 0 6px 15px rgba(0,0,0,0.08); transition: 0.2s; cursor: pointer;
         }
-        .btn-bld-folder:hover { background: #f0fdfa; }
+        .btn-bld-folder:hover { background: var(--teal-main); color: white; }
 
-        .house-img { position: absolute; right: 20px; top: 10px; width: 120px; z-index: 1;}
-        .house-shadow { position: absolute; right: 25px; top: 110px; width: 110px; height: 15px; background: rgba(0,0,0,0.1); border-radius: 50%; filter: blur(4px); z-index: 0;}
+        .house-img { position: absolute; right: 20px; top: 10px; width: 120px; z-index: 1; pointer-events: none; }
+        .house-shadow { position: absolute; right: 25px; top: 110px; width: 110px; height: 15px; background: rgba(0,0,0,0.1); border-radius: 50%; filter: blur(4px); z-index: 0; pointer-events: none; }
         
         /* Footer */
         .footer-custom { background: rgba(255,255,255,0.8); padding: 15px 0; color: #64748b; font-size: 0.8rem; font-weight: 700; margin-top: auto; border-top: 1px solid #e2e8f0;}
@@ -208,20 +233,28 @@
             </a>
             
             <div class="d-flex align-items-center gap-4">
-                <div class="position-relative cursor-pointer" style="color: #94a3b8;">
-                    <i class="fa-solid fa-bell fs-5"></i>
-                    <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger border border-white" style="font-size: 0.6rem;">8</span>
-                </div>
+                <!-- Dropdown Tài khoản -->
                 <div class="dropdown">
-                    <div class="d-flex align-items-center gap-2 cursor-pointer" data-bs-toggle="dropdown">
+                    <div class="d-flex align-items-center gap-2 cursor-pointer" data-bs-toggle="dropdown" aria-expanded="false">
                         <div class="rounded-circle text-white d-flex align-items-center justify-content-center fw-bold shadow-sm" style="width:40px; height:40px; background-color: var(--teal-main); border: 2px solid #ffffff;">AS</div>
                         <div class="text-start d-none d-sm-block lh-sm">
-                            <div class="fw-bold text-dark" style="font-size: 0.85rem;">Quản trị viên Hệ thống <i class="fa-solid fa-angle-down ms-1 text-muted fs-6"></i></div>
-                            <div class="text-muted" style="font-size: 0.75rem;">Admin</div>
+                            <div class="fw-bold text-dark" style="font-size: 0.85rem;"><?= htmlspecialchars($userFullName) ?> <i class="fa-solid fa-angle-down ms-1 text-muted fs-6"></i></div>
+                            <div class="text-muted text-capitalize" style="font-size: 0.75rem;"><?= htmlspecialchars($userRole) ?></div>
                         </div>
                     </div>
-                    <ul class="dropdown-menu dropdown-menu-end shadow border-0 mt-2">
-                        <li><a class="dropdown-item text-danger" href="index.php?route=auth/logout"><i class="fa-solid fa-right-from-bracket me-2"></i> Đăng xuất</a></li>
+                    <ul class="dropdown-menu dropdown-menu-end shadow border-0 rounded-4 mt-2 p-2">
+                        <li>
+                            <button type="button" class="dropdown-item rounded-3 py-2 fw-bold" data-bs-toggle="modal" data-bs-target="#profileModal">
+                                <i class="fa-solid fa-id-card me-2 text-teal-main"></i> Hồ sơ tài khoản
+                            </button>
+                        </li>
+                        <li>
+                            <a class="dropdown-item rounded-3 py-2 fw-bold" href="index.php?route=overview">
+                                <i class="fa-solid fa-chart-pie me-2 text-primary"></i> Trang Tổng quan
+                            </a>
+                        </li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li><a class="dropdown-item rounded-3 py-2 text-danger fw-bold" href="index.php?route=auth/logout"><i class="fa-solid fa-right-from-bracket me-2"></i> Đăng xuất</a></li>
                     </ul>
                 </div>
             </div>
@@ -229,15 +262,27 @@
     </nav>
 
     <!-- Main Content -->
-    <div class="container-fluid px-4 px-xl-5 py-2 position-relative z-1">
+    <div class="container-fluid px-4 px-xl-5 py-3 position-relative z-1">
+
+        <?php if (!empty($flashSuccess)): ?>
+            <div class="alert alert-success alert-dismissible fade show rounded-4 shadow-sm border-0 fw-bold mb-3" role="alert">
+                <i class="fa-solid fa-circle-check me-2"></i> <?= htmlspecialchars($flashSuccess) ?>
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+        <?php endif; ?>
+
+        <?php if (!empty($flashError)): ?>
+            <div class="alert alert-danger alert-dismissible fade show rounded-4 shadow-sm border-0 fw-bold mb-3" role="alert">
+                <i class="fa-solid fa-triangle-exclamation me-2"></i> <?= htmlspecialchars($flashError) ?>
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+        <?php endif; ?>
         
         <!-- Khung Welcome Banner Cực Đẹp -->
         <div class="welcome-banner mb-4">
-            <!-- Họa tiết trang trí 2 bên -->
             <div class="deco-leaf-left"></div>
             <div class="deco-house-right"></div>
             
-            <!-- Nội dung chính (Trái) -->
             <div class="d-flex align-items-center gap-4 position-relative z-2">
                 <div class="welcome-icon-wrapper">
                     <i class="fa-solid fa-hand-sparkles"></i>
@@ -246,56 +291,75 @@
                     <span class="sparkle sp-3"></span>
                 </div>
                 <div>
-                    <h3 class="welcome-title mb-1">Xin chào, Admin!</h3>
-                    <div class="text-muted font-weight-600" style="font-size: 0.85rem;">Theo dõi tình hình kinh doanh tổng thể của toàn bộ hệ thống ngay hôm nay.</div>
+                    <h3 class="welcome-title mb-1">Xin chào, <?= htmlspecialchars($userFullName) ?>!</h3>
+                    <div class="text-muted font-weight-600" style="font-size: 0.85rem;">Theo dõi tình hình kinh doanh tổng thể của toàn bộ hệ thống từ CSDL ngay hôm nay.</div>
                 </div>
             </div>
             
-            <!-- Nội dung chính (Phải) -->
             <div class="date-badge d-none d-md-block">
                 <i class="fa-regular fa-calendar me-2" style="color: var(--teal-main);"></i> Hôm nay, <?php echo date('d/m/Y'); ?>
             </div>
         </div>
 
-        <!-- 4 Stats Cards -->
+        <!-- 4 Stats Cards (Lấy 100% từ SQL mới, bấm vào mở Modal chi tiết) -->
         <div class="row g-4 mb-5">
-            <!-- Tỷ lệ lấp đầy -->
+            <!-- 1. Tỷ lệ lấp đầy -->
             <div class="col-12 col-md-6 col-lg-3">
-                <div class="overview-card card-green">
+                <div class="overview-card card-green" data-bs-toggle="modal" data-bs-target="#roomsModal" title="Bấm để xem danh sách phòng trong CSDL">
                     <div class="card-bg-pattern pattern-green"></div>
                     <div class="overview-title text-success"><i class="fa-regular fa-calendar-check"></i> TỶ LỆ LẤP ĐẦY</div>
-                    <div class="d-flex align-items-baseline mb-2 position-relative z-2"><span class="overview-val text-dark me-2">1 / 3</span> <span class="fw-bold text-muted small">phòng</span></div>
-                    <div class="progress mb-2 position-relative z-2" style="height: 6px; background-color: rgba(255,255,255,0.7);"><div class="progress-bar bg-success" style="width: 33%"></div></div>
+                    <div class="d-flex align-items-baseline mb-2 position-relative z-2">
+                        <span class="overview-val text-dark me-2"><?= $stats['rented_rooms'] ?> / <?= $stats['total_rooms'] ?></span>
+                        <span class="fw-bold text-muted small">phòng</span>
+                    </div>
+                    <div class="progress mb-2 position-relative z-2" style="height: 6px; background-color: rgba(255,255,255,0.7);">
+                        <div class="progress-bar bg-success" style="width: <?= $stats['occupancy_rate'] ?>%"></div>
+                    </div>
                     <div class="d-flex justify-content-between text-success position-relative z-2" style="font-size: 0.75rem; font-weight: 800;">
-                        <span><i class="fa-solid fa-circle-check"></i> 33% đang thuê</span><span class="text-muted">2 trống</span>
+                        <span><i class="fa-solid fa-circle-check"></i> <?= $stats['occupancy_rate'] ?>% đang thuê</span>
+                        <span class="text-muted"><?= $stats['empty_rooms'] ?> trống</span>
                     </div>
                 </div>
             </div>
-            <!-- Thực thu -->
+
+            <!-- 2. Thực thu -->
             <div class="col-12 col-md-6 col-lg-3">
-                <div class="overview-card card-blue">
+                <div class="overview-card card-blue" data-bs-toggle="modal" data-bs-target="#revenueModal" title="Bấm để xem chi tiết doanh thu thực thu từ CSDL">
                     <div class="card-bg-pattern pattern-blue"></div>
-                    <div class="overview-title text-primary"><i class="fa-regular fa-calendar"></i> THỰC THU 2026</div>
-                    <div class="overview-val text-dark mt-2 position-relative z-2">0 đ</div>
+                    <div class="overview-title text-primary"><i class="fa-regular fa-calendar"></i> THỰC THU (ĐÃ THU)</div>
+                    <div class="overview-val text-dark mt-2 position-relative z-2"><?= number_format($stats['total_revenue'], 0, ',', '.') ?> đ</div>
+                    <div class="mt-3 position-relative z-2 text-primary" style="font-size: 0.75rem; font-weight: 800;">
+                        <i class="fa-solid fa-check-double"></i> Đã thu: <?= $stats['paid_invoices'] ?> hóa đơn
+                    </div>
                     <div class="overview-icon-bg icon-blue"><i class="fa-solid fa-wallet"></i></div>
                 </div>
             </div>
-            <!-- Công nợ -->
+
+            <!-- 3. Công nợ -->
             <div class="col-12 col-md-6 col-lg-3">
-                <div class="overview-card card-yellow">
+                <div class="overview-card card-yellow" data-bs-toggle="modal" data-bs-target="#debtModal" title="Bấm để xem và thu tiền các hóa đơn công nợ">
                     <div class="card-bg-pattern pattern-yellow"></div>
                     <div class="overview-title text-warning" style="color: #b45309 !important;"><i class="fa-solid fa-coins"></i> CÔNG NỢ CHƯA THU</div>
-                    <div class="overview-val mt-2 position-relative z-2" style="color: #b45309;">0 đ</div>
-                    <div class="mt-3 position-relative z-2" style="font-size: 0.75rem; font-weight: 800; color: #b45309;"><i class="fa-regular fa-clock"></i> Tồn đọng: 0 hóa đơn</div>
+                    <div class="overview-val mt-2 position-relative z-2" style="color: #b45309;"><?= number_format($stats['total_debt'], 0, ',', '.') ?> đ</div>
+                    <div class="mt-3 position-relative z-2" style="font-size: 0.75rem; font-weight: 800; color: #b45309;">
+                        <i class="fa-regular fa-clock"></i> Tồn đọng: <?= $stats['unpaid_invoices'] ?> hóa đơn
+                    </div>
                     <div class="overview-icon-bg icon-yellow"><i class="fa-solid fa-exclamation"></i></div>
                 </div>
             </div>
-            <!-- Khách & Hợp đồng -->
+
+            <!-- 4. Khách & Hợp đồng -->
             <div class="col-12 col-md-6 col-lg-3">
-                <div class="overview-card card-purple">
+                <div class="overview-card card-purple" data-bs-toggle="modal" data-bs-target="#contractsModal" title="Bấm để xem danh sách hợp đồng & khách thuê">
                     <div class="card-bg-pattern pattern-purple"></div>
                     <div class="overview-title" style="color: #7e22ce;"><i class="fa-solid fa-users"></i> KHÁCH & HỢP ĐỒNG</div>
-                    <div class="d-flex align-items-baseline mt-2 position-relative z-2"><span class="overview-val text-dark me-2">0</span> <span class="fw-bold text-muted small">hợp đồng</span></div>
+                    <div class="d-flex align-items-baseline mt-2 position-relative z-2">
+                        <span class="overview-val text-dark me-2"><?= $stats['active_contracts'] ?></span>
+                        <span class="fw-bold text-muted small">hợp đồng hiệu lực</span>
+                    </div>
+                    <div class="mt-3 position-relative z-2" style="font-size: 0.75rem; font-weight: 800; color: #7e22ce;">
+                        <i class="fa-solid fa-file-contract"></i> Tổng <?= $stats['total_contracts'] ?> HĐ • <?= $stats['total_tenants'] ?> khách thuê
+                    </div>
                     <div class="overview-icon-bg icon-purple"><i class="fa-solid fa-user-group"></i></div>
                 </div>
             </div>
@@ -303,164 +367,177 @@
 
         <!-- Toolbar Tòa nhà -->
         <div class="d-flex flex-wrap justify-content-between align-items-center mb-4 gap-3">
-            <div class="toolbar-select">
-                <i class="fa-solid fa-building"></i> Đang xem: Tất cả 3 Tòa nhà <i class="fa-solid fa-angle-down ms-1"></i>
+            <!-- Dropdown chọn Tòa nhà hoạt động thực tế -->
+            <div class="dropdown">
+                <button class="toolbar-select" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                    <i class="fa-solid fa-building"></i>
+                    Đang xem:
+                    <?php if ($filterBuilding === 'all' || !isset($buildings[$filterBuilding])): ?>
+                        Tất cả <?= $totalBuildingsCount ?> Tòa nhà
+                    <?php else: ?>
+                        <?= htmlspecialchars($buildings[$filterBuilding]['name']) ?>
+                    <?php endif; ?>
+                    <i class="fa-solid fa-angle-down ms-1"></i>
+                </button>
+                <ul class="dropdown-menu shadow border-0 rounded-4 p-2 mt-2">
+                    <li>
+                        <a class="dropdown-item rounded-3 py-2 fw-bold <?= $filterBuilding === 'all' ? 'bg-light text-teal-main' : '' ?>" href="index.php?route=dashboard&building_id=all">
+                            <i class="fa-solid fa-layer-group me-2 text-teal-main"></i> Tất cả <?= $totalBuildingsCount ?> Tòa nhà (<?= $stats['total_rooms'] ?> phòng)
+                        </a>
+                    </li>
+                    <li><hr class="dropdown-divider"></li>
+                    <?php foreach ($buildings as $bId => $bItem): ?>
+                        <li>
+                            <a class="dropdown-item rounded-3 py-2 fw-bold <?= $filterBuilding === (string)$bId ? 'bg-light text-teal-main' : '' ?>" href="index.php?route=dashboard&building_id=<?= urlencode((string)$bId) ?>">
+                                <i class="fa-solid fa-building me-2 text-teal-main"></i> <?= htmlspecialchars($bItem['name']) ?> (<?= $bItem['total_rooms'] ?> phòng)
+                            </a>
+                        </li>
+                    <?php endforeach; ?>
+                </ul>
             </div>
-            <div class="d-flex gap-2">
-                <a href="index.php?route=overview" class="btn btn-outline-custom text-decoration-none"><i class="fa-regular fa-eye me-1"></i> Xem Tất cả Tòa nhà</a>
-                <button class="btn btn-teal-custom" data-bs-toggle="modal" data-bs-target="#addBuildingModal"><i class="fa-solid fa-plus me-1"></i> Thêm Tòa nhà</button>
+
+            <div class="d-flex flex-wrap gap-2">
+                <?php if ($filterBuilding !== 'all'): ?>
+                    <a href="index.php?route=dashboard&building_id=all" class="btn btn-outline-custom">
+                        <i class="fa-solid fa-rotate-left me-1"></i> Hiện Tất cả <?= $totalBuildingsCount ?> Tòa
+                    </a>
+                <?php endif; ?>
+                <a href="index.php?route=overview&building_id=all" class="btn btn-outline-custom">
+                    <i class="fa-regular fa-eye me-1"></i> Xem Tổng quan Tất cả Tòa nhà
+                </a>
+                <button type="button" class="btn btn-teal-custom" data-bs-toggle="modal" data-bs-target="#addBuildingModal">
+                    <i class="fa-solid fa-plus me-1"></i> Thêm Tòa nhà
+                </button>
             </div>
         </div>
 
-        <!-- Building Grid -->
-        <div class="row g-4">
-            <!-- Tòa A -->
-            <div class="col-12 col-lg-4">
-                <div class="building-card">
-                    <div class="position-relative z-2"><span class="badge-bld">BLD-A</span></div>
-                    <div class="house-shadow"></div>
-                    <svg class="house-img" viewBox="0 0 120 120">
-                        <polygon points="10,60 60,20 110,60" fill="#94a3b8" opacity="0.3"/>
-                        <rect x="25" y="40" width="70" height="70" fill="#a7dcd6" rx="4"/>
-                        <rect x="40" y="30" width="40" height="80" fill="#75c2b9" rx="4"/>
-                        <polygon points="15,45 60,10 105,45" fill="#308f86"/>
-                        <rect x="35" y="60" width="10" height="15" fill="#ffffff" opacity="0.8"/>
-                        <rect x="75" y="60" width="10" height="15" fill="#ffffff" opacity="0.8"/>
-                        <rect x="35" y="85" width="10" height="15" fill="#ffffff" opacity="0.8"/>
-                        <rect x="75" y="85" width="10" height="15" fill="#ffffff" opacity="0.8"/>
-                        <circle cx="20" cy="100" r="10" fill="#22c55e" opacity="0.8"/>
-                        <circle cx="100" cy="95" r="15" fill="#16a34a" opacity="0.7"/>
-                    </svg>
-                    <div class="position-absolute z-2" style="top:25px; right:20px; color:#94a3b8; cursor:pointer;"><i class="fa-solid fa-ellipsis-vertical fs-5"></i></div>
-                    
-                    <h3 class="bld-title position-relative z-2">Tòa A - StayMate Sunrise</h3>
-                    <div class="bld-address position-relative z-2"><i class="fa-solid fa-location-dot" style="color:var(--teal-main);"></i> Số 128 Cầu Giấy, Quận Cầu Giấy, TP. Hà Nội</div>
-                    
-                    <div class="manager-info text-muted position-relative z-2">
-                        <span><i class="fa-solid fa-user-tie me-1"></i> Quản lý riêng:</span>
-                        <span class="text-dark fw-bold">Quản lý Tòa A (Nguyễn Văn Quản) <span style="color:var(--teal-main); font-weight:600;">(nhanvien)</span></span>
-                    </div>
+        <!-- Building Grid (Hiển thị số liệu thực tế từ CSDL cho từng Tòa nhà) -->
+        <div class="row g-4 mb-4">
+            <?php foreach ($displayedBuildings as $bId => $bld): ?>
+                <?php
+                    $theme = $bld['theme'] ?? 'teal';
+                    $badgeStyle = '';
+                    $rect1 = '#a7dcd6'; $rect2 = '#75c2b9'; $roof = '#308f86';
+                    if ($theme === 'blue') {
+                        $rect1 = '#bae6fd'; $rect2 = '#7dd3fc'; $roof = '#0284c7';
+                    } elseif ($theme === 'yellow') {
+                        $badgeStyle = 'background:#fef9c3; color:#a16207; border-color:#fef08a;';
+                        $rect1 = '#fef08a'; $rect2 = '#fde047'; $roof = '#ca8a04';
+                    }
+                ?>
+                <div class="col-12 col-lg-4">
+                    <div class="building-card">
+                        <div class="position-relative z-2">
+                            <span class="badge-bld" style="<?= $badgeStyle ?>"><?= htmlspecialchars($bld['code']) ?></span>
+                            <span class="badge bg-light text-secondary border ms-1" style="font-size:0.7rem;">Nhóm phòng <?= htmlspecialchars($bld['room_prefix']) ?>xx</span>
+                        </div>
+                        <div class="house-shadow"></div>
+                        <svg class="house-img" viewBox="0 0 120 120">
+                            <polygon points="10,60 60,20 110,60" fill="#94a3b8" opacity="0.3"/>
+                            <rect x="25" y="40" width="70" height="70" fill="<?= $rect1 ?>" rx="4"/>
+                            <rect x="40" y="30" width="40" height="80" fill="<?= $rect2 ?>" rx="4"/>
+                            <polygon points="15,45 60,10 105,45" fill="<?= $roof ?>"/>
+                            <rect x="35" y="60" width="10" height="15" fill="#ffffff" opacity="0.8"/>
+                            <rect x="75" y="60" width="10" height="15" fill="#ffffff" opacity="0.8"/>
+                            <rect x="35" y="85" width="10" height="15" fill="#ffffff" opacity="0.8"/>
+                            <rect x="75" y="85" width="10" height="15" fill="#ffffff" opacity="0.8"/>
+                            <circle cx="20" cy="100" r="10" fill="#22c55e" opacity="0.8"/>
+                            <circle cx="100" cy="95" r="15" fill="#16a34a" opacity="0.7"/>
+                        </svg>
 
-                    <div class="stat-group position-relative z-2">
-                        <div class="stat-item stat-total">
-                            <i class="fa-regular fa-building fs-4"></i>
-                            <div class="stat-val">15</div>
-                            <div class="stat-label">Tổng</div>
+                        <!-- Menu 3 chấm trên thẻ Tòa nhà -->
+                        <div class="dropdown position-absolute z-3" style="top:22px; right:20px;">
+                            <button class="btn btn-sm btn-light rounded-circle shadow-sm" type="button" data-bs-toggle="dropdown" aria-expanded="false" title="Tùy chọn tòa nhà">
+                                <i class="fa-solid fa-ellipsis-vertical text-secondary"></i>
+                            </button>
+                            <ul class="dropdown-menu dropdown-menu-end shadow border-0 rounded-4 p-2">
+                                <li>
+                                    <a class="dropdown-item rounded-3 py-2 fw-bold" href="index.php?route=overview&building_id=<?= urlencode((string)$bId) ?>">
+                                        <i class="fa-solid fa-chart-line me-2 text-teal-main"></i> Vào Tổng quan Tòa này
+                                    </a>
+                                </li>
+                                <li>
+                                    <button type="button" class="dropdown-item rounded-3 py-2 fw-bold" data-bs-toggle="modal" data-bs-target="#bldDetailModal_<?= htmlspecialchars((string)$bId) ?>">
+                                        <i class="fa-regular fa-folder-open me-2 text-primary"></i> Xem Phòng & Hóa đơn CSDL
+                                    </button>
+                                </li>
+                                <li>
+                                    <button type="button" class="dropdown-item rounded-3 py-2 fw-bold" data-bs-toggle="modal" data-bs-target="#editBldModal_<?= htmlspecialchars((string)$bId) ?>">
+                                        <i class="fa-solid fa-pen-to-square me-2 text-warning"></i> Chỉnh sửa Tòa nhà
+                                    </button>
+                                </li>
+                                <?php if (count($buildings) > 1): ?>
+                                    <li><hr class="dropdown-divider"></li>
+                                    <li>
+                                        <form method="POST" action="index.php?route=dashboard" onsubmit="return confirm('Bạn có chắc muốn xóa tòa nhà này khỏi danh sách hiển thị?');">
+                                            <input type="hidden" name="action" value="delete_building">
+                                            <input type="hidden" name="building_id" value="<?= htmlspecialchars((string)$bId) ?>">
+                                            <button type="submit" class="dropdown-item rounded-3 py-2 fw-bold text-danger">
+                                                <i class="fa-solid fa-trash-can me-2"></i> Xóa Tòa nhà
+                                            </button>
+                                        </form>
+                                    </li>
+                                <?php endif; ?>
+                            </ul>
                         </div>
-                        <div class="stat-item stat-rented">
-                            <i class="fa-solid fa-user-group fs-4"></i>
-                            <div class="stat-val">12</div>
-                            <div class="stat-label">Đang thuê</div>
+                        
+                        <h3 class="bld-title position-relative z-2"><?= htmlspecialchars($bld['name']) ?></h3>
+                        <div class="bld-address position-relative z-2">
+                            <i class="fa-solid fa-location-dot" style="color:var(--teal-main);"></i> <?= htmlspecialchars($bld['address']) ?>
                         </div>
-                        <div class="stat-item stat-empty">
-                            <i class="fa-solid fa-house-chimney fs-4"></i>
-                            <div class="stat-val">3</div>
-                            <div class="stat-label">Phòng trống</div>
+                        
+                        <div class="manager-info text-muted position-relative z-2">
+                            <span><i class="fa-solid fa-user-tie me-1"></i> Quản lý riêng:</span>
+                            <span class="text-dark fw-bold">
+                                <?= htmlspecialchars($bld['manager']) ?>
+                                <span style="color:var(--teal-main); font-weight:600;">(<?= htmlspecialchars($bld['manager_acc']) ?>)</span>
+                            </span>
                         </div>
-                    </div>
 
-                    <div class="d-flex gap-2 mt-auto position-relative z-2">
-                        <a href="index.php?route=overview&building_id=A" class="btn-bld-main"><i class="fa-solid fa-arrow-right-to-bracket me-2"></i> Vào quản lý Tòa này</a>
-                        <a href="index.php?route=rooms" class="btn-bld-folder" title="Quản lý phòng trọ"><i class="fa-regular fa-folder-open"></i></a>
+                        <!-- 3 ô số liệu Phòng lấy trực tiếp từ bảng `rooms` trong SQL -->
+                        <div class="stat-group position-relative z-2" data-bs-toggle="modal" data-bs-target="#bldDetailModal_<?= htmlspecialchars((string)$bId) ?>" title="Bấm để xem chi tiết các phòng thuộc <?= htmlspecialchars($bld['name']) ?>">
+                            <div class="stat-item stat-total">
+                                <i class="fa-regular fa-building fs-4"></i>
+                                <div class="stat-val"><?= $bld['total_rooms'] ?></div>
+                                <div class="stat-label">Tổng phòng</div>
+                            </div>
+                            <div class="stat-item stat-rented">
+                                <i class="fa-solid fa-user-group fs-4"></i>
+                                <div class="stat-val"><?= $bld['rented_rooms'] ?></div>
+                                <div class="stat-label">Đang thuê</div>
+                            </div>
+                            <div class="stat-item stat-empty">
+                                <i class="fa-solid fa-house-chimney fs-4"></i>
+                                <div class="stat-val"><?= $bld['empty_rooms'] ?></div>
+                                <div class="stat-label">Phòng trống</div>
+                            </div>
+                        </div>
+
+                        <!-- Thanh tóm tắt Thực thu & Công nợ của Tòa này từ bảng `invoices` -->
+                        <div class="bld-finance-bar position-relative z-2">
+                            <span class="text-primary"><i class="fa-solid fa-wallet me-1"></i> Đã thu: <?= number_format($bld['total_revenue'], 0, ',', '.') ?> đ</span>
+                            <span class="text-danger"><i class="fa-solid fa-coins me-1"></i> Nợ: <?= number_format($bld['total_debt'], 0, ',', '.') ?> đ (<?= $bld['unpaid_invoices'] ?> HĐ)</span>
+                        </div>
+
+                        <div class="d-flex gap-2 mt-auto position-relative z-2">
+                            <a href="index.php?route=overview&building_id=<?= urlencode((string)$bId) ?>" class="btn-bld-main">
+                                <i class="fa-solid fa-arrow-right-to-bracket me-2"></i> Vào quản lý Tòa này
+                            </a>
+                            <button type="button" class="btn-bld-folder" data-bs-toggle="modal" data-bs-target="#bldDetailModal_<?= htmlspecialchars((string)$bId) ?>" title="Xem nhanh hồ sơ Phòng & Hóa đơn của <?= htmlspecialchars($bld['name']) ?>">
+                                <i class="fa-regular fa-folder-open"></i>
+                            </button>
+                        </div>
                     </div>
                 </div>
-            </div>
-
-            <!-- Tòa B -->
-            <div class="col-12 col-lg-4">
-                <div class="building-card">
-                    <div class="position-relative z-2"><span class="badge-bld">BLD-B</span></div>
-                    <div class="house-shadow"></div>
-                    <svg class="house-img" viewBox="0 0 120 120">
-                        <polygon points="10,60 60,20 110,60" fill="#94a3b8" opacity="0.3"/>
-                        <rect x="25" y="40" width="70" height="70" fill="#bae6fd" rx="4"/>
-                        <rect x="40" y="30" width="40" height="80" fill="#7dd3fc" rx="4"/>
-                        <polygon points="15,45 60,10 105,45" fill="#0284c7"/>
-                        <rect x="35" y="60" width="10" height="15" fill="#ffffff" opacity="0.8"/>
-                        <rect x="75" y="60" width="10" height="15" fill="#ffffff" opacity="0.8"/>
-                        <rect x="35" y="85" width="10" height="15" fill="#ffffff" opacity="0.8"/>
-                        <rect x="75" y="85" width="10" height="15" fill="#ffffff" opacity="0.8"/>
-                        <circle cx="20" cy="100" r="10" fill="#22c55e" opacity="0.8"/>
-                        <circle cx="100" cy="95" r="15" fill="#16a34a" opacity="0.7"/>
-                    </svg>
-                    <div class="position-absolute z-2" style="top:25px; right:20px; color:#94a3b8; cursor:pointer;"><i class="fa-solid fa-ellipsis-vertical fs-5"></i></div>
-                    
-                    <h3 class="bld-title position-relative z-2">Tòa B - StayMate Emerald</h3>
-                    <div class="bld-address position-relative z-2"><i class="fa-solid fa-location-dot" style="color:var(--teal-main);"></i> Số 45 Nguyễn Chí Thanh, Quận Đống Đa, TP. Hà Nội</div>
-                    
-                    <div class="manager-info text-muted position-relative z-2">
-                        <span><i class="fa-solid fa-user-tie me-1"></i> Quản lý riêng:</span>
-                        <span class="text-dark fw-bold">Quản lý Tòa B (Trần Thị Bích) <span style="color:var(--teal-main); font-weight:600;">(quanly_b)</span></span>
-                    </div>
-
-                    <div class="stat-group position-relative z-2">
-                        <div class="stat-item stat-total">
-                            <i class="fa-regular fa-building fs-4"></i><div class="stat-val">20</div><div class="stat-label">Tổng</div>
-                        </div>
-                        <div class="stat-item stat-rented">
-                            <i class="fa-solid fa-user-group fs-4"></i><div class="stat-val">18</div><div class="stat-label">Đang thuê</div>
-                        </div>
-                        <div class="stat-item stat-empty">
-                            <i class="fa-solid fa-house-chimney fs-4"></i><div class="stat-val">2</div><div class="stat-label">Phòng trống</div>
-                        </div>
-                    </div>
-
-                    <div class="d-flex gap-2 mt-auto position-relative z-2">
-                        <a href="index.php?route=overview&building_id=B" class="btn-bld-main"><i class="fa-solid fa-arrow-right-to-bracket me-2"></i> Vào quản lý Tòa này</a>
-                        <a href="index.php?route=rooms" class="btn-bld-folder" title="Quản lý phòng trọ"><i class="fa-regular fa-folder-open"></i></a>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Tòa C -->
-            <div class="col-12 col-lg-4">
-                <div class="building-card">
-                    <div class="position-relative z-2"><span class="badge-bld" style="background:#fef9c3; color:#a16207; border-color:#fef08a;">BLD-C</span></div>
-                    <div class="house-shadow"></div>
-                    <svg class="house-img" viewBox="0 0 120 120">
-                        <polygon points="10,60 60,20 110,60" fill="#94a3b8" opacity="0.3"/>
-                        <rect x="25" y="40" width="70" height="70" fill="#fef08a" rx="4"/>
-                        <rect x="40" y="30" width="40" height="80" fill="#fde047" rx="4"/>
-                        <polygon points="15,45 60,10 105,45" fill="#ca8a04"/>
-                        <rect x="35" y="60" width="10" height="15" fill="#ffffff" opacity="0.8"/>
-                        <rect x="75" y="60" width="10" height="15" fill="#ffffff" opacity="0.8"/>
-                        <rect x="35" y="85" width="10" height="15" fill="#ffffff" opacity="0.8"/>
-                        <rect x="75" y="85" width="10" height="15" fill="#ffffff" opacity="0.8"/>
-                        <circle cx="20" cy="100" r="10" fill="#22c55e" opacity="0.8"/>
-                        <circle cx="100" cy="95" r="15" fill="#16a34a" opacity="0.7"/>
-                    </svg>
-                    <div class="position-absolute z-2" style="top:25px; right:20px; color:#94a3b8; cursor:pointer;"><i class="fa-solid fa-ellipsis-vertical fs-5"></i></div>
-                    
-                    <h3 class="bld-title position-relative z-2">Tòa C - StayMate Horizon</h3>
-                    <div class="bld-address position-relative z-2"><i class="fa-solid fa-location-dot" style="color:var(--teal-main);"></i> Số 88 Nguyễn Trãi, Quận Thanh Xuân, TP. Hà Nội</div>
-                    
-                    <div class="manager-info text-muted position-relative z-2">
-                        <span><i class="fa-solid fa-user-tie me-1"></i> Quản lý riêng:</span>
-                        <span class="text-dark fw-bold">Quản lý Tòa C (Lê Hoàng Nam) <span style="color:var(--teal-main); font-weight:600;">(quanly_c)</span></span>
-                    </div>
-
-                    <div class="stat-group position-relative z-2">
-                        <div class="stat-item stat-total">
-                            <i class="fa-regular fa-building fs-4"></i><div class="stat-val">10</div><div class="stat-label">Tổng</div>
-                        </div>
-                        <div class="stat-item stat-rented">
-                            <i class="fa-solid fa-user-group fs-4"></i><div class="stat-val">7</div><div class="stat-label">Đang thuê</div>
-                        </div>
-                        <div class="stat-item stat-empty">
-                            <i class="fa-solid fa-house-chimney fs-4"></i><div class="stat-val">3</div><div class="stat-label">Phòng trống</div>
-                        </div>
-                    </div>
-
-                    <div class="d-flex gap-2 mt-auto position-relative z-2">
-                        <a href="index.php?route=overview&building_id=C" class="btn-bld-main"><i class="fa-solid fa-arrow-right-to-bracket me-2"></i> Vào quản lý Tòa này</a>
-                        <a href="index.php?route=rooms" class="btn-bld-folder" title="Quản lý phòng trọ"><i class="fa-regular fa-folder-open"></i></a>
-                    </div>
-                </div>
-            </div>
+            <?php endforeach; ?>
         </div>
     </div>
 
-    <!-- MODAL THÊM TÒA NHÀ -->
+    <!-- ========================================================= -->
+    <!-- CÁC MODAL TƯƠNG TÁC TRỰC TIẾP VỚI CSDL TRÊN TRANG TÒA NHÀ -->
+    <!-- ========================================================= -->
+
+    <!-- 1. MODAL THÊM TÒA NHÀ MỚI -->
     <div class="modal fade" id="addBuildingModal" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content border-0 shadow-lg rounded-4">
@@ -469,14 +546,441 @@
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body p-4">
-                    <form onsubmit="event.preventDefault(); alert('Đã thêm thành công!'); bootstrap.Modal.getInstance(document.getElementById('addBuildingModal')).hide();">
-                        <div class="mb-3"><label class="form-label fw-bold small text-muted">Mã tòa nhà</label><input type="text" class="form-control" required></div>
-                        <div class="mb-3"><label class="form-label fw-bold small text-muted">Tên tòa nhà</label><input type="text" class="form-control" required></div>
+                    <form method="POST" action="index.php?route=dashboard">
+                        <input type="hidden" name="action" value="add_building">
+                        <div class="row g-3">
+                            <div class="col-md-5">
+                                <label class="form-label fw-bold small text-muted">Mã tòa nhà</label>
+                                <input type="text" name="code" class="form-control" placeholder="VD: BLD-D" value="BLD-D" required>
+                            </div>
+                            <div class="col-md-7">
+                                <label class="form-label fw-bold small text-muted">Nhóm mã phòng (Prefix SQL)</label>
+                                <input type="text" name="room_prefix" class="form-control" placeholder="VD: P4 (khớp phòng P401...)" value="P4" required>
+                            </div>
+                            <div class="col-12">
+                                <label class="form-label fw-bold small text-muted">Tên tòa nhà</label>
+                                <input type="text" name="name" class="form-control" placeholder="VD: Tòa D - StayMate Diamond" required>
+                            </div>
+                            <div class="col-12">
+                                <label class="form-label fw-bold small text-muted">Địa chỉ</label>
+                                <input type="text" name="address" class="form-control" placeholder="VD: Số 102 Xuân Thủy, Cầu Giấy, Hà Nội" required>
+                            </div>
+                            <div class="col-md-7">
+                                <label class="form-label fw-bold small text-muted">Người quản lý</label>
+                                <input type="text" name="manager" class="form-control" value="Quản Trị Viên">
+                            </div>
+                            <div class="col-md-5">
+                                <label class="form-label fw-bold small text-muted">Tài khoản quản lý</label>
+                                <input type="text" name="manager_acc" class="form-control" value="admin01">
+                            </div>
+                        </div>
                         <div class="d-flex justify-content-end gap-2 mt-4">
                             <button type="button" class="btn btn-outline-secondary rounded-pill px-4" data-bs-dismiss="modal">Hủy</button>
                             <button type="submit" class="btn btn-teal-custom px-4">Lưu tòa nhà</button>
                         </div>
                     </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 2. CÁC MODAL CHI TIẾT & CHỈNH SỬA CHO TỪNG TÒA NHÀ -->
+    <?php foreach ($buildings as $bId => $bld): ?>
+        <!-- Modal Hồ sơ Phòng & Hóa đơn của Tòa nhà -->
+        <div class="modal fade" id="bldDetailModal_<?= htmlspecialchars((string)$bId) ?>" tabindex="-1" aria-hidden="true">
+            <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
+                <div class="modal-content border-0 shadow-lg rounded-4">
+                    <div class="modal-header bg-light rounded-top-4">
+                        <h5 class="modal-title fw-bold text-teal-main">
+                            <i class="fa-regular fa-folder-open me-2"></i> Hồ sơ CSDL: <?= htmlspecialchars($bld['name']) ?>
+                        </h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body p-4">
+                        <div class="d-flex flex-wrap justify-content-between align-items-center bg-light p-3 rounded-4 mb-3 border">
+                            <div>
+                                <div class="fw-bold text-dark"><i class="fa-solid fa-location-dot text-teal-main me-1"></i> <?= htmlspecialchars($bld['address']) ?></div>
+                                <div class="small text-muted">Quản lý: <strong><?= htmlspecialchars($bld['manager']) ?></strong> • Nhóm phòng SQL: <code><?= htmlspecialchars($bld['room_prefix']) ?>%</code></div>
+                            </div>
+                            <div class="d-flex gap-2 mt-2 mt-md-0">
+                                <span class="badge bg-primary rounded-pill px-3 py-2">Tổng: <?= $bld['total_rooms'] ?> phòng</span>
+                                <span class="badge bg-success rounded-pill px-3 py-2">Đang thuê: <?= $bld['rented_rooms'] ?></span>
+                                <span class="badge bg-warning text-dark rounded-pill px-3 py-2">Trống: <?= $bld['empty_rooms'] ?></span>
+                            </div>
+                        </div>
+
+                        <h6 class="fw-bold text-dark mb-2"><i class="fa-solid fa-bed text-teal-main me-1"></i> Danh sách Phòng thuộc Tòa này (Từ bảng `rooms` & `contracts`):</h6>
+                        <div class="table-responsive mb-4">
+                            <table class="table table-hover align-middle border rounded-3 overflow-hidden">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>Mã Phòng</th>
+                                        <th>Giá Thuê</th>
+                                        <th>Mô Tả</th>
+                                        <th>Khách Đang Thuê</th>
+                                        <th>Trạng Thái</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <?php if (!empty($bld['rooms_list'])): ?>
+                                        <?php foreach ($bld['rooms_list'] as $rm): ?>
+                                            <tr>
+                                                <td class="fw-bold text-teal-main"><?= htmlspecialchars($rm['room_number']) ?></td>
+                                                <td class="fw-bold"><?= number_format($rm['price'], 0, ',', '.') ?> đ</td>
+                                                <td class="small text-muted"><?= htmlspecialchars($rm['description'] ?? '') ?></td>
+                                                <td>
+                                                    <?php if (!empty($rm['tenant_name'])): ?>
+                                                        <div class="fw-bold text-dark"><?= htmlspecialchars($rm['tenant_name']) ?></div>
+                                                        <div class="small text-muted"><?= htmlspecialchars($rm['tenant_phone'] ?? '') ?></div>
+                                                    <?php else: ?>
+                                                        <span class="text-muted fst-italic">Chưa có khách</span>
+                                                    <?php endif; ?>
+                                                </td>
+                                                <td>
+                                                    <?php if ($rm['status'] === 'rented'): ?>
+                                                        <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill px-3">Đang thuê</span>
+                                                    <?php else: ?>
+                                                        <span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle rounded-pill px-3">Phòng trống</span>
+                                                    <?php endif; ?>
+                                                </td>
+                                            </tr>
+                                        <?php endforeach; ?>
+                                    <?php else: ?>
+                                        <tr><td colspan="5" class="text-center text-muted py-3">Chưa có phòng nào thuộc nhóm <?= htmlspecialchars($bld['room_prefix']) ?>xx trong CSDL.</td></tr>
+                                    <?php endif; ?>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <h6 class="fw-bold text-dark mb-2"><i class="fa-solid fa-file-invoice-dollar text-teal-main me-1"></i> Hóa đơn của Tòa này (Từ bảng `invoices`):</h6>
+                        <div class="table-responsive">
+                            <table class="table table-sm table-hover align-middle border">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>Mã HĐ</th>
+                                        <th>Phòng</th>
+                                        <th>Khách thuê</th>
+                                        <th>Kỳ</th>
+                                        <th>Tổng tiền</th>
+                                        <th>Trạng thái</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <?php if (!empty($bld['invoices_list'])): ?>
+                                        <?php foreach (array_slice($bld['invoices_list'], 0, 8) as $inv): ?>
+                                            <tr>
+                                                <td class="fw-bold"><?= htmlspecialchars($inv['invoice_code']) ?></td>
+                                                <td><span class="badge bg-secondary"><?= htmlspecialchars($inv['room_number']) ?></span></td>
+                                                <td><?= htmlspecialchars($inv['tenant']) ?></td>
+                                                <td><?= htmlspecialchars($inv['month_year']) ?></td>
+                                                <td class="fw-bold text-danger"><?= number_format($inv['total_amount'], 0, ',', '.') ?> đ</td>
+                                                <td>
+                                                    <?php if ($inv['status'] === 'paid'): ?>
+                                                        <span class="badge bg-success">Đã thu</span>
+                                                    <?php else: ?>
+                                                        <span class="badge bg-danger">Chưa thu</span>
+                                                    <?php endif; ?>
+                                                </td>
+                                            </tr>
+                                        <?php endforeach; ?>
+                                    <?php else: ?>
+                                        <tr><td colspan="6" class="text-center text-muted py-3">Chưa có hóa đơn.</td></tr>
+                                    <?php endif; ?>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    <div class="modal-footer bg-light">
+                        <a href="index.php?route=rooms&floor=<?= urlencode(substr($bld['room_prefix'], 1)) ?>" class="btn btn-outline-secondary rounded-pill px-3">
+                            <i class="fa-solid fa-bed me-1"></i> Quản lý Phòng
+                        </a>
+                        <a href="index.php?route=overview&building_id=<?= urlencode((string)$bId) ?>" class="btn btn-teal-custom px-4">
+                            <i class="fa-solid fa-arrow-right-to-bracket me-1"></i> Vào Tổng quan <?= htmlspecialchars($bld['code']) ?>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Modal Chỉnh sửa Tòa nhà -->
+        <div class="modal fade" id="editBldModal_<?= htmlspecialchars((string)$bId) ?>" tabindex="-1" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content border-0 shadow-lg rounded-4">
+                    <div class="modal-header bg-light rounded-top-4">
+                        <h5 class="modal-title fw-bold text-teal-main"><i class="fa-solid fa-pen-to-square me-2"></i> Chỉnh sửa <?= htmlspecialchars($bld['name']) ?></h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body p-4">
+                        <form method="POST" action="index.php?route=dashboard">
+                            <input type="hidden" name="action" value="edit_building">
+                            <input type="hidden" name="building_id" value="<?= htmlspecialchars((string)$bId) ?>">
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <label class="form-label fw-bold small text-muted">Mã tòa nhà</label>
+                                    <input type="text" name="code" class="form-control" value="<?= htmlspecialchars($bld['code']) ?>" required>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label fw-bold small text-muted">Nhóm phòng SQL (Prefix)</label>
+                                    <input type="text" name="room_prefix" class="form-control" value="<?= htmlspecialchars($bld['room_prefix']) ?>" required>
+                                </div>
+                                <div class="col-12">
+                                    <label class="form-label fw-bold small text-muted">Tên tòa nhà</label>
+                                    <input type="text" name="name" class="form-control" value="<?= htmlspecialchars($bld['name']) ?>" required>
+                                </div>
+                                <div class="col-12">
+                                    <label class="form-label fw-bold small text-muted">Địa chỉ</label>
+                                    <input type="text" name="address" class="form-control" value="<?= htmlspecialchars($bld['address']) ?>" required>
+                                </div>
+                                <div class="col-md-7">
+                                    <label class="form-label fw-bold small text-muted">Người quản lý</label>
+                                    <input type="text" name="manager" class="form-control" value="<?= htmlspecialchars($bld['manager']) ?>" required>
+                                </div>
+                                <div class="col-md-5">
+                                    <label class="form-label fw-bold small text-muted">Tài khoản quản lý</label>
+                                    <input type="text" name="manager_acc" class="form-control" value="<?= htmlspecialchars($bld['manager_acc']) ?>" required>
+                                </div>
+                            </div>
+                            <div class="d-flex justify-content-end gap-2 mt-4">
+                                <button type="button" class="btn btn-outline-secondary rounded-pill px-4" data-bs-dismiss="modal">Hủy</button>
+                                <button type="submit" class="btn btn-teal-custom px-4">Lưu thay đổi</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    <?php endforeach; ?>
+
+    <!-- 3. MODAL DANH SÁCH TẤT CẢ PHÒNG TRỌ TỪ SQL (Khi bấm thẻ Tỷ lệ lấp đầy) -->
+    <div class="modal fade" id="roomsModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
+            <div class="modal-content border-0 shadow-lg rounded-4">
+                <div class="modal-header bg-light rounded-top-4">
+                    <h5 class="modal-title fw-bold text-success"><i class="fa-solid fa-bed me-2"></i> Tình trạng Phòng trọ trong CSDL (<?= $stats['rented_rooms'] ?>/<?= $stats['total_rooms'] ?> đang thuê)</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body p-4">
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle border">
+                            <thead class="table-success">
+                                <tr>
+                                    <th>Mã Phòng</th>
+                                    <th>Giá Thuê</th>
+                                    <th>Mô tả loại phòng</th>
+                                    <th>Khách đang thuê</th>
+                                    <th>Trạng thái</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <?php foreach ($roomsList as $rm): ?>
+                                    <tr>
+                                        <td class="fw-bold"><?= htmlspecialchars($rm['room_number']) ?></td>
+                                        <td class="fw-bold text-success"><?= number_format($rm['price'], 0, ',', '.') ?> đ</td>
+                                        <td><?= htmlspecialchars($rm['description'] ?? '') ?></td>
+                                        <td><?= !empty($rm['tenant_name']) ? htmlspecialchars($rm['tenant_name']) : '<span class="text-muted">Đang trống</span>' ?></td>
+                                        <td>
+                                            <?php if ($rm['status'] === 'rented'): ?>
+                                                <span class="badge bg-success rounded-pill">Đang thuê</span>
+                                            <?php else: ?>
+                                                <span class="badge bg-warning text-dark rounded-pill">Phòng trống</span>
+                                            <?php endif; ?>
+                                        </td>
+                                    </tr>
+                                <?php endforeach; ?>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="modal-footer bg-light">
+                    <button type="button" class="btn btn-outline-secondary rounded-pill px-4" data-bs-dismiss="modal">Đóng</button>
+                    <a href="index.php?route=rooms" class="btn btn-teal-custom px-4">Đi tới Quản lý Phòng trọ</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 4. MODAL THỰC THU & DOANH THU 6 THÁNG TỪ SQL (Khi bấm thẻ Thực thu) -->
+    <div class="modal fade" id="revenueModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
+            <div class="modal-content border-0 shadow-lg rounded-4">
+                <div class="modal-header bg-light rounded-top-4">
+                    <h5 class="modal-title fw-bold text-primary"><i class="fa-solid fa-wallet me-2"></i> Thống kê Thực thu từ CSDL: <?= number_format($stats['total_revenue'], 0, ',', '.') ?> đ</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body p-4">
+                    <h6 class="fw-bold mb-3">Tổng hợp Doanh thu & Công nợ theo Kỳ tháng (Bảng `invoices`):</h6>
+                    <div class="table-responsive">
+                        <table class="table table-bordered align-middle text-center">
+                            <thead class="table-primary">
+                                <tr>
+                                    <th>Kỳ Hóa Đơn</th>
+                                    <th>Số lượng HĐ</th>
+                                    <th>Thực Thu (Đã đóng)</th>
+                                    <th>Công Nợ (Chưa đóng)</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <?php if (!empty($chartData['rows'])): ?>
+                                    <?php foreach ($chartData['rows'] as $cr): ?>
+                                        <tr>
+                                            <td class="fw-bold">Tháng <?= htmlspecialchars($cr['month_year']) ?></td>
+                                            <td><?= (int)$cr['invoice_count'] ?> hóa đơn</td>
+                                            <td class="fw-bold text-success"><?= number_format($cr['revenue'], 0, ',', '.') ?> đ</td>
+                                            <td class="fw-bold text-danger"><?= number_format($cr['debt'], 0, ',', '.') ?> đ</td>
+                                        </tr>
+                                    <?php endforeach; ?>
+                                <?php endif; ?>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="modal-footer bg-light">
+                    <button type="button" class="btn btn-outline-secondary rounded-pill px-4" data-bs-dismiss="modal">Đóng</button>
+                    <a href="index.php?route=overview&status=paid#invoice-section" class="btn btn-teal-custom px-4">Xem toàn bộ Hóa đơn đã thu</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 5. MODAL CÔNG NỢ CHƯA THU (Khi bấm thẻ Công nợ) -->
+    <div class="modal fade" id="debtModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
+            <div class="modal-content border-0 shadow-lg rounded-4">
+                <div class="modal-header bg-light rounded-top-4">
+                    <h5 class="modal-title fw-bold text-warning" style="color:#b45309 !important;">
+                        <i class="fa-solid fa-coins me-2"></i> Danh sách Hóa đơn Chưa thu (<?= $stats['unpaid_invoices'] ?> HĐ - <?= number_format($stats['total_debt'], 0, ',', '.') ?> đ)
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body p-4">
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle border">
+                            <thead class="table-warning">
+                                <tr>
+                                    <th>Mã HĐ</th>
+                                    <th>Phòng</th>
+                                    <th>Khách thuê</th>
+                                    <th>Kỳ</th>
+                                    <th>Số tiền nợ</th>
+                                    <th>Thao tác</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <?php
+                                $unpaidOnly = array_filter($debtList ?? [], fn($i) => $i['status'] === 'unpaid');
+                                ?>
+                                <?php if (!empty($unpaidOnly)): ?>
+                                    <?php foreach ($unpaidOnly as $uInv): ?>
+                                        <tr>
+                                            <td class="fw-bold"><?= htmlspecialchars($uInv['invoice_code']) ?></td>
+                                            <td><span class="badge bg-dark"><?= htmlspecialchars($uInv['room_number']) ?></span></td>
+                                            <td class="fw-bold"><?= htmlspecialchars($uInv['tenant']) ?></td>
+                                            <td><?= htmlspecialchars($uInv['month_year']) ?></td>
+                                            <td class="fw-bold text-danger"><?= number_format($uInv['total_amount'], 0, ',', '.') ?> đ</td>
+                                            <td>
+                                                <form method="POST" action="index.php?route=dashboard" class="d-inline">
+                                                    <input type="hidden" name="action" value="pay_invoice">
+                                                    <input type="hidden" name="invoice_id" value="<?= (int)$uInv['id'] ?>">
+                                                    <button type="submit" class="btn btn-sm btn-success rounded-pill px-3 fw-bold">
+                                                        <i class="fa-solid fa-check me-1"></i> Thu tiền
+                                                    </button>
+                                                </form>
+                                            </td>
+                                        </tr>
+                                    <?php endforeach; ?>
+                                <?php else: ?>
+                                    <tr><td colspan="6" class="text-center text-muted py-4">Tuyệt vời! Không còn hóa đơn tồn đọng.</td></tr>
+                                <?php endif; ?>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="modal-footer bg-light">
+                    <button type="button" class="btn btn-outline-secondary rounded-pill px-4" data-bs-dismiss="modal">Đóng</button>
+                    <a href="index.php?route=overview&status=unpaid#invoice-section" class="btn btn-teal-custom px-4">Quản lý Công nợ trên Trang Tổng quan</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 6. MODAL KHÁCH & HỢP ĐỒNG TỪ SQL (Khi bấm thẻ Khách & Hợp đồng) -->
+    <div class="modal fade" id="contractsModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
+            <div class="modal-content border-0 shadow-lg rounded-4">
+                <div class="modal-header bg-light rounded-top-4">
+                    <h5 class="modal-title fw-bold" style="color:#7e22ce;"><i class="fa-solid fa-file-signature me-2"></i> Danh sách Hợp đồng trong CSDL (<?= count($contractsList ?? []) ?> hợp đồng)</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body p-4">
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle border">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Mã HĐ</th>
+                                    <th>Phòng</th>
+                                    <th>Khách thuê</th>
+                                    <th>Thời hạn</th>
+                                    <th>Tiền cọc</th>
+                                    <th>Trạng thái</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <?php foreach ($contractsList as $con): ?>
+                                    <tr>
+                                        <td class="fw-bold">#HD-0<?= (int)$con['id'] ?></td>
+                                        <td><span class="badge bg-teal-main" style="background:var(--teal-main);"><?= htmlspecialchars($con['room_number']) ?></span></td>
+                                        <td>
+                                            <div class="fw-bold"><?= htmlspecialchars($con['tenant_name']) ?></div>
+                                            <div class="small text-muted"><?= htmlspecialchars($con['tenant_phone']) ?></div>
+                                        </td>
+                                        <td class="small"><?= htmlspecialchars($con['start_date']) ?> ➔ <?= htmlspecialchars($con['end_date']) ?></td>
+                                        <td class="fw-bold"><?= number_format($con['deposit_amount'], 0, ',', '.') ?> đ</td>
+                                        <td>
+                                            <?php if ($con['status'] === 'active'): ?>
+                                                <span class="badge bg-success rounded-pill">Đang hiệu lực</span>
+                                            <?php else: ?>
+                                                <span class="badge bg-secondary rounded-pill">Đã thanh lý</span>
+                                            <?php endif; ?>
+                                        </td>
+                                    </tr>
+                                <?php endforeach; ?>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="modal-footer bg-light">
+                    <a href="index.php?route=tenants" class="btn btn-outline-secondary rounded-pill px-4">Trang Khách thuê</a>
+                    <a href="index.php?route=contracts" class="btn btn-teal-custom px-4">Đi tới Quản lý Hợp đồng</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 7. MODAL HỒ SƠ TÀI KHOẢN ĐANG ĐĂNG NHẬP -->
+    <div class="modal fade" id="profileModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content border-0 shadow-lg rounded-4">
+                <div class="modal-header bg-light rounded-top-4">
+                    <h5 class="modal-title fw-bold text-teal-main"><i class="fa-solid fa-user-shield me-2"></i> Thông tin Tài khoản</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body p-4">
+                    <div class="d-flex align-items-center gap-3 mb-3">
+                        <div class="rounded-circle text-white d-flex align-items-center justify-content-center fw-bold fs-4" style="width:60px; height:60px; background:var(--teal-main);">AS</div>
+                        <div>
+                            <h5 class="fw-bold mb-0"><?= htmlspecialchars($userFullName) ?></h5>
+                            <span class="badge bg-success rounded-pill text-uppercase"><?= htmlspecialchars($userRole) ?></span>
+                        </div>
+                    </div>
+                    <ul class="list-group list-group-flush border rounded-3">
+                        <li class="list-group-item d-flex justify-content-between"><span class="text-muted">Tên đăng nhập:</span> <strong><?= htmlspecialchars($userName) ?></strong></li>
+                        <li class="list-group-item d-flex justify-content-between"><span class="text-muted">Email:</span> <strong><?= htmlspecialchars($userEmail) ?></strong></li>
+                        <li class="list-group-item d-flex justify-content-between"><span class="text-muted">Số điện thoại:</span> <strong><?= htmlspecialchars($userPhone) ?></strong></li>
+                    </ul>
+                </div>
+                <div class="modal-footer bg-light">
+                    <button type="button" class="btn btn-outline-secondary rounded-pill px-4" data-bs-dismiss="modal">Đóng</button>
+                    <a href="index.php?route=auth/logout" class="btn btn-danger rounded-pill px-4"><i class="fa-solid fa-right-from-bracket me-1"></i> Đăng xuất</a>
                 </div>
             </div>
         </div>
@@ -491,5 +995,63 @@
     </footer>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        const SERVER_ACTIVITIES = <?= json_encode($notifications ?? [], JSON_UNESCAPED_UNICODE) ?>;
+
+        function getStoredActivities() {
+            try {
+                const raw = localStorage.getItem('staymate_activity_logs');
+                return raw ? JSON.parse(raw) : [];
+            } catch (e) {
+                return [];
+            }
+        }
+
+        function saveStoredActivities(list) {
+            try {
+                localStorage.setItem('staymate_activity_logs', JSON.stringify(list.slice(0, 50)));
+            } catch (e) {}
+        }
+
+        function nowTimeStr() {
+            const d = new Date();
+            return d.toLocaleTimeString('vi-VN', { hour12: false }) + ' - ' + d.toLocaleDateString('vi-VN');
+        }
+
+        function pushUserActivity(title, type = 'info') {
+            let list = getStoredActivities();
+            if (list.length === 0 && Array.isArray(SERVER_ACTIVITIES)) {
+                list = SERVER_ACTIVITIES;
+            }
+            if (list.length > 0 && list[0].title === title) return;
+            list.unshift({
+                id: 'act_' + Date.now() + '_' + Math.random().toString(36).slice(2, 6),
+                title: title,
+                time: nowTimeStr(),
+                type: type
+            });
+            saveStoredActivities(list);
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            pushUserActivity('Đang xem trang Quản lý Hệ thống Tòa nhà', 'success');
+
+            document.querySelectorAll('.overview-card').forEach(card => {
+                card.addEventListener('click', function() {
+                    const titleEl = this.querySelector('.overview-title');
+                    const name = titleEl ? titleEl.textContent.trim() : 'Thống kê';
+                    pushUserActivity('Đã bấm xem thẻ tổng hợp: ' + name, 'info');
+                });
+            });
+
+            document.querySelectorAll('.btn-manage-bld').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const card = this.closest('.building-card');
+                    const bldName = card ? (card.querySelector('.bld-title')?.textContent.trim() || 'Tòa nhà') : 'Tòa nhà';
+                    pushUserActivity('Đã chọn Quản lý Tòa nhà: ' + bldName, 'success');
+                });
+            });
+        });
+    </script>
 </body>
 </html>
