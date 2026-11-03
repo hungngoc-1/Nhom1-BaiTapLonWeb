@@ -57,6 +57,13 @@ class UtilitiesController {
             ";
 
             $params = [];
+            require_once __DIR__ . '/../Models/ReportModel.php';
+            $mgr = ReportModel::getManagerBuildingInfo();
+            if ($mgr) {
+                $sql .= " AND (r.building_id = :mgrBId OR r.room_number LIKE :mgrPfx) ";
+                $params[':mgrBId'] = $mgr['id'];
+                $params[':mgrPfx'] = $mgr['prefix'] . '%';
+            }
 
             if ($keyword !== '') {
                 $cleanRoom = preg_replace('/^[pP]/', '', $keyword);

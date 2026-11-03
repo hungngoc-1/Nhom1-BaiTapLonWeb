@@ -28,7 +28,8 @@ class ReportApiController {
      */
     public function summary(): void {
         try {
-            $buildingId = trim($_GET['building_id'] ?? 'all');
+            $mgr = ReportModel::getManagerBuildingInfo();
+            $buildingId = $mgr ? $mgr['code'] : trim($_GET['building_id'] ?? 'all');
             $stats = $this->reportModel->getSummaryStats($buildingId);
             $buildings = $this->reportModel->getBuildingsWithStats();
 
@@ -70,7 +71,8 @@ class ReportApiController {
      */
     public function revenue(): void {
         try {
-            $buildingId = trim($_GET['building_id'] ?? 'all');
+            $mgr = ReportModel::getManagerBuildingInfo();
+            $buildingId = $mgr ? $mgr['code'] : trim($_GET['building_id'] ?? 'all');
             $chartData = $this->reportModel->getMonthlyRevenue($buildingId);
 
             // Bóc tách cơ cấu nguồn thu từ invoice_details
@@ -140,7 +142,8 @@ class ReportApiController {
      */
     public function debt(): void {
         try {
-            $buildingId = trim($_GET['building_id'] ?? 'all');
+            $mgr = ReportModel::getManagerBuildingInfo();
+            $buildingId = $mgr ? $mgr['code'] : trim($_GET['building_id'] ?? 'all');
             $status     = trim($_GET['status'] ?? 'unpaid');
             $keyword    = trim($_GET['keyword'] ?? '');
             $monthYear  = trim($_GET['month_year'] ?? '');
@@ -196,7 +199,8 @@ class ReportApiController {
      */
     public function utilities(): void {
         try {
-            $buildingId = trim($_GET['building_id'] ?? 'all');
+            $mgr = ReportModel::getManagerBuildingInfo();
+            $buildingId = $mgr ? $mgr['code'] : trim($_GET['building_id'] ?? 'all');
             $monthYear  = trim($_GET['month_year'] ?? '10-2026');
 
             $sql = "

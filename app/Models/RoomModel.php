@@ -84,6 +84,13 @@ class RoomModel {
                 )
                 LEFT JOIN users u ON u.id = c.tenant_id
                 WHERE 1=1";
+        require_once __DIR__ . '/ReportModel.php';
+        $mgr = ReportModel::getManagerBuildingInfo();
+        if ($mgr) {
+            $sql .= " AND (r.building_id = :mgrBId OR r.room_number LIKE :mgrPfx)";
+            $params[':mgrBId'] = $mgr['id'];
+            $params[':mgrPfx'] = $mgr['prefix'] . '%';
+        }
 
         $params = [];
 

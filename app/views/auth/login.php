@@ -391,22 +391,37 @@
                 </form>
 
                 <div style="margin-top: 18px; padding: 12px; background: #F0FBF9; border-radius: 16px; border: 1.5px dashed #A8E4DD;">
-                    <div style="font-size: 0.8rem; font-weight: 700; color: #166E66; margin-bottom: 8px; display: flex; align-items: center; justify-content: space-between;">
-                        <span><i class="bi bi-person-badge"></i> Đăng nhập nhanh vai trò Khách Thuê:</span>
-                        <span style="font-size: 0.72rem; color: #64748b;">(Mật khẩu: <code>hash</code> hoặc <code>123456</code>)</span>
+                    <div style="font-size: 0.8rem; font-weight: 700; color: #166E66; margin-bottom: 6px; display: flex; align-items: center; justify-content: space-between;">
+                        <span><i class="bi bi-shield-lock"></i> Đăng nhập nhanh Quản trị & Quản lý tòa:</span>
+                        <span style="font-size: 0.7rem; color: #64748b;">(MK: <code>123456</code> hoặc <code>hash</code>)</span>
                     </div>
-                    <div style="display: flex; gap: 6px; flex-wrap: wrap;">
-                        <button type="button" class="btn-quick-fill" style="padding: 5px 10px; font-size: 0.78rem;" onclick="fillLogin('kh_a101', 'hash'); document.getElementById('loginForm').submit();" title="Nguyễn Tiến Đạt (P.A101)">
-                            <i class="bi bi-door-open"></i> P.A101: kh_a101
+                    <div style="display: flex; gap: 5px; flex-wrap: wrap; margin-bottom: 10px;">
+                        <button type="button" class="btn-quick-fill" style="padding: 4px 9px; font-size: 0.76rem; background: #113437; color: #fff;" onclick="fillLogin('admin', 'hash'); document.getElementById('loginForm').submit();" title="Quản trị viên (Toàn quyền tất cả các tòa)">
+                            <i class="bi bi-shield-shaded"></i> Admin
                         </button>
-                        <button type="button" class="btn-quick-fill" style="padding: 5px 10px; font-size: 0.78rem;" onclick="fillLogin('kh_b101', 'hash'); document.getElementById('loginForm').submit();" title="Mai Thùy Dung (P.B101)">
-                            <i class="bi bi-door-open"></i> P.B101: kh_b101
+                        <button type="button" class="btn-quick-fill" style="padding: 4px 9px; font-size: 0.76rem; background: #287A74; color: #fff;" onclick="fillLogin('quanly_a', 'hash'); document.getElementById('loginForm').submit();" title="Quản lý Tòa A (Nguyễn Văn Quân - Chỉ xem Tòa A)">
+                            <i class="bi bi-building"></i> QL Tòa A (quanly_a)
                         </button>
-                        <button type="button" class="btn-quick-fill" style="padding: 5px 10px; font-size: 0.78rem;" onclick="fillLogin('kh_c101', 'hash'); document.getElementById('loginForm').submit();" title="Hoàng Thị Ngọc Bích (P.C101)">
-                            <i class="bi bi-door-open"></i> P.C101: kh_c101
+                        <button type="button" class="btn-quick-fill" style="padding: 4px 9px; font-size: 0.76rem; background: #1d72b8; color: #fff;" onclick="fillLogin('quanly_b', 'hash'); document.getElementById('loginForm').submit();" title="Quản lý Tòa B (Trần Thị Mai Lan - Chỉ xem Tòa B)">
+                            <i class="bi bi-building"></i> QL Tòa B (quanly_b)
                         </button>
-                        <button type="button" class="btn-quick-fill" style="padding: 5px 10px; font-size: 0.78rem; background: #287A74; color: #fff;" onclick="fillLogin('admin', 'hash'); document.getElementById('loginForm').submit();" title="Quản trị viên hệ thống">
-                            <i class="bi bi-shield-check"></i> admin
+                        <button type="button" class="btn-quick-fill" style="padding: 4px 9px; font-size: 0.76rem; background: #b8860b; color: #fff;" onclick="fillLogin('quanly_c', 'hash'); document.getElementById('loginForm').submit();" title="Quản lý Tòa C (Lê Hoàng Nam - Chỉ xem Tòa C)">
+                            <i class="bi bi-building"></i> QL Tòa C (quanly_c)
+                        </button>
+                    </div>
+
+                    <div style="font-size: 0.78rem; font-weight: 700; color: #166E66; margin-bottom: 6px;">
+                        <i class="bi bi-person-badge"></i> Đăng nhập nhanh Khách Thuê:
+                    </div>
+                    <div style="display: flex; gap: 5px; flex-wrap: wrap;">
+                        <button type="button" class="btn-quick-fill" style="padding: 4px 9px; font-size: 0.76rem;" onclick="fillLogin('kh_a101', 'hash'); document.getElementById('loginForm').submit();" title="Nguyễn Tiến Đạt (P.A101 - Tòa A)">
+                            <i class="bi bi-door-open"></i> P.A101
+                        </button>
+                        <button type="button" class="btn-quick-fill" style="padding: 4px 9px; font-size: 0.76rem;" onclick="fillLogin('kh_b101', 'hash'); document.getElementById('loginForm').submit();" title="Mai Thùy Dung (P.B101 - Tòa B)">
+                            <i class="bi bi-door-open"></i> P.B101
+                        </button>
+                        <button type="button" class="btn-quick-fill" style="padding: 4px 9px; font-size: 0.76rem;" onclick="fillLogin('kh_c101', 'hash'); document.getElementById('loginForm').submit();" title="Hoàng Thị Ngọc Bích (P.C101 - Tòa C)">
+                            <i class="bi bi-door-open"></i> P.C101
                         </button>
                     </div>
                 </div>
@@ -452,22 +467,37 @@
                 </form>
 
                 <div style="margin-top: 18px; padding: 12px; background: #F0FBF9; border-radius: 16px; border: 1.5px dashed #A8E4DD;">
-                    <div style="font-size: 0.8rem; font-weight: 700; color: #166E66; margin-bottom: 8px; display: flex; align-items: center; justify-content: space-between;">
-                        <span><i class="bi bi-person-badge"></i> Đăng nhập nhanh vai trò Khách Thuê:</span>
-                        <span style="font-size: 0.72rem; color: #64748b;">(Mật khẩu: <code>hash</code> hoặc <code>123456</code>)</span>
+                    <div style="font-size: 0.8rem; font-weight: 700; color: #166E66; margin-bottom: 6px; display: flex; align-items: center; justify-content: space-between;">
+                        <span><i class="bi bi-shield-lock"></i> Đăng nhập nhanh Quản trị & Quản lý tòa:</span>
+                        <span style="font-size: 0.7rem; color: #64748b;">(MK: <code>123456</code> hoặc <code>hash</code>)</span>
                     </div>
-                    <div style="display: flex; gap: 6px; flex-wrap: wrap;">
-                        <button type="button" class="btn-quick-fill" style="padding: 5px 10px; font-size: 0.78rem;" onclick="fillLogin('kh_a101', 'hash'); document.getElementById('loginForm').submit();" title="Nguyễn Tiến Đạt (P.A101)">
-                            <i class="bi bi-door-open"></i> P.A101: kh_a101
+                    <div style="display: flex; gap: 5px; flex-wrap: wrap; margin-bottom: 10px;">
+                        <button type="button" class="btn-quick-fill" style="padding: 4px 9px; font-size: 0.76rem; background: #113437; color: #fff;" onclick="fillLogin('admin', 'hash'); document.getElementById('loginForm').submit();" title="Quản trị viên (Toàn quyền tất cả các tòa)">
+                            <i class="bi bi-shield-shaded"></i> Admin
                         </button>
-                        <button type="button" class="btn-quick-fill" style="padding: 5px 10px; font-size: 0.78rem;" onclick="fillLogin('kh_b101', 'hash'); document.getElementById('loginForm').submit();" title="Mai Thùy Dung (P.B101)">
-                            <i class="bi bi-door-open"></i> P.B101: kh_b101
+                        <button type="button" class="btn-quick-fill" style="padding: 4px 9px; font-size: 0.76rem; background: #287A74; color: #fff;" onclick="fillLogin('quanly_a', 'hash'); document.getElementById('loginForm').submit();" title="Quản lý Tòa A (Nguyễn Văn Quân - Chỉ xem Tòa A)">
+                            <i class="bi bi-building"></i> QL Tòa A (quanly_a)
                         </button>
-                        <button type="button" class="btn-quick-fill" style="padding: 5px 10px; font-size: 0.78rem;" onclick="fillLogin('kh_c101', 'hash'); document.getElementById('loginForm').submit();" title="Hoàng Thị Ngọc Bích (P.C101)">
-                            <i class="bi bi-door-open"></i> P.C101: kh_c101
+                        <button type="button" class="btn-quick-fill" style="padding: 4px 9px; font-size: 0.76rem; background: #1d72b8; color: #fff;" onclick="fillLogin('quanly_b', 'hash'); document.getElementById('loginForm').submit();" title="Quản lý Tòa B (Trần Thị Mai Lan - Chỉ xem Tòa B)">
+                            <i class="bi bi-building"></i> QL Tòa B (quanly_b)
                         </button>
-                        <button type="button" class="btn-quick-fill" style="padding: 5px 10px; font-size: 0.78rem; background: #287A74; color: #fff;" onclick="fillLogin('admin', 'hash'); document.getElementById('loginForm').submit();" title="Quản trị viên hệ thống">
-                            <i class="bi bi-shield-check"></i> admin
+                        <button type="button" class="btn-quick-fill" style="padding: 4px 9px; font-size: 0.76rem; background: #b8860b; color: #fff;" onclick="fillLogin('quanly_c', 'hash'); document.getElementById('loginForm').submit();" title="Quản lý Tòa C (Lê Hoàng Nam - Chỉ xem Tòa C)">
+                            <i class="bi bi-building"></i> QL Tòa C (quanly_c)
+                        </button>
+                    </div>
+
+                    <div style="font-size: 0.78rem; font-weight: 700; color: #166E66; margin-bottom: 6px;">
+                        <i class="bi bi-person-badge"></i> Đăng nhập nhanh Khách Thuê:
+                    </div>
+                    <div style="display: flex; gap: 5px; flex-wrap: wrap;">
+                        <button type="button" class="btn-quick-fill" style="padding: 4px 9px; font-size: 0.76rem;" onclick="fillLogin('kh_a101', 'hash'); document.getElementById('loginForm').submit();" title="Nguyễn Tiến Đạt (P.A101 - Tòa A)">
+                            <i class="bi bi-door-open"></i> P.A101
+                        </button>
+                        <button type="button" class="btn-quick-fill" style="padding: 4px 9px; font-size: 0.76rem;" onclick="fillLogin('kh_b101', 'hash'); document.getElementById('loginForm').submit();" title="Mai Thùy Dung (P.B101 - Tòa B)">
+                            <i class="bi bi-door-open"></i> P.B101
+                        </button>
+                        <button type="button" class="btn-quick-fill" style="padding: 4px 9px; font-size: 0.76rem;" onclick="fillLogin('kh_c101', 'hash'); document.getElementById('loginForm').submit();" title="Hoàng Thị Ngọc Bích (P.C101 - Tòa C)">
+                            <i class="bi bi-door-open"></i> P.C101
                         </button>
                     </div>
                 </div>

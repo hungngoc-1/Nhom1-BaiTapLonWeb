@@ -43,6 +43,8 @@ $publicRoutes = [
 if ($isLoggedIn && in_array($route, ['login', 'auth/login'], true)) {
     if ($currentUserRole === 'tenant') {
         header("Location: index.php?route=tenant/portal");
+    } elseif ($currentUserRole === 'manager' || $currentUserRole === 'landlord') {
+        header("Location: index.php?route=overview");
     } else {
         header("Location: index.php?route=dashboard");
     }
@@ -81,6 +83,20 @@ if ($isLoggedIn && $currentUserRole === 'tenant') {
     if (!in_array($route, $tenantAllowedRoutes, true)) {
         $_SESSION['flash_error'] = "Tài khoản khách thuê không có quyền truy cập vào khu vực quản trị nội bộ!";
         header("Location: index.php?route=tenant/portal");
+        exit;
+    }
+}
+
+// Phân quyền chặt chẽ cho Quản lý Tòa nhà (role === 'manager' hoặc 'landlord')
+// Quản lý KHÔNG được vào trang Quản lý các Tòa nhà (dashboard) và KHÔNG được quản lý tài khoản (accounts, users)
+if ($isLoggedIn && in_array($currentUserRole, ['manager', 'landlord'], true)) {
+    if ($route === 'dashboard') {
+        header("Location: index.php?route=overview");
+        exit;
+    }
+    if (in_array($route, ['accounts', 'users'], true)) {
+        $_SESSION['flash_error'] = "Quản lý không có quyền quản lý tài khoản người dùng và khách thuê!";
+        header("Location: index.php?route=overview");
         exit;
     }
 }
