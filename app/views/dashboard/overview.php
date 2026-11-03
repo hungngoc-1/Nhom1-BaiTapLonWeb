@@ -1,4 +1,5 @@
 <?php
+date_default_timezone_set('Asia/Ho_Chi_Minh');
 $userFullName = $_SESSION['full_name'] ?? 'Quản trị viên Hệ thống';
 $userRole     = $_SESSION['role'] ?? 'admin';
 $userName     = $_SESSION['username'] ?? 'admin01';
@@ -405,11 +406,9 @@ $currentMonthFilter  = $_GET['month_year'] ?? '';
                             </div>
                             <div class="fw-bold text-dark fs-5">Nhật ký hoạt động</div>
                         </div>
-                        <span id="bellActivityBadge" class="badge rounded-pill px-3 py-2 text-white" style="background: var(--teal-main); font-size: 0.85rem;">
-                            <?= count($notifications ?? []) ?> hoạt động
-                        </span>
+                        
                     </div>
-                    <div id="activityLogList" class="p-4 flex-grow-1 overflow-auto d-flex flex-column gap-3" style="background: #ffffff;">
+                    <div id="activityLogList" class="p-3 flex-grow-1 d-flex flex-column gap-3" style="background: #f8fafc; overflow-y: auto; max-height: 460px;">
                         <!-- Danh sách nhật ký thao tác dạng card trắng border cong thanh thoát -->
                     </div>
                 </div>
@@ -917,10 +916,10 @@ $currentMonthFilter  = $_GET['month_year'] ?? '';
                 new Chart(ctxBreakdown, {
                     type: 'doughnut',
                     data: {
-                        labels: ['Tiền phòng', 'Tiền điện', 'Tiền nước', 'Phí dịch vụ'],
+                        labels: ['Tiền phòng', 'Phí dịch vụ'],
                         datasets: [{
-                            data: [<?= $sumRoom ?>, <?= $sumElec ?>, <?= $sumWater ?>, <?= $sumService ?>],
-                            backgroundColor: ['#308f86', '#f59e0b', '#3b82f6', '#8b5cf6'],
+                            data: [<?= $sumRoom ?>, <?= $sumService ?>],
+                            backgroundColor: ['#308f86', '#8b5cf6'],
                             borderColor: '#ffffff',
                             borderWidth: 3,
                             hoverOffset: 8
@@ -988,109 +987,54 @@ $currentMonthFilter  = $_GET['month_year'] ?? '';
     </script>
 
     <script>
+        // Xóa sạch bộ nhớ tạm trình duyệt cũ lưu những hành động xem trang trước đây
+        try { localStorage.removeItem("staymate_activity_logs"); } catch(e) {}
+
         const SERVER_ACTIVITIES = <?= json_encode($notifications ?? [], JSON_UNESCAPED_UNICODE) ?>;
-        const CURRENT_BLD_NAME  = <?= json_encode($current_bld['name'] ?? '', JSON_UNESCAPED_UNICODE) ?>;
-
-        function getStoredActivities() {
-            try {
-                const raw = localStorage.getItem('staymate_activity_logs');
-                return raw ? JSON.parse(raw) : [];
-            } catch (e) {
-                return [];
-            }
-        }
-
-        function saveStoredActivities(list) {
-            try {
-                localStorage.setItem('staymate_activity_logs', JSON.stringify(list.slice(0, 50)));
-            } catch (e) {}
-        }
-
-        function nowTimeStr() {
-            const d = new Date();
-            return d.toLocaleTimeString('vi-VN', { hour12: false }) + ' - ' + d.toLocaleDateString('vi-VN');
-        }
-
-        function pushUserActivity(title, type = 'info') {
-            const list = getStoredActivities();
-            if (list.length > 0 && list[0].title === title) {
-                return;
-            }
-            list.unshift({
-                id: 'act_' + Date.now() + '_' + Math.random().toString(36).slice(2, 6),
-                title: title,
-                time: nowTimeStr(),
-                type: type
-            });
-            saveStoredActivities(list);
-            renderActivityLogs();
-        }
 
         function renderActivityLogs() {
-            const container = document.getElementById('activityLogList');
-            const badge = document.getElementById('bellActivityBadge');
+            const container = document.getElementById("activityLogList");
+            
             if (!container) return;
 
-            let list = getStoredActivities();
-            if (list.length === 0 && Array.isArray(SERVER_ACTIVITIES)) {
-                list = SERVER_ACTIVITIES;
-                saveStoredActivities(list);
-            }
+            const list = Array.isArray(SERVER_ACTIVITIES) ? SERVER_ACTIVITIES : [];
 
-            if (badge) {
-                badge.textContent = list.length + ' hoạt động';
-            }
+            
 
             if (list.length === 0) {
-                container.innerHTML = '<div class="text-center text-muted py-5 small">Chưa có thao tác nào được ghi nhận.</div>';
+                container.innerHTML = '<div class="text-center text-muted py-5 small"><i class="fa-regular fa-clipboard me-1 fs-4 d-block mb-2 text-secondary"></i>Chưa có thay đổi dữ liệu nào.<br><span class="text-secondary" style="font-size:0.75rem;">Khi bạn thêm/sửa/xóa tòa nhà hoặc lập/thu tiền hóa đơn, hoạt động sẽ được ghi nhận tại đây kèm tên tài khoản thực hiện.</span></div>';
                 return;
             }
 
             container.innerHTML = list.map((item, idx) => {
-                const iconClass = item.type === 'success'
-                    ? 'fa-circle-check text-success'
-                    : (item.type === 'warning' ? 'fa-triangle-exclamation text-warning' : 'fa-bolt text-teal-main');
+                const iconClass = item.type === "success"
+                    ? "fa-circle-check text-success"
+                    : (item.type === "warning" ? "fa-triangle-exclamation text-warning" : "fa-bolt text-teal-main");
+                
+                const userText = item.user ? `${item.user}` : "Quản trị viên";
+                const userAcc = item.username ? `(${item.username})` : "";
+                
                 return `
                     <div class="p-3 rounded-4 border bg-white shadow-sm d-flex align-items-center gap-3">
-                        <div class="rounded-circle d-flex align-items-center justify-content-center flex-shrink-0" style="width: 38px; height: 38px; background: #ecfdf5; border: 1px solid #a7f3d0;">
+                        <div class="rounded-circle d-flex align-items-center justify-content-center flex-shrink-0" style="width: 42px; height: 42px; background: #ecfdf5; border: 1px solid #a7f3d0;">
                             <i class="fa-solid ${iconClass} fs-5"></i>
                         </div>
                         <div class="flex-grow-1" style="min-width: 0;">
-                            <div class="fw-bold text-dark" style="font-size: 0.92rem; line-height: 1.35;">${item.title}</div>
-                            <div class="text-muted mt-1 small">
-                                <i class="fa-regular fa-clock me-1"></i>${item.time}
+                            <div class="d-flex align-items-center gap-2 mb-1 flex-wrap">
+                                <span class="badge bg-light text-dark border px-2 py-1" style="font-size: 0.76rem;">
+                                    <i class="fa-solid fa-user me-1 text-teal-main"></i><strong>${userText}</strong> <span class="text-muted">${userAcc}</span>
+                                </span>
+                                <span class="text-muted small"><i class="fa-regular fa-clock me-1"></i>${item.time}</span>
                             </div>
+                            <div class="fw-bold text-dark" style="font-size: 0.92rem; line-height: 1.35;">${item.title}</div>
                         </div>
                     </div>
                 `;
-            }).join('');
+            }).join("");
         }
 
-        document.addEventListener('DOMContentLoaded', function() {
-            pushUserActivity('Đang xem trang Tổng quan: ' + CURRENT_BLD_NAME, 'success');
+        document.addEventListener("DOMContentLoaded", function() {
             renderActivityLogs();
-
-            // Tự động ghi nhận mọi thao tác bấm thẻ biểu đồ, nút bấm, menu trên trang
-            document.querySelectorAll('.overview-card').forEach(card => {
-                card.addEventListener('click', function() {
-                    const titleEl = this.querySelector('.overview-title');
-                    const name = titleEl ? titleEl.textContent.trim() : 'Biểu đồ';
-                    pushUserActivity('Đã bấm xem chi tiết thẻ biểu đồ: ' + name + ' (' + CURRENT_BLD_NAME + ')', 'info');
-                });
-            });
-
-            document.querySelectorAll('.nav-pills .nav-link, .btn-back-content').forEach(link => {
-                link.addEventListener('click', function() {
-                    const label = this.textContent.trim();
-                    pushUserActivity('Đã chuyển sang mục: ' + label, 'info');
-                });
-            });
-
-            document.querySelectorAll('[data-bs-target="#ovRoomsModal"]').forEach(btn => {
-                btn.addEventListener('click', function() {
-                    pushUserActivity('Đã mở danh sách phòng của ' + CURRENT_BLD_NAME, 'info');
-                });
-            });
         });
     </script>
 </body>
