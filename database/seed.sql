@@ -46,12 +46,13 @@ INSERT INTO `buildings` (`id`, `name`, `address`, `manager_id`) VALUES
 
 -- 3. DỊCH VỤ (Giữ 12 dịch vụ phong phú để test Bill)
 INSERT INTO `services` (`id`, `service_name`, `unit_price`, `unit`, `is_active`) VALUES
-(1, 'Tiền điện', 3500, 'kWh', 1), (2, 'Tiền nước', 80000, 'Người', 1),
-(3, 'Internet', 100000, 'Phòng', 1), (4, 'Thang máy', 150000, 'Phòng', 1),
-(5, 'Vệ sinh', 30000, 'Phòng', 1), (6, 'Gửi xe máy', 100000, 'Xe', 1),
-(7, 'Máy giặt chung', 50000, 'Người', 0), (8, 'Gửi ô tô', 1200000, 'Xe', 1),
-(9, 'Truyền hình cáp', 50000, 'Phòng', 1), (10, 'Phí quản lý vận hành', 200000, 'Phòng', 1),
-(11, 'Dọn phòng', 50000, 'Lượt', 1), (12, 'Phí thú cưng', 300000, 'Tháng', 0);
+(1, 'Tiền điện', 3500, 'kWh', 1),
+(2, 'Tiền nước', 80000, 'Người', 1),
+(3, 'Internet / Wifi', 30000, 'Người', 1),
+(4, 'Rác sinh hoạt', 20000, 'Người', 1),
+(5, 'Vệ sinh chung', 20000, 'Người', 1),
+(6, 'Phí thang máy', 30000, 'Người', 1),
+(7, 'Gửi xe', 50000, 'Xe', 1);
 
 -- 4. PHÒNG TRỌ (Mô phỏng 60 phòng, insert 24 phòng để map với 20 khách)
 INSERT INTO `rooms` (`id`, `building_id`, `room_number`, `price`, `status`) VALUES
