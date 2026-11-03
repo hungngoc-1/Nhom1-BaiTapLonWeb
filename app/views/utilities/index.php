@@ -228,12 +228,12 @@ $readings = $conn->query($query)->fetchAll(PDO::FETCH_ASSOC);
                     <div id="errorMsg" style="display: none;" class="text-danger mt-2 fw-bold" style="font-size: 0.85rem;"></div>
                 </div>
                 <div class="col-md-6 text-end d-none d-md-block">
-                    <div class="d-inline-flex align-items-center bg-light border border-2 border-light rounded-pill px-4 py-2 text-muted fw-bold shadow-sm" style="font-size: 0.85rem;">
-                        <i class="fa-solid fa-bolt text-warning me-2 fs-5"></i>
-                        <i class="fa-solid fa-droplet text-info me-2 fs-5"></i>
-                        Tự động Fetch API không tải lại trang
-                    </div>
-                </div>
+    <a href="BaiTapCaNhan/05_DoMinhNguyet/public/index.php?route=services" class="d-inline-flex align-items-center text-decoration-none border border-2 rounded-pill px-4 py-2 fw-bold shadow-sm" style="font-size: 0.85rem; background-color: #f8fafc; border-color: #cbd5e1; color: var(--primary-teal); transition: all 0.2s;" onmouseover="this.style.backgroundColor='#e2e8f0'; this.style.transform='translateY(-2px)'" onmouseout="this.style.backgroundColor='#f8fafc'; this.style.transform='translateY(0)'">
+        <i class="fa-solid fa-money-bill-wave me-2 fs-5 text-success"></i>
+        <i class="fa-solid fa-gear me-2 fs-5"></i>
+        Cấu hình Đơn giá Dịch vụ
+    </a>
+</div>
             </div>
         </div>
 
