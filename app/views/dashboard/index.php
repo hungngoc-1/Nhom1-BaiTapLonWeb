@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="vi">
 <head>
     <meta charset="UTF-8">
@@ -199,7 +199,7 @@
     <!-- Navbar -->
     <nav class="navbar navbar-expand-lg navbar-custom">
         <div class="container-fluid px-4 px-xl-5 d-flex justify-content-between align-items-center">
-            <a class="brand-logo" href="#">
+            <a class="brand-logo" href="index.php?route=dashboard">
                 <i class="fa-solid fa-house-chimney text-teal-main"></i>
                 <div>
                     <div class="brand-text">StayMate</div>
@@ -307,7 +307,7 @@
                 <i class="fa-solid fa-building"></i> Đang xem: Tất cả 3 Tòa nhà <i class="fa-solid fa-angle-down ms-1"></i>
             </div>
             <div class="d-flex gap-2">
-                <button class="btn btn-outline-custom"><i class="fa-regular fa-eye me-1"></i> Xem Tất cả Tòa nhà</button>
+                <a href="index.php?route=overview" class="btn btn-outline-custom text-decoration-none"><i class="fa-regular fa-eye me-1"></i> Xem Tất cả Tòa nhà</a>
                 <button class="btn btn-teal-custom" data-bs-toggle="modal" data-bs-target="#addBuildingModal"><i class="fa-solid fa-plus me-1"></i> Thêm Tòa nhà</button>
             </div>
         </div>
@@ -361,7 +361,7 @@
 
                     <div class="d-flex gap-2 mt-auto position-relative z-2">
                         <a href="index.php?route=overview&building_id=A" class="btn-bld-main"><i class="fa-solid fa-arrow-right-to-bracket me-2"></i> Vào quản lý Tòa này</a>
-                        <a href="#" class="btn-bld-folder"><i class="fa-regular fa-folder-open"></i></a>
+                        <a href="index.php?route=rooms" class="btn-bld-folder" title="Quản lý phòng trọ"><i class="fa-regular fa-folder-open"></i></a>
                     </div>
                 </div>
             </div>
@@ -407,7 +407,7 @@
 
                     <div class="d-flex gap-2 mt-auto position-relative z-2">
                         <a href="index.php?route=overview&building_id=B" class="btn-bld-main"><i class="fa-solid fa-arrow-right-to-bracket me-2"></i> Vào quản lý Tòa này</a>
-                        <a href="#" class="btn-bld-folder"><i class="fa-regular fa-folder-open"></i></a>
+                        <a href="index.php?route=rooms" class="btn-bld-folder" title="Quản lý phòng trọ"><i class="fa-regular fa-folder-open"></i></a>
                     </div>
                 </div>
             </div>
@@ -453,7 +453,7 @@
 
                     <div class="d-flex gap-2 mt-auto position-relative z-2">
                         <a href="index.php?route=overview&building_id=C" class="btn-bld-main"><i class="fa-solid fa-arrow-right-to-bracket me-2"></i> Vào quản lý Tòa này</a>
-                        <a href="#" class="btn-bld-folder"><i class="fa-regular fa-folder-open"></i></a>
+                        <a href="index.php?route=rooms" class="btn-bld-folder" title="Quản lý phòng trọ"><i class="fa-regular fa-folder-open"></i></a>
                     </div>
                 </div>
             </div>

@@ -248,7 +248,6 @@ try {
                 <li class="nav-item"><a class="nav-link" href="index.php?route=contracts"><i class="fa-solid fa-file-signature"></i> Hợp đồng</a></li>
                 <li class="nav-item"><a class="nav-link" href="index.php?route=utilities"><i class="fa-solid fa-bolt"></i> Điện Nước</a></li>
                 <li class="nav-item"><a class="nav-link" href="index.php?route=invoices"><i class="fa-solid fa-file-invoice-dollar"></i> Hóa đơn</a></li>
-                <li class="nav-item"><a class="nav-link" href="TrangXemPhong/" target="_blank"><i class="fa-solid fa-eye"></i> Xem phòng</a></li>
             </ul>
 
             <div class="d-flex align-items-center gap-4">
@@ -368,7 +367,7 @@ try {
         <div class="invoice-section">
             <div class="d-flex justify-content-between align-items-center border-bottom border-light pb-3 mb-4">
                 <div class="fw-bold text-dark fs-6"><i class="fa-solid fa-file-invoice-dollar me-2" style="color: var(--teal-main);"></i> Hóa đơn Cần Thu Nợ (0)</div>
-                <button class="btn btn-teal-custom"><i class="fa-solid fa-plus me-2"></i> Lập hóa đơn</button>
+                <a href="index.php?route=invoices" class="btn btn-teal-custom text-decoration-none"><i class="fa-solid fa-plus me-2"></i> Lập hóa đơn</a>
             </div>
             
             <div class="text-center py-5 text-muted">
