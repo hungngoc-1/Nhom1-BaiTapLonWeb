@@ -530,9 +530,9 @@ try {
                 url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1440 320"><path fill="%23e6f4f1" fill-opacity="0.8" d="M0,160L48,170.7C96,181,192,203,288,197.3C384,192,480,160,576,149.3C672,139,768,149,864,170.7C960,192,1056,224,1152,213.3C1248,203,1344,149,1392,122.7L1440,96L1440,0L1392,0C1344,0,1248,0,1152,0C1056,0,960,0,864,0C768,0,672,0,576,0C480,0,384,0,288,0C192,0,96,0,48,0L0,0Z"></path></svg>'),
                 url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 300"><path d="M0,150 Q50,100 100,250" stroke="%2334d399" stroke-width="4" fill="none"/><path d="M10,120 Q40,90 60,110 Q30,140 10,120" fill="%236ee7b7"/><path d="M30,180 Q80,140 90,170 Q50,200 30,180" fill="%2310b981"/><path d="M60,220 Q100,190 110,220 Q70,250 60,220" fill="%23059669"/></svg>'),
                 url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 300"><path d="M200,150 Q150,100 100,250" stroke="%2334d399" stroke-width="4" fill="none"/><path d="M190,120 Q160,90 140,110 Q170,140 190,120" fill="%236ee7b7"/><path d="M170,180 Q120,140 110,170 Q150,200 170,180" fill="%2310b981"/><path d="M140,220 Q100,190 90,220 Q130,250 140,220" fill="%23059669"/></svg>');
-            background-position: top center, left 20%, right bottom;
+            background-position: top center, left -35px bottom 60px, right -35px bottom 40px;
             background-repeat: no-repeat;
-            background-size: 100% auto, 150px, 150px;
+            background-size: 100% auto, 120px, 120px;
             background-attachment: fixed;
         }
 
@@ -544,7 +544,7 @@ try {
         .brand-sub { color: #64748b; font-size: 0.75rem; font-weight: 600; }
         .text-teal-main { color: var(--teal-main) !important; }
 
-        .nav-pills { gap: 8px; }
+        .nav-pills { gap: 8px; flex-wrap: nowrap; }
         .nav-pills .nav-link { 
             color: #475569; font-weight: 800; font-size: 0.92rem; 
             padding: 10px 18px; border-radius: 50px; transition: all 0.2s; white-space: nowrap; 
@@ -552,6 +552,95 @@ try {
         .nav-pills .nav-link i { margin-right: 6px; }
         .nav-pills .nav-link:hover { color: var(--teal-main); background: #f0fdfa; }
         .nav-pills .nav-link.active { background-color: var(--teal-main); color: white; box-shadow: 0 6px 15px rgba(48, 143, 134, 0.35); }
+
+        /* Nút 3 gạch (Hamburger) trên điện thoại */
+        .btn-hamburger {
+            width: 44px; height: 44px;
+            border-radius: 14px;
+            background: #f0fdfa;
+            border: 2px solid #99f6e4;
+            color: var(--teal-main);
+            display: inline-flex; align-items: center; justify-content: center;
+            font-size: 1.25rem;
+            transition: all 0.2s;
+        }
+        .btn-hamburger:hover, .btn-hamburger:focus {
+            background: var(--teal-main);
+            color: #ffffff;
+            outline: none;
+        }
+        @media (max-width: 991.98px) {
+            .mobile-nav-collapse {
+                background: #ffffff;
+                border-radius: 22px;
+                padding: 14px;
+                margin-top: 12px;
+                border: 2px solid #ccfbf1;
+                box-shadow: 0 12px 30px rgba(0,0,0,0.08);
+            }
+            .mobile-nav-collapse .nav-pills {
+                flex-direction: column;
+                gap: 6px;
+            }
+            .mobile-nav-collapse .nav-link {
+                border-radius: 16px;
+                padding: 11px 16px;
+            }
+        }
+
+        /* Dropdown chọn Kỳ đang xem gọn gàng */
+        .period-dropdown-btn {
+            background: #ffffff;
+            border: 2.5px solid #99f6e4;
+            border-radius: 50px;
+            padding: 8px 18px;
+            font-weight: 800;
+            font-size: 0.88rem;
+            color: #0f172a;
+            box-shadow: 0 6px 18px rgba(48, 143, 134, 0.12);
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            transition: all 0.2s;
+        }
+        .period-dropdown-btn:hover, .period-dropdown-btn:focus {
+            border-color: var(--teal-main);
+            background: #f0fdfa;
+        }
+        .period-dropdown-badge {
+            background: var(--teal-main);
+            color: #ffffff;
+            padding: 4px 12px;
+            border-radius: 50px;
+            font-weight: 900;
+            font-size: 0.82rem;
+        }
+        .period-dropdown-menu {
+            border-radius: 22px;
+            border: 2px solid #ccfbf1;
+            padding: 8px;
+            min-width: 220px;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.12);
+        }
+        .period-dropdown-menu .dropdown-item {
+            border-radius: 14px;
+            font-weight: 800;
+            font-size: 0.86rem;
+            padding: 9px 14px;
+            color: #334155;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 2px;
+        }
+        .period-dropdown-menu .dropdown-item:hover {
+            background: #f0fdfa;
+            color: var(--teal-main);
+        }
+        .period-dropdown-menu .dropdown-item.active {
+            background: var(--teal-main);
+            color: #ffffff;
+        }
 
         .avatar-circle {
             width: 46px; height: 46px;
@@ -780,10 +869,14 @@ try {
             background: #f1f5f9;
             color: #334155;
             border: 2px solid #cbd5e1;
-            padding: 5px 14px;
+            padding: 6px 14px;
             border-radius: 50px;
             font-weight: 800;
             font-size: 0.82rem;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            white-space: nowrap;
         }
         .meter-box {
             background: #f8fafc;
@@ -792,26 +885,53 @@ try {
             padding: 8px 12px;
             display: inline-flex;
             align-items: center;
+            justify-content: center;
             gap: 8px;
+            min-width: 108px;
+            white-space: nowrap;
+        }
+        .usage-pill-elec, .usage-pill-water {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 4px;
+            min-width: 84px;
+            padding: 5px 11px;
+            border-radius: 50px;
+            font-weight: 800;
+            font-size: 0.76rem;
+            white-space: nowrap;
         }
         .usage-pill-elec {
             background: #fef3c7;
             color: #b45309;
             border: 1.5px solid #fde68a;
-            padding: 4px 11px;
-            border-radius: 50px;
-            font-weight: 800;
-            font-size: 0.76rem;
         }
         .usage-pill-water {
             background: #e0f2fe;
             color: #0369a1;
             border: 1.5px solid #bae6fd;
-            padding: 4px 11px;
-            border-radius: 50px;
-            font-weight: 800;
-            font-size: 0.76rem;
         }
+        .table-staymate td, .table-staymate th { white-space: nowrap; }
+        .table-staymate thead th { padding: 14px 10px; font-size: 0.72rem; }
+        .table-staymate tbody td { padding: 14px 10px; }
+        .table-staymate thead th:first-child, .table-staymate tbody td:first-child { padding-left: 16px !important; }
+        .table-staymate td .tenant-name { white-space: normal; min-width: 110px; max-width: 150px; line-height: 1.25; }
+        .table-staymate .col-period { width: 110px; }
+        .table-staymate .meter-box { min-width: 96px; padding: 7px 10px; gap: 6px; }
+        .table-staymate .usage-pill-elec, .table-staymate .usage-pill-water { min-width: 76px; padding: 4px 8px; }
+        .table-staymate .badge-period-pill { padding: 5px 10px; font-size: 0.78rem; }
+        .table-staymate .badge-room-pill { padding: 6px 11px; font-size: 0.8rem; }
+        /* Cột thao tác luôn hiển thị (ghim bên phải) */
+        .table-staymate thead th:last-child, .table-staymate tbody td:last-child {
+            position: sticky; right: 0; z-index: 2;
+            padding-right: 14px !important; padding-left: 12px !important;
+            box-shadow: -8px 0 12px -8px rgba(0,0,0,0.08);
+        }
+        .table-staymate thead th:last-child { background: #f0fdfa; }
+        .table-staymate tbody td:last-child { background: #ffffff; }
+        .table-staymate tbody tr:hover td:last-child { background: #f8fafc; }
+        .btn-icon-circle { width: 34px !important; height: 34px !important; }
 
         /* Action Buttons */
         .btn-icon-circle {
@@ -876,10 +996,10 @@ try {
 </head>
 <body>
 
-    <!-- ================= NAVBAR CHUẨN STAYMATE ================= -->
+    <!-- ================= NAVBAR CHUẨN STAYMATE (CÓ MENU 3 GẠCH TRÊN ĐIỆN THOẠI) ================= -->
     <nav class="navbar navbar-expand-lg navbar-custom sticky-top">
-        <div class="container-fluid px-4 px-xl-5 d-flex justify-content-between align-items-center">
-            <a class="brand-logo me-4" href="index.php?route=dashboard">
+        <div class="container-fluid px-3 px-xl-5">
+            <a class="brand-logo me-3" href="index.php?route=dashboard">
                 <i class="fa-solid fa-house-chimney text-teal-main"></i>
                 <div>
                     <div class="brand-text">StayMate</div>
@@ -887,17 +1007,8 @@ try {
                 </div>
             </a>
 
-            <ul class="nav nav-pills me-auto d-none d-lg-flex">
-                <li class="nav-item"><a class="nav-link" href="index.php?route=dashboard"><i class="fa-solid fa-city"></i> Tòa nhà</a></li>
-                <li class="nav-item"><a class="nav-link" href="index.php?route=overview"><i class="fa-solid fa-border-all"></i> Tổng quan</a></li>
-                <li class="nav-item"><a class="nav-link" href="index.php?route=rooms"><i class="fa-solid fa-bed"></i> Phòng trọ</a></li>
-                <li class="nav-item"><a class="nav-link" href="index.php?route=contracts"><i class="fa-solid fa-file-signature"></i> Hợp đồng</a></li>
-                <li class="nav-item"><a class="nav-link active" href="index.php?route=utilities"><i class="fa-solid fa-bolt"></i> Điện Nước</a></li>
-                <li class="nav-item"><a class="nav-link" href="index.php?route=invoices"><i class="fa-solid fa-file-invoice-dollar"></i> Hóa đơn</a></li>
-                <li class="nav-item"><a class="nav-link" href="TrangXemPhong/" target="_blank"><i class="fa-solid fa-eye"></i> Xem phòng</a></li>
-            </ul>
-
-            <div class="d-flex align-items-center gap-4">
+            <!-- Nhóm Chuông + Avatar + Nút 3 gạch khi ở màn hình điện thoại -->
+            <div class="d-flex align-items-center gap-3 order-lg-3">
                 <div class="position-relative" style="color: #64748b; cursor: pointer;" title="Phòng chưa chốt kỳ <?= htmlspecialchars($activeCheckPeriod) ?>">
                     <i class="fa-solid fa-bell fs-4"></i>
                     <?php if (count($unrecordedRooms) > 0): ?>
@@ -918,6 +1029,25 @@ try {
                         <li><a class="dropdown-item text-danger fw-bold" href="index.php?route=auth/logout"><i class="fa-solid fa-right-from-bracket me-2"></i> Đăng xuất</a></li>
                     </ul>
                 </div>
+
+                <!-- Nút 3 gạch (Hamburger) chỉ hiện trên điện thoại / màn hình nhỏ -->
+                <button class="btn-hamburger d-lg-none" type="button" data-bs-toggle="collapse" data-bs-target="#staymateMobileNav" aria-controls="staymateMobileNav" aria-expanded="false" aria-label="Mở danh mục menu">
+                    <i class="fa-solid fa-bars"></i>
+                </button>
+            </div>
+
+            <!-- Danh mục Menu (Ngang trên máy tính, Xổ dọc trên điện thoại) -->
+            <div class="collapse navbar-collapse mobile-nav-collapse order-lg-2" id="staymateMobileNav">
+                <ul class="nav nav-pills me-auto">
+
+                    <li class="nav-item"><a class="nav-link" href="index.php?route=overview"><i class="fa-solid fa-border-all"></i> Tổng quan</a></li>
+                    <li class="nav-item"><a class="nav-link" href="index.php?route=rooms"><i class="fa-solid fa-bed"></i> Phòng trọ</a></li>
+                    <li class="nav-item"><a class="nav-link" href="index.php?route=tenants"><i class="fa-solid fa-users"></i> Khách thuê</a></li>
+                    <li class="nav-item"><a class="nav-link" href="index.php?route=contracts"><i class="fa-solid fa-file-signature"></i> Hợp đồng</a></li>
+                    <li class="nav-item"><a class="nav-link active" href="index.php?route=utilities"><i class="fa-solid fa-bolt"></i> Điện Nước</a></li>
+                    <li class="nav-item"><a class="nav-link" href="index.php?route=invoices"><i class="fa-solid fa-file-invoice-dollar"></i> Hóa đơn</a></li>
+
+                </ul>
             </div>
         </div>
     </nav>
@@ -925,24 +1055,33 @@ try {
     <!-- ================= MAIN CONTAINER ================= -->
     <div class="container-fluid px-4 px-xl-5 py-4 position-relative">
 
-        <div class="d-flex flex-wrap justify-content-between align-items-center mb-2 no-print">
-            <a href="index.php?route=overview" class="btn-back-content mb-2">
-                <i class="fa-solid fa-arrow-left me-2"></i> Quay lại Tổng quan
-            </a>
-
-            <!-- Chọn nhanh Kỳ chốt để xem thống kê -->
-            <div class="d-flex flex-wrap align-items-center gap-2 mb-2">
-                <span class="fw-bold text-muted small"><i class="fa-regular fa-calendar-check me-1 text-teal-main"></i> Kỳ đang xem:</span>
-                <?php foreach (array_slice($availablePeriods, 0, 5) as $per): ?>
-                    <a href="index.php?route=utilities&period=<?= urlencode($per) ?>" 
-                       class="btn btn-sm rounded-pill fw-bold px-3 <?= ($selectedPeriod === $per) ? 'btn-teal-custom py-1 px-3' : 'btn-pill-white py-1 px-3' ?>">
-                        Kỳ <?= htmlspecialchars($per) ?>
-                    </a>
-                <?php endforeach; ?>
-                <a href="index.php?route=utilities&period=all" 
-                   class="btn btn-sm rounded-pill fw-bold px-3 <?= ($selectedPeriod === 'all') ? 'btn-teal-custom py-1 px-3' : 'btn-pill-white py-1 px-3' ?>">
-                    Tất cả các kỳ
-                </a>
+        <div class="d-flex flex-wrap justify-content-end align-items-center mb-2 no-print">
+            <!-- Danh mục chọn Kỳ đang xem (Thu gọn thành Dropdown bấm vào mới xổ ra) -->
+            <div class="dropdown">
+                <button class="period-dropdown-btn" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                    <span><i class="fa-regular fa-calendar-check me-1 text-teal-main"></i> Kỳ đang xem:</span>
+                    <span class="period-dropdown-badge">
+                        <?= $selectedPeriod === 'all' ? 'Tất cả các kỳ' : 'Kỳ ' . htmlspecialchars($selectedPeriod) ?>
+                    </span>
+                    <i class="fa-solid fa-chevron-down text-muted small"></i>
+                </button>
+                <ul class="dropdown-menu dropdown-menu-end period-dropdown-menu">
+                    <li>
+                        <a class="dropdown-item <?= $selectedPeriod === 'all' ? 'active' : '' ?>" href="index.php?route=utilities&period=all">
+                            <span><i class="fa-solid fa-layer-group me-2"></i>Tất cả các kỳ</span>
+                            <?php if ($selectedPeriod === 'all'): ?><i class="fa-solid fa-check"></i><?php endif; ?>
+                        </a>
+                    </li>
+                    <li><hr class="dropdown-divider my-1"></li>
+                    <?php foreach ($availablePeriods as $per): ?>
+                        <li>
+                            <a class="dropdown-item <?= $selectedPeriod === $per ? 'active' : '' ?>" href="index.php?route=utilities&period=<?= urlencode($per) ?>">
+                                <span><i class="fa-regular fa-calendar me-2"></i>Kỳ <?= htmlspecialchars($per) ?></span>
+                                <?php if ($selectedPeriod === $per): ?><i class="fa-solid fa-check"></i><?php endif; ?>
+                            </a>
+                        </li>
+                    <?php endforeach; ?>
+                </ul>
             </div>
         </div>
 
@@ -1226,7 +1365,7 @@ try {
                     <thead>
                         <tr>
                             <th class="ps-4">PHÒNG &amp; KHÁCH THUÊ</th>
-                            <th>KỲ CHỐT</th>
+                            <th class="col-period">KỲ CHỐT</th>
                             <th>CHỈ SỐ ĐIỆN (CŨ → MỚI)</th>
                             <th>CHỈ SỐ NƯỚC (CŨ → MỚI)</th>
                             <th>TỔNG ĐIỆN + NƯỚC</th>
@@ -1249,7 +1388,7 @@ try {
                                     <div class="d-flex align-items-center gap-2">
                                         <span class="badge-room-pill"><?= htmlspecialchars($row['room_number']) ?></span>
                                         <div>
-                                            <div class="fw-bold text-dark" style="font-size: 0.86rem;">
+                                            <div class="fw-bold text-dark tenant-name" style="font-size: 0.86rem;">
                                                 <?= htmlspecialchars($row['tenant_name'] ?? 'Khách thuê phòng') ?>
                                             </div>
                                             <div class="text-muted" style="font-size: 0.74rem;">
@@ -2039,7 +2178,7 @@ try {
                                 <div class="d-flex align-items-center gap-2">
                                     <span class="badge-room-pill room-cell"></span>
                                     <div>
-                                        <div class="fw-bold text-dark tenant-cell" style="font-size: 0.86rem;"></div>
+                                        <div class="fw-bold text-dark tenant-cell tenant-name" style="font-size: 0.86rem;"></div>
                                         <div class="text-muted" style="font-size: 0.74rem;">Giá phòng: ${formatVND(roomPrice)}</div>
                                     </div>
                                 </div>

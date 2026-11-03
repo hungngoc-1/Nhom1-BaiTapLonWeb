@@ -21,8 +21,10 @@ if ($route === 'auth/logout') {
 require_once __DIR__ . '/app/Controllers/DashboardController.php';
 require_once __DIR__ . '/app/Controllers/AuthController.php';
 require_once __DIR__ . '/app/Controllers/RoomController.php';
+require_once __DIR__ . '/app/Controllers/TenantController.php';
 require_once __DIR__ . '/app/Controllers/ContractController.php';
 require_once __DIR__ . '/app/Controllers/UtilitiesController.php';
+require_once __DIR__ . '/app/Controllers/InvoiceController.php';
 
 // ==========================================
 // 2. BỘ ĐIỀU HƯỚNG CÁC TRANG (ROUTER)
@@ -57,7 +59,7 @@ switch ($route) {
 
     // --- PHÂN HỆ QUẢN LÝ KHÁCH THUÊ (ĐANG XÂY DỰNG) ---
     case 'tenants':
-        showPlaceholder('Quản lý Khách thuê');
+        (new TenantController())->index();
         break;
         
     // ==========================================
@@ -126,11 +128,41 @@ switch ($route) {
 
     // --- CÁC PHÂN HỆ ĐANG XÂY DỰNG ---
     case 'invoices':
-        showPlaceholder('Hóa đơn & Thu tiền');
+        (new InvoiceController())->index();
+        break;
+
+    case 'invoices/detail':
+        (new InvoiceController())->detail();
+        break;
+
+    case 'invoices/store':
+        (new InvoiceController())->store();
+        break;
+
+    case 'invoices/store-all':
+        (new InvoiceController())->storeAll();
+        break;
+
+    case 'invoices/pay':
+        (new InvoiceController())->pay();
+        break;
+
+    case 'invoices/delete':
+        (new InvoiceController())->delete();
+        break;
+
+    case 'invoices/export':
+        (new InvoiceController())->export();
         break;
 
     case 'reports':
-        showPlaceholder('Báo cáo thống kê');
+        header("Location: index.php?route=overview");
+        exit;
+
+    case 'web360':
+    case 'xemphong':
+        header("Location: TrangXemPhong/");
+        exit;
         break;
 
     default:
