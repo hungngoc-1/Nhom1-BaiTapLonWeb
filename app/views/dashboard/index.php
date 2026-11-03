@@ -403,9 +403,6 @@ if (!empty($filterBuilding) && $filterBuilding !== 'all' && isset($buildings[$fi
                         <i class="fa-solid fa-rotate-left me-1"></i> Hiện Tất cả <?= $totalBuildingsCount ?> Tòa
                     </a>
                 <?php endif; ?>
-                <a href="index.php?route=overview&building_id=all" class="btn btn-outline-custom">
-                    <i class="fa-regular fa-eye me-1"></i> Xem Tổng quan Tất cả Tòa nhà
-                </a>
                 <button type="button" class="btn btn-teal-custom" data-bs-toggle="modal" data-bs-target="#addBuildingModal">
                     <i class="fa-solid fa-plus me-1"></i> Thêm Tòa nhà
                 </button>
