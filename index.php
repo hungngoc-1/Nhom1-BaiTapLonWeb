@@ -122,6 +122,16 @@ switch ($route) {
         $contractController->delete();
         break;
 
+    case 'tenant/contract': // Xem hợp đồng dành cho phân quyền khách thuê
+        $contractController = new ContractController();
+        $contractController->tenantContract();
+        break;
+
+    case 'api/tenant/contract': // API JSON dành cho phân quyền khách thuê
+        $contractController = new ContractController();
+        $contractController->apiTenantContract();
+        break;
+
     // --- PHÂN HỆ ĐIỆN NƯỚC ---
     case 'utilities':
         $utilitiesController = new UtilitiesController();

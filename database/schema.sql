@@ -10,6 +10,7 @@ CREATE TABLE `users` (
   `phone` VARCHAR(20) NOT NULL,
   `email` VARCHAR(100) NOT NULL UNIQUE,
   `role` ENUM('admin', 'landlord', 'tenant') NOT NULL,
+  `preferred_room_id` INT NULL,
   `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=InnoDB;
 
@@ -33,14 +34,19 @@ CREATE TABLE `services` (
 CREATE TABLE `contracts` (
   `id` INT AUTO_INCREMENT PRIMARY KEY,
   `contract_code` VARCHAR(30) UNIQUE,
+  `contract_type` ENUM('deposit_hold', 'official_lease') DEFAULT 'official_lease',
+  `parent_contract_id` INT NULL,
   `room_id` INT NOT NULL,
   `tenant_id` INT NOT NULL,
   `start_date` DATE NOT NULL,
   `end_date` DATE NOT NULL,
   `deposit_amount` DECIMAL(10,2) NOT NULL,
   `deposit_date` DATE NULL,
+  `deposit_paid_percent` INT DEFAULT 100,
   `deposit_status` ENUM('held', 'refunded', 'forfeited') DEFAULT 'held',
   `monthly_rent` DECIMAL(10,2) DEFAULT 0,
+  `first_month_rent_paid` TINYINT(1) DEFAULT 0,
+  `first_month_invoice_id` INT NULL,
   `electricity_rate` DECIMAL(10,2) DEFAULT 3500,
   `water_rate` DECIMAL(10,2) DEFAULT 20000,
   `service_fee` DECIMAL(10,2) DEFAULT 150000,
