@@ -621,14 +621,6 @@ $isManagerPreview = ($userRole === 'admin' || $userRole === 'manager' || $userRo
                     <i class="fa-solid fa-tags"></i> Bảng đơn giá dịch vụ
                 </button>
             </li>
-            <li class="nav-item" role="presentation">
-                <button class="nav-link" id="profile-tab" data-bs-toggle="tab" data-bs-target="#profile-content" type="button" role="tab">
-                    <i class="fa-solid fa-id-card"></i> Thông tin cá nhân &amp; Yêu cầu
-                    <?php if (!empty($requests)): ?>
-                        <span class="badge bg-secondary rounded-pill ms-1"><?= count($requests) ?></span>
-                    <?php endif; ?>
-                </button>
-            </li>
         </ul>
 
         <!-- TAB CONTENTS -->
@@ -781,7 +773,12 @@ $isManagerPreview = ($userRole === 'admin' || $userRole === 'manager' || $userRo
                                         </div>
                                         <div class="col-sm-6">
                                             <div class="text-muted small">Tòa nhà &amp; Địa chỉ:</div>
-                                            <div class="fw-bold text-dark fs-6"><i class="fa-solid fa-location-dot text-danger me-1"></i> <?= h($buildingName) ?></div>
+                                            <div class="fw-bold text-dark fs-6">
+                                                <i class="fa-solid fa-building text-teal-main me-1"></i> <?= h($contract['building_name'] ?? $buildingName) ?>
+                                            </div>
+                                            <div class="small text-muted mt-1">
+                                                <i class="fa-solid fa-location-dot text-danger me-1"></i> <?= h($contract['building_address'] ?? $buildingAddress) ?>
+                                            </div>
                                         </div>
                                         <div class="col-sm-6">
                                             <div class="text-muted small">Thời hạn thuê:</div>
@@ -922,16 +919,25 @@ $isManagerPreview = ($userRole === 'admin' || $userRole === 'manager' || $userRo
                                             </td>
                                             <td class="text-muted small">
                                                 <?php
+                                                $u = mb_strtolower($srv['unit'] ?? '', 'UTF-8');
                                                 if (strpos($sName, 'điện') !== false) {
-                                                    echo 'Theo chỉ số công tơ điện riêng từng phòng chốt ngày cuối tháng.';
+                                                    echo 'Theo chỉ số công tơ điện riêng từng phòng chốt ngày cuối tháng (3.500 đ/kWh).';
                                                 } elseif (strpos($sName, 'nước') !== false) {
-                                                    echo 'Theo đồng hồ nước hoặc định mức tính theo số lượng người ở thực tế.';
+                                                    echo $u === 'người' ? 'Định mức nước sinh hoạt tính theo số người đăng ký lưu trú.' : ($u === 'khối' || $u === 'm3' ? 'Theo chỉ số đồng hồ nước riêng từng phòng chốt cuối tháng (' . money($srv['unit_price']) . '/Khối).' : 'Tính trọn gói theo phòng hàng tháng.');
                                                 } elseif (strpos($sName, 'internet') !== false || strpos($sName, 'wifi') !== false) {
-                                                    echo 'Cáp quang tốc độ cao 300Mbps không giới hạn băng thông.';
+                                                    echo 'Cáp quang tốc độ cao 300Mbps không giới hạn băng thông (' . h($srv['unit']) . ').';
+                                                } elseif (strpos($sName, 'rác') !== false) {
+                                                    echo 'Phí thu gom rác sinh hoạt & vệ sinh môi trường (' . h($srv['unit']) . ').';
+                                                } elseif (strpos($sName, 'vệ sinh') !== false) {
+                                                    echo 'Phí vệ sinh hành lang & không gian chung (' . h($srv['unit']) . ').';
+                                                } elseif (strpos($sName, 'thang máy') !== false) {
+                                                    echo 'Phí vận hành & bảo trì thang máy tòa nhà (' . h($srv['unit']) . ').';
                                                 } elseif (strpos($sName, 'xe') !== false) {
-                                                    echo 'Trông giữ xe 24/7 có camera an ninh và thẻ từ ra vào.';
+                                                    echo 'Phí trông giữ phương tiện tại hầm xe tòa nhà (' . h($srv['unit']) . ').';
+                                                } elseif (strpos($sName, 'giặt') !== false) {
+                                                    echo 'Phí sử dụng khu máy giặt sấy chung tòa nhà (' . h($srv['unit']) . ').';
                                                 } else {
-                                                    echo 'Thu cố định hàng tháng theo kỳ hóa đơn.';
+                                                    echo 'Đơn giá niêm yết tính theo ' . h($srv['unit']) . ' hàng tháng theo kỳ hóa đơn.';
                                                 }
                                                 ?>
                                             </td>
@@ -968,175 +974,6 @@ $isManagerPreview = ($userRole === 'admin' || $userRole === 'manager' || $userRo
                                 <h6 class="fw-bold text-dark"><i class="fa-solid fa-headset text-danger me-2"></i>Đường dây hỗ trợ:</h6>
                                 <p class="text-muted small mb-0">Mọi thắc mắc về chỉ số và tiền dịch vụ, vui lòng gọi hotline BQL: <strong><?= h($profile['manager_phone'] ?? '0988 888 999') ?></strong>.</p>
                             </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- ========================================== -->
-            <!-- TAB 4: THÔNG TIN CÁ NHÂN & GỬI YÊU CẦU DUYỆT -->
-            <!-- ========================================== -->
-            <div class="tab-pane fade" id="profile-content" role="tabpanel">
-                <div class="portal-card">
-                    <div class="card-header-custom">
-                        <div>
-                            <h3 class="card-header-title">
-                                <i class="fa-solid fa-id-card text-teal-main"></i> Thông Tin Cá Nhân Khách Thuê
-                            </h3>
-                            <p class="text-muted small mb-0 mt-1">Thông tin cá nhân được ràng buộc pháp lý theo hợp đồng thuê phòng. Khách thuê không tự ý sửa trực tiếp mà cần gửi yêu cầu để Ban Quản Lý xét duyệt.</p>
-                        </div>
-                        <span class="badge bg-secondary bg-opacity-10 text-secondary border px-3 py-2 rounded-pill fw-bold">
-                            <i class="fa-solid fa-lock me-1"></i> Chế độ chỉ đọc (Readonly)
-                        </span>
-                    </div>
-
-                    <!-- THÔNG BÁO QUY ĐỊNH KHÔNG ĐƯỢC TỰ SỬA -->
-                    <div class="notice-banner">
-                        <i class="fa-solid fa-shield-halved fs-4 text-warning"></i>
-                        <div>
-                            <div class="fw-bold mb-1">Quy định bảo mật &amp; Pháp lý hợp đồng thuê:</div>
-                            Để bảo vệ tính toàn vẹn của hợp đồng và an ninh của toàn bộ cư dân trong tòa nhà, bạn không thể tự sửa trực tiếp các thông tin như Họ tên, Số điện thoại, Email hoặc Số người ở. Nếu thông tin của bạn có sự thay đổi, xin vui lòng gửi yêu cầu bằng form bên dưới để Ban Quản Lý phê duyệt và cập nhật.
-                        </div>
-                    </div>
-
-                    <!-- FORM XEM THÔNG TIN CÁ NHÂN (READONLY) -->
-                    <div class="row g-3 mb-4">
-                        <div class="col-md-4">
-                            <label class="form-label fw-bold text-dark small">Họ và tên khách thuê <i class="fa-solid fa-lock readonly-lock"></i></label>
-                            <input type="text" class="form-control form-control-readonly" value="<?= h($tenantName) ?>" readonly>
-                        </div>
-                        <div class="col-md-4">
-                            <label class="form-label fw-bold text-dark small">Tên đăng nhập hệ thống <i class="fa-solid fa-lock readonly-lock"></i></label>
-                            <input type="text" class="form-control form-control-readonly" value="<?= h($profile['username'] ?? '') ?>" readonly>
-                        </div>
-                        <div class="col-md-4">
-                            <label class="form-label fw-bold text-dark small">Số điện thoại liên hệ <i class="fa-solid fa-lock readonly-lock"></i></label>
-                            <input type="text" class="form-control form-control-readonly" value="<?= h($profile['phone'] ?? '') ?>" readonly>
-                        </div>
-                        <div class="col-md-4">
-                            <label class="form-label fw-bold text-dark small">Địa chỉ Email <i class="fa-solid fa-lock readonly-lock"></i></label>
-                            <input type="email" class="form-control form-control-readonly" value="<?= h($profile['email'] ?? '') ?>" readonly>
-                        </div>
-                        <div class="col-md-4">
-                            <label class="form-label fw-bold text-dark small">Phòng đang thuê <i class="fa-solid fa-lock readonly-lock"></i></label>
-                            <input type="text" class="form-control form-control-readonly" value="Phòng <?= h($roomNumber) ?> (<?= money($profile['room_price'] ?? 0) ?>/tháng)" readonly>
-                        </div>
-                        <div class="col-md-4">
-                            <label class="form-label fw-bold text-dark small">Tòa nhà cư trú <i class="fa-solid fa-lock readonly-lock"></i></label>
-                            <input type="text" class="form-control form-control-readonly" value="<?= h($buildingName) ?>" readonly>
-                        </div>
-                    </div>
-
-                    <hr class="my-4">
-
-                    <!-- FORM GỬI YÊU CẦU ĐIỀU CHỈNH LÊN QUẢN LÝ -->
-                    <div class="row g-4">
-                        <div class="col-lg-5">
-                            <div class="p-4 rounded-4 border bg-light h-100">
-                                <h5 class="fw-bold text-dark mb-3">
-                                    <i class="fa-solid fa-paper-plane text-teal-main me-2"></i>Gửi Yêu Cầu Cập Nhật Thông Tin
-                                </h5>
-                                <p class="text-muted small mb-3">
-                                    Chọn loại thông tin bạn muốn thay đổi và nhập dữ liệu mới. Quản lý tòa nhà sẽ tiếp nhận và xử lý sau khi xác thực.
-                                </p>
-
-                                <form method="POST" action="index.php?route=tenant/request">
-                                    <input type="hidden" name="csrf_token" value="<?= h($csrf) ?>">
-                                    <?php if ($isManagerPreview): ?>
-                                        <input type="hidden" name="tenant_id" value="<?= (int)($profile['id'] ?? 0) ?>">
-                                    <?php endif; ?>
-
-                                    <div class="mb-3">
-                                        <label class="form-label fw-bold text-dark small">Thông tin cần điều chỉnh: <span class="text-danger">*</span></label>
-                                        <select name="field_target" class="form-select rounded-3 fw-bold" required id="selectFieldTarget" onchange="updateOldValuePlaceholder()">
-                                            <option value="phone" data-old="<?= h($profile['phone'] ?? '') ?>">Số điện thoại (Hiện tại: <?= h($profile['phone'] ?? '') ?>)</option>
-                                            <option value="email" data-old="<?= h($profile['email'] ?? '') ?>">Địa chỉ Email (Hiện tại: <?= h($profile['email'] ?? '') ?>)</option>
-                                            <option value="full_name" data-old="<?= h($profile['full_name'] ?? '') ?>">Họ và tên (Hiện tại: <?= h($profile['full_name'] ?? '') ?>)</option>
-                                            <option value="id_card" data-old="Căn cước công dân">Số CCCD / Ngày cấp</option>
-                                            <option value="co_tenant" data-old="Người ở cùng">Đăng ký thêm người ở cùng / Đổi xe</option>
-                                            <option value="other" data-old="Yêu cầu khác">Yêu cầu khác</option>
-                                        </select>
-                                    </div>
-
-                                    <input type="hidden" name="old_value" id="hiddenOldValue" value="<?= h($profile['phone'] ?? '') ?>">
-
-                                    <div class="mb-3">
-                                        <label class="form-label fw-bold text-dark small">Nội dung thông tin mới: <span class="text-danger">*</span></label>
-                                        <input type="text" name="new_value" class="form-control rounded-3" placeholder="Nhập số điện thoại mới, email mới hoặc nội dung cần sửa..." required>
-                                    </div>
-
-                                    <div class="mb-3">
-                                        <label class="form-label fw-bold text-dark small">Lý do yêu cầu thay đổi:</label>
-                                        <textarea name="reason" rows="2" class="form-control rounded-3" placeholder="VD: Mất sim điện thoại cũ, đổi nơi làm việc, cấp đổi CCCD mới..."></textarea>
-                                    </div>
-
-                                    <button type="submit" class="btn btn-teal w-100 py-2 justify-content-center">
-                                        <i class="fa-solid fa-paper-plane me-1"></i> Gửi Yêu Cầu Cho Ban Quản Lý
-                                    </button>
-                                </form>
-                            </div>
-                        </div>
-
-                        <!-- DANH SÁCH LỊCH SỬ YÊU CẦU ĐÃ GỬI -->
-                        <div class="col-lg-7">
-                            <h5 class="fw-bold text-dark mb-3">
-                                <i class="fa-solid fa-clock-rotate-left text-teal-main me-2"></i>Lịch Sử Yêu Cầu Đã Gửi (<?= count($requests) ?>)
-                            </h5>
-
-                            <?php if (empty($requests)): ?>
-                                <div class="text-center py-4 bg-light rounded-4 border">
-                                    <i class="fa-solid fa-inbox fs-2 text-muted opacity-50 mb-2"></i>
-                                    <div class="fw-bold text-dark small">Bạn chưa gửi yêu cầu điều chỉnh thông tin nào</div>
-                                    <div class="text-muted" style="font-size:0.8rem;">Khi bạn gửi yêu cầu, tiến độ xử lý và phản hồi của Quản lý sẽ hiển thị tại đây.</div>
-                                </div>
-                            <?php else: ?>
-                                <div class="table-responsive">
-                                    <table class="table table-custom">
-                                        <thead>
-                                            <tr>
-                                                <th>Ngày gửi</th>
-                                                <th>Mục cần sửa</th>
-                                                <th>Thông tin mới</th>
-                                                <th>Trạng thái</th>
-                                                <th>Phản hồi của QL</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                            <?php foreach ($requests as $req): ?>
-                                                <tr>
-                                                    <td class="small text-muted"><?= date('d/m/Y H:i', strtotime($req['created_at'])) ?></td>
-                                                    <td class="fw-bold text-dark">
-                                                        <?php
-                                                        $mapField = [
-                                                            'phone'     => 'Số điện thoại',
-                                                            'email'     => 'Địa chỉ Email',
-                                                            'full_name' => 'Họ và tên',
-                                                            'id_card'   => 'CCCD / Định danh',
-                                                            'co_tenant' => 'Người ở cùng',
-                                                            'other'     => 'Yêu cầu khác'
-                                                        ];
-                                                        echo h($mapField[$req['field_target']] ?? $req['field_target']);
-                                                        ?>
-                                                    </td>
-                                                    <td class="small fw-bold text-teal-main"><?= h($req['new_value']) ?></td>
-                                                    <td>
-                                                        <?php if ($req['status'] === 'approved'): ?>
-                                                            <span class="badge-paid"><i class="fa-solid fa-check"></i> Đã duyệt</span>
-                                                        <?php elseif ($req['status'] === 'rejected'): ?>
-                                                            <span class="badge-unpaid"><i class="fa-solid fa-xmark"></i> Từ chối</span>
-                                                        <?php else: ?>
-                                                            <span class="badge-pending"><i class="fa-solid fa-hourglass-start"></i> Đang chờ duyệt</span>
-                                                        <?php endif; ?>
-                                                    </td>
-                                                    <td class="small text-muted">
-                                                        <?= !empty($req['manager_note']) ? h($req['manager_note']) : '<em>Đang chờ xử lý...</em>' ?>
-                                                    </td>
-                                                </tr>
-                                            <?php endforeach; ?>
-                                        </tbody>
-                                    </table>
-                                </div>
-                            <?php endif; ?>
                         </div>
                     </div>
                 </div>
@@ -1195,11 +1032,7 @@ $isManagerPreview = ($userRole === 'admin' || $userRole === 'manager' || $userRo
     <!-- JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
-        function updateOldValuePlaceholder() {
-            const select = document.getElementById('selectFieldTarget');
-            const opt = select.options[select.selectedIndex];
-            document.getElementById('hiddenOldValue').value = opt.getAttribute('data-old') || '';
-        }
+
 
         // Đọc số tiền thành chữ tiếng Việt
         function numberToWordsVn(n) {
@@ -1336,7 +1169,7 @@ $isManagerPreview = ($userRole === 'admin' || $userRole === 'manager' || $userRo
                                             <div class="small text-muted fw-bold text-uppercase">Chỉ số Nước kỳ này</div>
                                             <div class="fw-bold text-dark">
                                                 Cũ: <strong>${inv.water_old || 0}</strong> &rarr; Mới: <strong>${inv.water_new || 0}</strong>
-                                                <span class="badge bg-info text-white ms-2 fw-bold">+${wUsed} m³</span>
+                                                <span class="badge bg-info text-white ms-2 fw-bold">+${wUsed} Khối</span>
                                             </div>
                                         </div>
                                     </div>
