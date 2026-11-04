@@ -9,7 +9,7 @@ CREATE TABLE `users` (
   `full_name` VARCHAR(100) NOT NULL,
   `phone` VARCHAR(20) NOT NULL,
   `email` VARCHAR(100) NOT NULL UNIQUE,
-  `role` ENUM('admin', 'landlord', 'tenant', 'manager') NOT NULL,
+  `role` ENUM('admin', 'landlord', 'tenant') NOT NULL,
   `preferred_room_id` INT NULL,
   `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=InnoDB;
@@ -94,8 +94,15 @@ CREATE TABLE `invoices` (
   `room_id` INT NOT NULL,
   `contract_id` INT NOT NULL,
   `month_year` VARCHAR(7) NOT NULL,
+  `room_price` DECIMAL(10,2) DEFAULT 0,
+  `electric_amount` DECIMAL(10,2) DEFAULT 0,
+  `water_amount` DECIMAL(10,2) DEFAULT 0,
+  `service_fee` DECIMAL(10,2) DEFAULT 0,
   `total_amount` DECIMAL(10,2) NOT NULL,
   `status` ENUM('unpaid', 'paid') DEFAULT 'unpaid',
+  `paid_at` DATETIME NULL,
+  `payment_method` VARCHAR(20) NULL,
+  `payment_note` VARCHAR(255) NULL,
   `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   UNIQUE KEY `unique_invoice_month` (`room_id`, `month_year`),
   FOREIGN KEY (`room_id`) REFERENCES `rooms`(`id`),
@@ -111,21 +118,4 @@ CREATE TABLE `invoice_details` (
   `subtotal` DECIMAL(10,2) NOT NULL,
   FOREIGN KEY (`invoice_id`) REFERENCES `invoices`(`id`) ON DELETE CASCADE,
   FOREIGN KEY (`service_id`) REFERENCES `services`(`id`) ON DELETE SET NULL
-) ENGINE=InnoDB;
-
-CREATE TABLE IF NOT EXISTS `third_party_expenses` (
-  `id` INT AUTO_INCREMENT PRIMARY KEY,
-  `month_year` VARCHAR(7) NOT NULL,
-  `expense_type` VARCHAR(30) NOT NULL,
-  `title` VARCHAR(150) NOT NULL,
-  `provider_name` VARCHAR(150) NOT NULL,
-  `quantity` DECIMAL(10,2) DEFAULT 0,
-  `unit` VARCHAR(30) DEFAULT '',
-  `unit_price` DECIMAL(10,2) DEFAULT 0,
-  `amount` DECIMAL(10,2) NOT NULL,
-  `customer_amount` DECIMAL(10,2) DEFAULT 0,
-  `status` ENUM('paid', 'pending') DEFAULT 'paid',
-  `paid_at` DATE NULL,
-  `notes` VARCHAR(255) NULL,
-  `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=InnoDB;

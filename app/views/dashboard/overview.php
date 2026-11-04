@@ -908,15 +908,17 @@ $currentMonthFilter  = $_GET['month_year'] ?? '';
                     scales: {
                         y: {
                             beginAtZero: true,
+                            suggestedMin: 0,
+                            suggestedMax: 10000000,
                             ticks: {
                                 callback: function(val) {
-                                    return (val / 1000000) + ' tr';
+                                    if (val === 0) return '0 tr';
+                                    if (val >= 1000000) return (val / 1000000) + ' tr';
+                                    return val.toLocaleString('vi-VN') + ' đ';
                                 }
                             }
                         }
-                    }
-                }
-            });
+                    } } });
 
             // 6. Biểu đồ Tròn: Cơ cấu Doanh thu (Tiền phòng, Điện, Nước, Dịch vụ)
             const ctxBreakdown = document.getElementById('breakdownPieChartCanvas');
