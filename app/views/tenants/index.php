@@ -386,18 +386,27 @@ $adminName = $_SESSION['full_name'] ?? 'Quản trị viên Hệ thống';
                             </label>
                             <select name="room_id" class="form-select rounded-3 py-2" id="tenantRoomSelect_new" onchange="handleTenantRoomChange(this, 'new')">
                                 <option value="" data-max-occupants="1">-- Chọn phòng thuê (Chưa xếp phòng) --</option>
-                                <?php if (!empty($allRooms)): ?>
-                                    <?php foreach ($allRooms as $r):
-                                        $rMax = (int)($r['details']['max_occupants'] ?? 2);
+                                <?php 
+                                $hasAvailable = false;
+                                if (!empty($allRooms)): 
+                                    foreach ($allRooms as $r):
                                         $isCurSelected = ($selectedRoomId > 0 && $selectedRoomId === (int)$r['id']);
-                                        $stLabel = ($r['status'] === 'available') ? 'Phòng trống' : 'Đang thuê';
-                                    ?>
+                                        // Chỉ hiện những phòng trống (status = 'available'), ẩn hoàn toàn phòng đã thuê
+                                        if ($r['status'] !== 'available' && !$isCurSelected) {
+                                            continue;
+                                        }
+                                        $hasAvailable = true;
+                                        $rMax = (int)($r['details']['max_occupants'] ?? 2);
+                                ?>
                                         <option value="<?= $r['id'] ?>" 
                                                 data-max-occupants="<?= $rMax ?>"
                                                 <?= $isCurSelected ? 'selected' : '' ?>>
-                                            Phòng <?= h($r['room_number']) ?> &bull; <?= number_format($r['price'], 0, ',', '.') ?> đ/tháng (Tối đa <?= $rMax ?> người) [<?= $stLabel ?>]
+                                            Phòng <?= h($r['room_number']) ?> &bull; <?= number_format($r['price'], 0, ',', '.') ?> đ/tháng (Tối đa <?= $rMax ?> người) [Phòng trống]
                                         </option>
                                     <?php endforeach; ?>
+                                <?php endif; ?>
+                                <?php if (!$hasAvailable): ?>
+                                    <option value="" disabled>-- Hiện không có phòng trống --</option>
                                 <?php endif; ?>
                             </select>
                         </div>
@@ -519,8 +528,12 @@ $adminName = $_SESSION['full_name'] ?? 'Quản trị viên Hệ thống';
                                     <option value="" data-max-occupants="1">-- Chưa xếp phòng --</option>
                                     <?php if (!empty($allRooms)): ?>
                                         <?php foreach ($allRooms as $r):
-                                            $rMax = (int)($r['details']['max_occupants'] ?? 2);
                                             $isThisRoom = ($curRoomId === (int)$r['id']);
+                                            // Chỉ hiện phòng trống hoặc chính phòng khách này đang thuê
+                                            if ($r['status'] !== 'available' && !$isThisRoom) {
+                                                continue;
+                                            }
+                                            $rMax = (int)($r['details']['max_occupants'] ?? 2);
                                             $stLabel = ($r['status'] === 'available') ? 'Phòng trống' : 'Đang thuê';
                                         ?>
                                             <option value="<?= $r['id'] ?>" 
