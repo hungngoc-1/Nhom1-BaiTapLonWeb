@@ -672,7 +672,8 @@ if (!empty($filterBuilding) && $filterBuilding !== 'all' && isset($buildings[$fi
                             </div>
                             <div class="col-md-4">
                                 <label class="form-label fw-bold small text-muted">Số điện thoại <span class="text-danger">*</span></label>
-                                <input type="text" name="manager_phone" class="form-control rounded-3" placeholder="VD: 0912 345 678" required>
+                                <input type="tel" name="manager_phone" class="form-control rounded-3" placeholder="VD: 0912345678 (đúng 10 số)" pattern="^0[0-9]{9}$" maxlength="10" minlength="10" required title="Số điện thoại phải gồm đúng 10 chữ số (bắt đầu bằng 0)" oninput="this.value = this.value.replace(/[^0-9]/g, '').slice(0, 10)">
+                                <div class="form-text small text-muted">Bắt buộc đúng 10 chữ số (bắt đầu bằng 0).</div>
                             </div>
                             <div class="col-md-4">
                                 <label class="form-label fw-bold small text-muted">Email liên hệ <span class="text-danger">*</span></label>
@@ -872,7 +873,7 @@ if (!empty($filterBuilding) && $filterBuilding !== 'all' && isset($buildings[$fi
                                 </div>
                                 <div class="col-md-4">
                                     <label class="form-label fw-bold small text-muted">Số điện thoại <span class="text-danger">*</span></label>
-                                    <input type="text" name="manager_phone" class="form-control rounded-3" value="<?= htmlspecialchars($bld['manager_phone'] ?? '0912 345 678') ?>" required>
+                                    <input type="tel" name="manager_phone" class="form-control rounded-3" value="<?= htmlspecialchars($bld['manager_phone'] ?? '0912345678') ?>" pattern="^0[0-9]{9}$" maxlength="10" minlength="10" required title="Số điện thoại phải gồm đúng 10 chữ số (bắt đầu bằng 0)" oninput="this.value = this.value.replace(/[^0-9]/g, '').slice(0, 10)">
                                 </div>
                                 <div class="col-md-4">
                                     <label class="form-label fw-bold small text-muted">Email liên hệ <span class="text-danger">*</span></label>
@@ -1235,7 +1236,7 @@ if (!empty($filterBuilding) && $filterBuilding !== 'all' && isset($buildings[$fi
                                             $roleBadge = '';
                                             if ($acc['role'] === 'admin') {
                                                 $roleBadge = '<span class="badge rounded-pill" style="background:#ede9fe; color:#6d28d9; font-weight:700;"><i class="fa-solid fa-shield-halved me-1"></i>Admin</span>';
-                                            } elseif ($acc['role'] === 'landlord') {
+                                            } elseif ($acc['role'] === 'landlord' || $acc['role'] === 'manager') {
                                                 $roleBadge = '<span class="badge rounded-pill" style="background:#ccfbf1; color:#0f766e; font-weight:700;"><i class="fa-solid fa-user-tie me-1"></i>Quản lý</span>';
                                             } else {
                                                 $roleBadge = '<span class="badge rounded-pill" style="background:#e0f2fe; color:#0369a1; font-weight:700;"><i class="fa-solid fa-user me-1"></i>Khách thuê</span>';
@@ -1268,7 +1269,7 @@ if (!empty($filterBuilding) && $filterBuilding !== 'all' && isset($buildings[$fi
                                                     
                                                     <!-- Nút Xóa -->
                                                     <?php if (!$isSelf): ?>
-                                                        <form method="POST" action="index.php?route=dashboard" class="d-inline" onsubmit="return confirm('Bạn có chắc chắn muốn xóa tài khoản này không?');">
+                                                        <form method="POST" action="index.php?route=dashboard" class="d-inline" onsubmit="return confirm('Bạn có chắc chắn muốn xóa tài khoản này khỏi hệ thống không?');">
                                                             <input type="hidden" name="action" value="delete_user_account">
                                                             <input type="hidden" name="user_id" value="<?= $acc['id'] ?>">
                                                             <button type="submit" class="btn btn-sm btn-outline-danger rounded-pill px-2 fw-bold" title="Xóa tài khoản">
@@ -1331,7 +1332,7 @@ if (!empty($filterBuilding) && $filterBuilding !== 'all' && isset($buildings[$fi
                                     <label class="form-label fw-bold small text-muted">Phân quyền</label>
                                     <select name="role" class="form-select rounded-3">
                                         <option value="tenant" <?= $acc['role'] === 'tenant' ? 'selected' : '' ?>>Khách thuê</option>
-                                        <option value="landlord" <?= $acc['role'] === 'landlord' ? 'selected' : '' ?>>Quản lý tòa nhà</option>
+                                        <option value="manager" <?= ($acc['role'] === 'manager' || $acc['role'] === 'landlord') ? 'selected' : '' ?>>Quản lý tòa nhà</option>
                                         <option value="admin" <?= $acc['role'] === 'admin' ? 'selected' : '' ?>>Quản trị viên (Admin)</option>
                                     </select>
                                 </div>

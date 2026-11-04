@@ -319,7 +319,7 @@ $menuLabel = ($userRole === 'admin') ? 'Tài khoản' : 'Tài khoản khách';
                 <div class="d-flex flex-wrap align-items-center gap-2">
                     <?php if ($userRole === 'admin'): ?>
                         <a href="index.php?route=accounts" class="filter-tab <?= empty($roleFilter) ? 'active' : '' ?>">Tất cả (<?= $stats['total'] ?>)</a>
-                        <a href="index.php?route=accounts&role=landlord" class="filter-tab <?= ($roleFilter === 'landlord') ? 'active' : '' ?>">Quản lý Tòa nhà (<?= $stats['managers'] ?>)</a>
+                        <a href="index.php?route=accounts&role=manager" class="filter-tab <?= ($roleFilter === 'manager' || $roleFilter === 'landlord') ? 'active' : '' ?>">Quản lý Tòa nhà (<?= $stats['managers'] ?>)</a>
                         <a href="index.php?route=accounts&role=tenant" class="filter-tab <?= ($roleFilter === 'tenant') ? 'active' : '' ?>">Khách thuê (<?= $stats['tenants'] ?>)</a>
                     <?php else: ?>
                         <span class="fw-bold text-dark fs-6"><i class="fa-solid fa-list-check me-2 text-teal-main"></i> Danh sách khách thuê của <?= htmlspecialchars($buildingName) ?></span>
@@ -372,7 +372,7 @@ $menuLabel = ($userRole === 'admin') ? 'Tài khoản' : 'Tài khoản khách';
                                 <?php
                                     $role = $acc['role'] ?? 'tenant';
                                     $isAdm = ($role === 'admin');
-                                    $isMng = ($role === 'landlord');
+                                    $isMng = ($role === 'landlord' || $role === 'manager');
                                     $isTnt = ($role === 'tenant');
 
                                     // Màu avatar
@@ -495,7 +495,7 @@ $menuLabel = ($userRole === 'admin') ? 'Tài khoản' : 'Tài khoản khách';
                             <?php if ($userRole === 'admin'): ?>
                                 <select name="role" class="form-select rounded-3" required>
                                     <option value="tenant" selected>Khách thuê trọ (tenant)</option>
-                                    <option value="landlord">Quản lý tòa nhà (landlord)</option>
+                                    <option value="manager">Quản lý tòa nhà (manager)</option>
                                 </select>
                             <?php else: ?>
                                 <input type="text" class="form-control rounded-3 bg-light" value="Khách thuê trọ (tenant)" readonly>
@@ -522,7 +522,7 @@ $menuLabel = ($userRole === 'admin') ? 'Tài khoản' : 'Tài khoản khách';
                         <div class="row g-2 mb-3">
                             <div class="col-6">
                                 <label class="form-label fw-bold small text-muted">Số điện thoại <span class="text-danger">*</span></label>
-                                <input type="text" name="phone" class="form-control rounded-3" placeholder="0987654321" required>
+                                <input type="tel" name="phone" class="form-control rounded-3" placeholder="0987654321 (đúng 10 số)" pattern="^0[0-9]{9}$" maxlength="10" minlength="10" oninput="this.value = this.value.replace(/[^0-9]/g, '').slice(0, 10)" title="Số điện thoại phải gồm đúng 10 số và bắt đầu bằng số 0" required>
                             </div>
                             <div class="col-6">
                                 <label class="form-label fw-bold small text-muted">Email <span class="text-danger">*</span></label>
@@ -562,7 +562,7 @@ $menuLabel = ($userRole === 'admin') ? 'Tài khoản' : 'Tài khoản khách';
                         <div class="row g-2 mb-3">
                             <div class="col-6">
                                 <label class="form-label fw-bold small text-muted">Số điện thoại <span class="text-danger">*</span></label>
-                                <input type="text" name="phone" id="editAccPhone" class="form-control rounded-3" required>
+                                <input type="tel" name="phone" id="editAccPhone" class="form-control rounded-3" pattern="^0[0-9]{9}$" maxlength="10" minlength="10" oninput="this.value = this.value.replace(/[^0-9]/g, '').slice(0, 10)" title="Số điện thoại phải gồm đúng 10 số và bắt đầu bằng số 0" required>
                             </div>
                             <div class="col-6">
                                 <label class="form-label fw-bold small text-muted">Email <span class="text-danger">*</span></label>
@@ -574,7 +574,7 @@ $menuLabel = ($userRole === 'admin') ? 'Tài khoản' : 'Tài khoản khách';
                                 <label class="form-label fw-bold small text-muted">Vai trò</label>
                                 <select name="role" id="editAccRole" class="form-select rounded-3">
                                     <option value="admin">Quản trị viên (admin)</option>
-                                    <option value="landlord">Quản lý tòa nhà (landlord)</option>
+                                    <option value="manager">Quản lý tòa nhà (manager)</option>
                                     <option value="tenant">Khách thuê trọ (tenant)</option>
                                 </select>
                             </div>

@@ -868,7 +868,7 @@ $adminName = $_SESSION['full_name'] ?? 'Quản trị viên Hệ thống';
                                                     <span class="input-group-text py-1 px-2 small">đ</span>
                                                 </div>
                                                 <input type="text" name="service_units[]" class="form-control rounded-3 py-1" style="max-width: 110px; font-size:0.85rem;" placeholder="Đơn vị" value="<?= h($s['unit']) ?>">
-                                                <button type="button" class="btn btn-outline-danger btn-sm rounded-3 px-2 py-1" onclick="this.closest('.service-row').remove()" title="Xóa dịch vụ">
+                                                <button type="button" class="btn btn-outline-danger btn-sm rounded-3 px-2 py-1" onclick="if(confirm('Bạn có chắc chắn muốn xóa dịch vụ này khỏi phòng không?')) this.closest('.service-row').remove();" title="Xóa dịch vụ">
                                                     <i class="fa-solid fa-trash-can"></i>
                                                 </button>
                                             </div>
@@ -977,7 +977,7 @@ $adminName = $_SESSION['full_name'] ?? 'Quản trị viên Hệ thống';
                 <span class="input-group-text py-1 px-2 small">đ</span>
             </div>
             <input type="text" name="service_units[]" class="form-control rounded-3 py-1" style="max-width: 110px; font-size:0.85rem;" placeholder="Đơn vị" value="Tháng">
-            <button type="button" class="btn btn-outline-danger btn-sm rounded-3 px-2 py-1" onclick="this.closest('.service-row').remove()" title="Xóa dịch vụ">
+            <button type="button" class="btn btn-outline-danger btn-sm rounded-3 px-2 py-1" onclick="if(confirm('Bạn có chắc chắn muốn xóa dịch vụ này khỏi phòng không?')) this.closest('.service-row').remove();" title="Xóa dịch vụ">
                 <i class="fa-solid fa-trash-can"></i>
             </button>
         `;

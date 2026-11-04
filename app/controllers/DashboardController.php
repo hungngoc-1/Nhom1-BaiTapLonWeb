@@ -63,6 +63,14 @@ class DashboardController {
                 $roomPrefix = trim($_POST['room_prefix'] ?? '');
                 $theme      = trim($_POST['theme'] ?? 'teal');
 
+                $cleanPhone = preg_replace('/\D/', '', $managerPhone);
+                if (strlen($cleanPhone) !== 10 || !str_starts_with($cleanPhone, '0')) {
+                    $_SESSION['flash_error'] = "Số điện thoại người quản lý tòa nhà phải đúng 10 số (bắt đầu bằng số 0)!";
+                    header("Location: index.php?route=dashboard");
+                    exit;
+                }
+                $managerPhone = $cleanPhone;
+
                 if ($name !== '') {
                     $selectedRoomTypes = $_POST['room_types'] ?? [];
                     if (!is_array($selectedRoomTypes) || empty($selectedRoomTypes)) {
@@ -83,7 +91,7 @@ class DashboardController {
 
                             if ($existingUserId) {
                                 $effectiveEmail = $managerEmail !== '' ? $managerEmail : ($managerAcc . '@nhatro.com');
-                                $up = $db->prepare("UPDATE users SET full_name = :fn, phone = :phone, email = :em, role = 'landlord', password = :pwd WHERE id = :id");
+                                $up = $db->prepare("UPDATE users SET full_name = :fn, phone = :phone, email = :em, role = 'manager', password = :pwd WHERE id = :id");
                                 $up->execute([
                                     ':fn'    => $manager !== '' ? $manager : 'Quản lý ' . $name,
                                     ':phone' => $managerPhone,
@@ -93,7 +101,7 @@ class DashboardController {
                                 ]);
                             } else {
                                 $effectiveEmail = $managerEmail !== '' ? $managerEmail : ($managerAcc . '@nhatro.com');
-                                $ins = $db->prepare("INSERT INTO users (username, password, full_name, phone, email, role, created_at) VALUES (:u, :pwd, :fn, :phone, :em, 'landlord', NOW())");
+                                $ins = $db->prepare("INSERT INTO users (username, password, full_name, phone, email, role, created_at) VALUES (:u, :pwd, :fn, :phone, :em, 'manager', NOW())");
                                 $ins->execute([
                                     ':u'     => $managerAcc,
                                     ':pwd'   => $managerPwd,
@@ -126,6 +134,14 @@ class DashboardController {
                 if (!is_array($selectedRoomTypes) || empty($selectedRoomTypes)) {
                     $selectedRoomTypes = ['Phòng Tiêu Chuẩn'];
                 }
+
+                $cleanPhone = preg_replace('/\D/', '', $managerPhone);
+                if (strlen($cleanPhone) !== 10 || !str_starts_with($cleanPhone, '0')) {
+                    $_SESSION['flash_error'] = "Số điện thoại người quản lý tòa nhà phải đúng 10 số (bắt đầu bằng số 0)!";
+                    header("Location: index.php?route=dashboard");
+                    exit;
+                }
+                $managerPhone = $cleanPhone;
 
                 if ($id !== '' && $name !== '') {
                     $this->reportModel->updateBuilding($id, $code, $name, $address, $manager, $managerAcc, $roomPrefix, $selectedRoomTypes, $managerPhone, $managerEmail);

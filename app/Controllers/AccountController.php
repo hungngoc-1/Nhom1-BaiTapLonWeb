@@ -49,12 +49,15 @@ class AccountController {
                 $role     = trim($_POST['role'] ?? 'tenant');
 
                 // Nếu là Quản lý, chỉ được phép tạo tài khoản khách thuê
-                if ($userRole === 'landlord') {
+                if ($userRole === 'landlord' || $userRole === 'manager') {
                     $role = 'tenant';
                 }
 
+                $cleanPhone = preg_replace('/\D/', '', $phone);
                 if ($username === '' || $fullName === '' || $phone === '' || $email === '') {
                     $_SESSION['acc_flash_error'] = "Vui lòng điền đầy đủ Tên đăng nhập, Họ tên, SĐT và Email!";
+                } elseif (strlen($cleanPhone) !== 10 || !str_starts_with($cleanPhone, '0')) {
+                    $_SESSION['acc_flash_error'] = "Số điện thoại phải gồm đúng 10 số và bắt đầu bằng số 0!";
                 } elseif (strlen($password) < 4) {
                     $_SESSION['acc_flash_error'] = "Mật khẩu phải từ 4 ký tự trở lên!";
                 } else {
@@ -80,11 +83,11 @@ class AccountController {
                 $target = $this->accountModel->getAccountById($id);
                 if (!$target) {
                     $_SESSION['acc_flash_error'] = "Không tìm thấy tài khoản cần chỉnh sửa!";
-                } elseif ($userRole === 'landlord' && $target['role'] !== 'tenant') {
+                } elseif (($userRole === 'landlord' || $userRole === 'manager') && $target['role'] !== 'tenant') {
                     $_SESSION['acc_flash_error'] = "Bạn chỉ có quyền quản lý tài khoản khách thuê!";
                 } else {
                     try {
-                        $newRole = ($userRole === 'admin' && in_array($role, ['admin', 'landlord', 'tenant'])) ? $role : null;
+                        $newRole = ($userRole === 'admin' && in_array($role, ['admin', 'manager', 'landlord', 'tenant'])) ? $role : null;
                         $this->accountModel->updateAccount($id, $fullName, $phone, $email, $newRole);
                         $this->reportModel->logActivity("Đã cập nhật thông tin tài khoản: '{$target['username']}'", 'info');
                         $_SESSION['acc_flash_success'] = "Đã cập nhật tài khoản '{$target['username']}' thành công!";
@@ -102,7 +105,7 @@ class AccountController {
 
                 if (!$target) {
                     $_SESSION['acc_flash_error'] = "Không tìm thấy tài khoản!";
-                } elseif ($userRole === 'landlord' && $target['role'] !== 'tenant') {
+                } elseif (($userRole === 'landlord' || $userRole === 'manager') && $target['role'] !== 'tenant') {
                     $_SESSION['acc_flash_error'] = "Bạn chỉ có quyền đổi mật khẩu cho tài khoản khách thuê!";
                 } elseif (strlen($newPass) < 4) {
                     $_SESSION['acc_flash_error'] = "Mật khẩu mới phải từ 4 ký tự trở lên!";
@@ -128,7 +131,7 @@ class AccountController {
                     $_SESSION['acc_flash_error'] = "Bạn không thể tự xóa tài khoản của chính mình!";
                 } elseif ($target['role'] === 'admin') {
                     $_SESSION['acc_flash_error'] = "Không thể xóa tài khoản Quản trị viên tối cao!";
-                } elseif ($userRole === 'landlord' && $target['role'] !== 'tenant') {
+                } elseif (($userRole === 'landlord' || $userRole === 'manager') && $target['role'] !== 'tenant') {
                     $_SESSION['acc_flash_error'] = "Bạn chỉ có quyền xóa tài khoản khách thuê!";
                 } else {
                     try {

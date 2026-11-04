@@ -6,7 +6,21 @@ if (empty($_SESSION['csrf_token'])) {
     $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
 }
 
-$route = $_GET['route'] ?? 'dashboard';
+$route = $_GET['route'] ?? null;
+if ($route === null || $route === '') {
+    $role = $_SESSION['role'] ?? ($_SESSION['user']['role'] ?? null);
+    if (!empty($_SESSION['user_id']) || !empty($_SESSION['username'])) {
+        if ($role === 'tenant') {
+            $route = 'tenant/portal';
+        } elseif (in_array($role, ['manager', 'landlord'], true)) {
+            $route = 'overview';
+        } else {
+            $route = 'dashboard';
+        }
+    } else {
+        $route = 'auth/login';
+    }
+}
 
 // ==========================================
 // 1. XỬ LÝ NÚT ĐĂNG XUẤT NGAY TẠI ROUTER
@@ -21,7 +35,7 @@ if ($route === 'auth/logout') {
 // 2. BẢO MẬT & PHÂN QUYỀN TRUY CẬP (ACCESS CONTROL & ROUTE GUARDING)
 // Ngăn chặn lỗ hổng Broken Access Control (OWASP Top 10)
 // ==============================================================================
-$currentUserRole = $_SESSION['role'] ?? null;
+$currentUserRole = $_SESSION['role'] ?? ($_SESSION['user']['role'] ?? null);
 $isLoggedIn = !empty($_SESSION['user_id']) || !empty($_SESSION['username']);
 
 // Danh sách các route công khai (Khách vãng lai / Postman test API được phép truy cập)

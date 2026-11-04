@@ -31,21 +31,25 @@ class AccountModel {
                 WHERE 1=1";
 
         // Nếu là Quản lý: CHỈ được xem khách thuê (tenant)
-        if ($currentRole === 'landlord') {
+        if ($currentRole === 'landlord' || $currentRole === 'manager') {
             $sql .= " AND u.role = 'tenant'";
-            // Lọc theo tòa nhà mà quản lý phụ trách (dựa vào tiền tố phòng)
+            // Lọc theo tòa nhà mà quản lý phụ trách
             if ($currentBuilding === 'A') {
-                $sql .= " AND (r.room_number LIKE 'P1%' OR r.room_number IS NULL)";
+                $sql .= " AND (r.room_number LIKE 'A%' OR r.room_number LIKE 'P1%' OR r.room_number IS NULL)";
             } elseif ($currentBuilding === 'B') {
-                $sql .= " AND (r.room_number LIKE 'P2%' OR r.room_number IS NULL)";
+                $sql .= " AND (r.room_number LIKE 'B%' OR r.room_number LIKE 'P2%' OR r.room_number IS NULL)";
             } elseif ($currentBuilding === 'C') {
-                $sql .= " AND (r.room_number LIKE 'P3%' OR r.room_number IS NULL)";
+                $sql .= " AND (r.room_number LIKE 'C%' OR r.room_number LIKE 'P3%' OR r.room_number IS NULL)";
             }
         } else {
-            // Admin có thể lọc theo role
-            if ($roleFilter !== '' && in_array($roleFilter, ['admin', 'landlord', 'tenant'])) {
-                $sql .= " AND u.role = :rf";
-                $params[':rf'] = $roleFilter;
+            // Admin có thể lọc theo role (hỗ trợ cả manager và landlord)
+            if ($roleFilter !== '') {
+                if ($roleFilter === 'manager' || $roleFilter === 'landlord') {
+                    $sql .= " AND (u.role = 'manager' OR u.role = 'landlord')";
+                } elseif (in_array($roleFilter, ['admin', 'tenant'], true)) {
+                    $sql .= " AND u.role = :rf";
+                    $params[':rf'] = $roleFilter;
+                }
             }
         }
 
@@ -59,7 +63,7 @@ class AccountModel {
             $params[':kw5'] = $kw;
         }
 
-        $sql .= " ORDER BY CASE u.role WHEN 'admin' THEN 1 WHEN 'landlord' THEN 2 ELSE 3 END ASC, u.id DESC";
+        $sql .= " ORDER BY CASE WHEN u.role = 'admin' THEN 1 WHEN u.role IN ('manager', 'landlord') THEN 2 ELSE 3 END ASC, u.id ASC";
 
         $stmt = $this->conn->prepare($sql);
         $stmt->execute($params);
@@ -90,7 +94,7 @@ class AccountModel {
         // Admin: thống kê toàn bộ hệ thống
         $total    = (int)$this->conn->query("SELECT COUNT(*) FROM users")->fetchColumn();
         $admins   = (int)$this->conn->query("SELECT COUNT(*) FROM users WHERE role = 'admin'")->fetchColumn();
-        $managers = (int)$this->conn->query("SELECT COUNT(*) FROM users WHERE role = 'landlord'")->fetchColumn();
+        $managers = (int)$this->conn->query("SELECT COUNT(*) FROM users WHERE role = 'manager' OR role = 'landlord'")->fetchColumn();
         $tenants  = (int)$this->conn->query("SELECT COUNT(*) FROM users WHERE role = 'tenant'")->fetchColumn();
 
         return [

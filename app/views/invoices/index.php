@@ -508,7 +508,7 @@ $pendingInPeriod = array_values(array_filter($pendingView, fn($x) => $filters['p
                                 <?php if ($inv['status'] === 'unpaid'): ?>
                                     <button type="button" class="btn-icon-circle btn-icon-pay" title="Xác nhận thu tiền"
                                         onclick="openPayModal(<?= (int)$inv['id'] ?>, <?= h(json_encode($inv['code'])) ?>, <?= h(json_encode($inv['room_number'])) ?>, <?= h(json_encode($inv['tenant_name'] ?? '')) ?>, <?= (float)$inv['total_amount'] ?>)"><i class="fa-solid fa-money-bill-wave"></i></button>
-                                    <form method="POST" action="index.php?route=invoices/delete" class="d-inline" onsubmit="return confirm('Xóa hóa đơn <?= h($inv['code']) ?>? Có thể lập lại từ bản ghi điện nước.');">
+                                    <form method="POST" action="index.php?route=invoices/delete" class="d-inline" onsubmit="return confirm('Bạn có chắc chắn muốn xóa hóa đơn <?= h($inv['code']) ?> không?');">
                                         <input type="hidden" name="csrf_token" value="<?= h($csrf) ?>">
                                         <input type="hidden" name="id" value="<?= (int)$inv['id'] ?>">
                                         <input type="hidden" name="return_query" value="<?= h($returnQuery) ?>">

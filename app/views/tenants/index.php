@@ -289,7 +289,7 @@ $adminName = $_SESSION['full_name'] ?? 'Quản trị viên Hệ thống';
                                             <button type="button" class="btn-icon-circle btn-icon-edit" data-bs-toggle="modal" data-bs-target="#editTenantModal<?= $tId ?>" title="Chỉnh sửa">
                                                 <i class="fa-solid fa-pen"></i>
                                             </button>
-                                            <form method="POST" action="index.php?route=tenants" class="m-0" onsubmit="return confirm('Xóa tài khoản khách thuê <?= h($t['full_name']) ?>?');">
+                                            <form method="POST" action="index.php?route=tenants" class="m-0" onsubmit="return confirm('Bạn có chắc chắn muốn xóa khách thuê <?= h($t['full_name']) ?> không?');">
                                                 <input type="hidden" name="csrf_token" value="<?= h($csrf) ?>">
                                                 <input type="hidden" name="action" value="delete">
                                                 <input type="hidden" name="id" value="<?= $tId ?>">
