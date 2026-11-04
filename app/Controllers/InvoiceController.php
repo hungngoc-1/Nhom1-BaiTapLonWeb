@@ -3,7 +3,7 @@ require_once __DIR__ . '/../Models/InvoiceModel.php';
 
 /**
  * Controller Hóa đơn & Thu tiền.
- * Routes: invoices, invoices/store, invoices/store-all, invoices/pay, invoices/delete, invoices/detail, invoices/export
+ * Routes: invoices, invoices/store, invoices/store-all, invoices/pay, invoices/delete, invoices/detail, invoices/export, invoices/update-deposit, invoices/update-first-month
  */
 class InvoiceController {
     private InvoiceModel $model;
@@ -19,10 +19,13 @@ class InvoiceController {
         $status = $_GET['status'] ?? '';
         if (!in_array($status, ['', 'paid', 'unpaid', 'overdue', 'recorded', 'pending'], true)) $status = '';
         return [
-            'period'  => $period,
-            'status'  => $status,
-            'room_id' => $_GET['room_id'] ?? '',
-            'keyword' => trim($_GET['keyword'] ?? ''),
+            'period'             => $period,
+            'status'             => $status,
+            'room_id'            => $_GET['room_id'] ?? '',
+            'keyword'            => trim($_GET['keyword'] ?? ''),
+            'deposit_filter'     => $_GET['deposit_filter'] ?? '',
+            'first_month_filter' => $_GET['first_month_filter'] ?? '',
+            'subtab'             => $_GET['subtab'] ?? 'monthly', // 'monthly', 'deposit', or 'all'
         ];
     }
 
@@ -59,6 +62,9 @@ class InvoiceController {
         $rooms = Database::getConnection()->query("SELECT id, room_number FROM rooms ORDER BY room_number")->fetchAll();
         $methods = InvoiceModel::METHODS;
         $thirdPartyFinance = $this->model->getThirdPartyFinance($filters['period']);
+        $depositContracts = $this->model->getDepositAndFirstMonthContracts($filters);
+        $depositStats = $this->model->getDepositAndFirstMonthStats($depositContracts);
+        $refundNotifications = $this->model->getRefundNotifications();
 
         $flash_success = $_SESSION['flash_success'] ?? '';
         $flash_error = $_SESSION['flash_error'] ?? '';
@@ -87,12 +93,64 @@ class InvoiceController {
         $this->back($this->returnUrl());
     }
 
+    public function storeAll(): void {
+        $this->checkPost();
+        $this->flash($this->model->createAllForPeriod(trim($_POST['period'] ?? '')));
+        $this->back($this->returnUrl());
+    }
+
     public function updateDeposit(): void {
         $this->checkPost();
         $contractId = (int)($_POST['contract_id'] ?? 0);
         $stateKey = trim($_POST['deposit_state_key'] ?? 'completed');
         $amount = (float)($_POST['deposit_amount'] ?? 0);
         $res = $this->model->updateDeposit($contractId, $stateKey, $amount);
+        $this->flash($res);
+        $subtab = $_POST['subtab'] ?? 'deposit';
+        $url = $this->returnUrl();
+        $sep = (strpos($url, '?') !== false) ? '&' : '?';
+        $this->back($url . $sep . 'subtab=' . urlencode($subtab));
+    }
+
+    public function sendVerification(): void {
+        $this->checkPost();
+        $contractId = (int)($_POST['contract_id'] ?? 0);
+        $res = $this->model->sendContractVerification($contractId);
+        $this->flash($res);
+        $subtab = $_POST['subtab'] ?? 'deposit';
+        $url = $this->returnUrl();
+        $sep = (strpos($url, '?') !== false) ? '&' : '?';
+        $this->back($url . $sep . 'subtab=' . urlencode($subtab));
+    }
+
+    public function confirmRefund(): void {
+        $this->checkPost();
+        $contractId = (int)($_POST['contract_id'] ?? 0);
+        $res = $this->model->confirmRefundInvoice($contractId);
+        $this->flash($res);
+        $subtab = $_POST['subtab'] ?? 'deposit';
+        $url = $this->returnUrl();
+        $sep = (strpos($url, '?') !== false) ? '&' : '?';
+        $this->back($url . $sep . 'subtab=' . urlencode($subtab));
+    }
+
+    public function updateFirstMonth(): void {
+        $this->checkPost();
+        $contractId = (int)($_POST['contract_id'] ?? 0);
+        $isPaid = (int)($_POST['first_month_rent_paid'] ?? 0);
+        $note = trim($_POST['first_month_paid_note'] ?? '');
+        $res = $this->model->updateFirstMonthRent($contractId, $isPaid, $note);
+        $this->flash($res);
+        $subtab = $_POST['subtab'] ?? 'deposit';
+        $url = $this->returnUrl();
+        $sep = (strpos($url, '?') !== false) ? '&' : '?';
+        $this->back($url . $sep . 'subtab=' . urlencode($subtab));
+    }
+
+    public function update(): void {
+        $this->checkPost();
+        $id = (int)($_POST['id'] ?? 0);
+        $res = $this->model->updateInvoice($id, $_POST);
         $this->flash($res);
         $this->back($this->returnUrl());
     }
@@ -101,12 +159,6 @@ class InvoiceController {
         $this->checkPost();
         $res = $this->model->addThirdPartyExpense($_POST);
         $this->flash($res);
-        $this->back($this->returnUrl());
-    }
-
-    public function storeAll(): void {
-        $this->checkPost();
-        $this->flash($this->model->createAllForPeriod(trim($_POST['period'] ?? '')));
         $this->back($this->returnUrl());
     }
 

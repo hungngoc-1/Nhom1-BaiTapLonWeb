@@ -32,6 +32,7 @@ class ContractController {
         $tenants = $this->contractModel->getTenants();
         $statuses = self::STATUSES;
         $contractTypes = self::CONTRACT_TYPES;
+        $pendingVerifications = $this->contractModel->getPendingOverdueVerifications();
 
         // Xử lý pre-fill nếu được chuyển từ trang Khách thuê hoặc trang Xem phòng
         $preTenantId = (int)($_GET['tenant_id'] ?? 0);
@@ -93,6 +94,7 @@ class ContractController {
 
         $statuses = self::STATUSES;
         $contractTypes = self::CONTRACT_TYPES;
+        $pendingVerifications = $this->contractModel->getPendingOverdueVerifications();
         $flash_error = $_SESSION['flash_error'] ?? '';
         $flash_success = $_SESSION['flash_success'] ?? '';
         unset($_SESSION['flash_error'], $_SESSION['flash_success']);
@@ -281,6 +283,7 @@ class ContractController {
         $tenants = $this->contractModel->getTenants();
         $statuses = self::STATUSES;
         $contractTypes = self::CONTRACT_TYPES;
+        $pendingVerifications = $this->contractModel->getPendingOverdueVerifications();
         $flash_error = $_SESSION['flash_error'] ?? '';
         unset($_SESSION['flash_error']);
 
@@ -398,6 +401,23 @@ class ContractController {
     private function isDate($value) {
         $d = DateTime::createFromFormat('Y-m-d', $value);
         return $d && $d->format('Y-m-d') === $value;
+    }
+
+    public function resolveVerification() {
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            $this->redirect('index.php?route=contracts');
+        }
+        $contractId = (int)($_POST['contract_id'] ?? 0);
+        $caseKey = trim($_POST['case_key'] ?? '');
+        $note = trim($_POST['verification_note'] ?? '');
+
+        $res = $this->contractModel->resolveOverdueVerification($contractId, $caseKey, $note);
+        if ($res['ok']) {
+            $_SESSION['flash_success'] = $res['msg'];
+        } else {
+            $_SESSION['flash_error'] = $res['msg'];
+        }
+        $this->redirect('index.php?route=contracts');
     }
 
     private function redirect($url, $error = '') {

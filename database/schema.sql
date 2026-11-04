@@ -1,36 +1,36 @@
+-- ==============================================================================
+-- STAYMATE - SCHEMA HỆ THỐNG QUẢN LÝ NHÀ TRỌ TOÀN DIỆN (CHÍNH THỨC)
+-- Kiến trúc chuẩn: 3 Tòa nhà, 60 Phòng, Điện Nước, Hóa đơn, Cọc & Chi phí bên thứ 3
+-- ==============================================================================
+
 DROP DATABASE IF EXISTS `quan_ly_nha_tro`;
 CREATE DATABASE `quan_ly_nha_tro` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 USE `quan_ly_nha_tro`;
 
+-- 1. BẢNG NGƯỜI DÙNG & TÀI KHOẢN HỆ THỐNG
 CREATE TABLE `users` (
   `id` INT AUTO_INCREMENT PRIMARY KEY,
   `username` VARCHAR(50) NOT NULL UNIQUE,
   `password` VARCHAR(255) NOT NULL,
   `full_name` VARCHAR(100) NOT NULL,
   `phone` VARCHAR(20) NOT NULL,
-  `cccd` VARCHAR(20) NULL,
-  `birthday` DATE NULL,
-  `gender` VARCHAR(10) NULL DEFAULT 'Nam',
   `email` VARCHAR(100) NOT NULL UNIQUE,
-  `occupation` VARCHAR(100) NULL,
-  `hometown` VARCHAR(255) NULL,
-  `emergency_contact` VARCHAR(100) NULL,
-  `status` VARCHAR(50) NULL DEFAULT 'Đang thuê',
-  `roommate_name` VARCHAR(100) NULL,
-  `roommate_phone` VARCHAR(20) NULL,
-  `role` ENUM('admin', 'landlord', 'tenant', 'manager') NOT NULL DEFAULT 'tenant',
+  `role` ENUM('admin', 'landlord', 'tenant') NOT NULL,
   `preferred_room_id` INT NULL,
   `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-) ENGINE=InnoDB;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+-- 2. BẢNG TÒA NHÀ TRỌ
 CREATE TABLE `buildings` (
   `id` INT AUTO_INCREMENT PRIMARY KEY,
   `name` VARCHAR(100) NOT NULL,
   `address` VARCHAR(255) NOT NULL,
   `manager_id` INT NULL,
-  `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-) ENGINE=InnoDB;
+  `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (`manager_id`) REFERENCES `users`(`id`) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+-- 3. BẢNG PHÒNG TRỌ
 CREATE TABLE `rooms` (
   `id` INT AUTO_INCREMENT PRIMARY KEY,
   `building_id` INT NULL,
@@ -38,20 +38,11 @@ CREATE TABLE `rooms` (
   `price` DECIMAL(10,2) NOT NULL,
   `status` ENUM('available', 'rented', 'maintenance') DEFAULT 'available',
   `description` TEXT,
-  `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-) ENGINE=InnoDB;
-
-CREATE TABLE `room_services` (
-  `id` INT AUTO_INCREMENT PRIMARY KEY,
-  `room_id` INT NOT NULL,
-  `service_name` VARCHAR(100) NOT NULL,
-  `unit_price` DECIMAL(10,2) NOT NULL,
-  `unit` VARCHAR(50) NOT NULL DEFAULT 'Tháng',
   `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  INDEX (`room_id`),
-  FOREIGN KEY (`room_id`) REFERENCES `rooms`(`id`) ON DELETE CASCADE
-) ENGINE=InnoDB;
+  FOREIGN KEY (`building_id`) REFERENCES `buildings`(`id`) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+-- 4. BẢNG DỊCH VỤ & BIỂU PHÍ
 CREATE TABLE `services` (
   `id` INT AUTO_INCREMENT PRIMARY KEY,
   `service_name` VARCHAR(100) NOT NULL,
@@ -59,8 +50,9 @@ CREATE TABLE `services` (
   `unit` VARCHAR(50) NOT NULL,
   `is_active` TINYINT(1) DEFAULT 1,
   `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-) ENGINE=InnoDB;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+-- 5. BẢNG HỢP ĐỒNG THUÊ & QUẢN LÝ TIỀN CỌC
 CREATE TABLE `contracts` (
   `id` INT AUTO_INCREMENT PRIMARY KEY,
   `contract_code` VARCHAR(30) UNIQUE,
@@ -70,13 +62,18 @@ CREATE TABLE `contracts` (
   `tenant_id` INT NOT NULL,
   `start_date` DATE NOT NULL,
   `end_date` DATE NOT NULL,
-  `deposit_amount` DECIMAL(10,2) NOT NULL,
+  `deposit_amount` DECIMAL(10,2) NOT NULL DEFAULT 0,
   `deposit_date` DATE NULL,
-  `deposit_paid_percent` INT DEFAULT 100,
-  `deposit_status` ENUM('held', 'paid', 'refunded', 'forfeited') DEFAULT 'held',
+  `deposit_paid_percent` INT DEFAULT 100, -- 50: Đã cọc 50%, 100: Hoàn thành cọc
+  `deposit_status` ENUM('held', 'refunded', 'forfeited') DEFAULT 'held', -- held: Đang giữ cọc, refunded: Hoàn cọc, forfeited: Mất cọc
   `monthly_rent` DECIMAL(10,2) DEFAULT 0,
   `first_month_rent_paid` TINYINT(1) DEFAULT 0,
   `first_month_invoice_id` INT NULL,
+  `unpaid_notice_sent` TINYINT(1) DEFAULT 0,
+  `unpaid_notice_sent_at` DATETIME NULL,
+  `termination_verification_case` ENUM('none', 'expired_no_renew', 'early_move_out') DEFAULT 'none',
+  `refund_confirmed_invoice` TINYINT(1) DEFAULT 0,
+  `unpaid_notice_resolved_at` DATETIME NULL,
   `electricity_rate` DECIMAL(10,2) DEFAULT 3500,
   `water_rate` DECIMAL(10,2) DEFAULT 20000,
   `service_fee` DECIMAL(10,2) DEFAULT 150000,
@@ -94,8 +91,77 @@ CREATE TABLE `contracts` (
   `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   FOREIGN KEY (`room_id`) REFERENCES `rooms`(`id`),
   FOREIGN KEY (`tenant_id`) REFERENCES `users`(`id`)
-) ENGINE=InnoDB;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+-- 6. BẢNG CHỈ SỐ ĐIỆN NƯỚC (CHỐT THEO KỲ MM-YYYY)
+CREATE TABLE `utilities_readings` (
+  `id` INT AUTO_INCREMENT PRIMARY KEY,
+  `room_id` INT NOT NULL,
+  `month_year` VARCHAR(7) NOT NULL,
+  `electric_old` INT NOT NULL,
+  `electric_new` INT NOT NULL,
+  `water_old` INT NOT NULL,
+  `water_new` INT NOT NULL,
+  `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  UNIQUE KEY `unique_room_month` (`room_id`, `month_year`),
+  FOREIGN KEY (`room_id`) REFERENCES `rooms`(`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- 7. BẢNG HÓA ĐƠN & TIỀN PHÒNG
+CREATE TABLE `invoices` (
+  `id` INT AUTO_INCREMENT PRIMARY KEY,
+  `room_id` INT NOT NULL,
+  `contract_id` INT NOT NULL,
+  `month_year` VARCHAR(7) NOT NULL,
+  `room_price` DECIMAL(10,2) DEFAULT 0,
+  `electric_amount` DECIMAL(10,2) DEFAULT 0,
+  `water_amount` DECIMAL(10,2) DEFAULT 0,
+  `service_fee` DECIMAL(10,2) DEFAULT 0,
+  `total_amount` DECIMAL(10,2) NOT NULL,
+  `status` ENUM('unpaid', 'paid') DEFAULT 'unpaid',
+  `due_date` DATE NULL,
+  `paid_at` DATETIME NULL,
+  `payment_method` VARCHAR(20) NULL,
+  `payment_note` VARCHAR(255) NULL,
+  `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  UNIQUE KEY `unique_invoice_month` (`room_id`, `month_year`),
+  FOREIGN KEY (`room_id`) REFERENCES `rooms`(`id`),
+  FOREIGN KEY (`contract_id`) REFERENCES `contracts`(`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- 8. BẢNG CHI TIẾT HÓA ĐƠN
+CREATE TABLE `invoice_details` (
+  `id` INT AUTO_INCREMENT PRIMARY KEY,
+  `invoice_id` INT NOT NULL,
+  `service_id` INT NULL,
+  `quantity` DECIMAL(10,2) NOT NULL DEFAULT 1,
+  `applied_price` DECIMAL(10,2) NOT NULL,
+  `subtotal` DECIMAL(10,2) NOT NULL,
+  FOREIGN KEY (`invoice_id`) REFERENCES `invoices`(`id`) ON DELETE CASCADE,
+  FOREIGN KEY (`service_id`) REFERENCES `services`(`id`) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- 9. BẢNG KHOẢN CHI CHO BÊN THỨ 3 (HÀNG THÁNG)
+CREATE TABLE `third_party_expenses` (
+  `id` INT AUTO_INCREMENT PRIMARY KEY,
+  `month_year` VARCHAR(7) NOT NULL,
+  `expense_type` ENUM('electricity', 'water', 'internet', 'garbage', 'maintenance', 'other') NOT NULL,
+  `title` VARCHAR(150) NOT NULL,
+  `provider_name` VARCHAR(150) NOT NULL,
+  `quantity` DECIMAL(10,2) DEFAULT 1,
+  `unit` VARCHAR(50) DEFAULT 'Tháng',
+  `unit_price` DECIMAL(10,2) DEFAULT 0,
+  `amount` DECIMAL(10,2) NOT NULL,
+  `customer_amount` DECIMAL(10,2) DEFAULT 0,
+  `status` ENUM('paid', 'pending') DEFAULT 'paid',
+  `paid_at` DATE NULL,
+  `notes` VARCHAR(255) NULL,
+  `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  INDEX (`month_year`),
+  INDEX (`expense_type`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- 10. BẢNG YÊU CẦU & KHIẾU NẠI CỦA KHÁCH THUÊ
 CREATE TABLE `tenant_requests` (
   `id` INT AUTO_INCREMENT PRIMARY KEY,
   `tenant_id` INT NOT NULL,
@@ -111,48 +177,4 @@ CREATE TABLE `tenant_requests` (
   INDEX (`tenant_id`),
   INDEX (`status`),
   FOREIGN KEY (`tenant_id`) REFERENCES `users`(`id`) ON DELETE CASCADE
-) ENGINE=InnoDB;
-
-CREATE TABLE `utilities_readings` (
-  `id` INT AUTO_INCREMENT PRIMARY KEY,
-  `room_id` INT NOT NULL,
-  `month_year` VARCHAR(7) NOT NULL,
-  `electric_old` INT NOT NULL,
-  `electric_new` INT NOT NULL,
-  `water_old` INT NOT NULL,
-  `water_new` INT NOT NULL,
-  `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  UNIQUE KEY `unique_room_month` (`room_id`, `month_year`),
-  FOREIGN KEY (`room_id`) REFERENCES `rooms`(`id`)
-) ENGINE=InnoDB;
-
-CREATE TABLE `invoices` (
-  `id` INT AUTO_INCREMENT PRIMARY KEY,
-  `room_id` INT NOT NULL,
-  `contract_id` INT NOT NULL,
-  `month_year` VARCHAR(7) NOT NULL,
-  `room_price` DECIMAL(10,2) DEFAULT 0,
-  `electric_amount` DECIMAL(10,2) DEFAULT 0,
-  `water_amount` DECIMAL(10,2) DEFAULT 0,
-  `service_fee` DECIMAL(10,2) DEFAULT 0,
-  `total_amount` DECIMAL(10,2) NOT NULL,
-  `status` ENUM('unpaid', 'paid') DEFAULT 'unpaid',
-  `paid_at` DATETIME NULL,
-  `payment_method` VARCHAR(20) NULL,
-  `payment_note` VARCHAR(255) NULL,
-  `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  UNIQUE KEY `unique_invoice_month` (`room_id`, `month_year`),
-  FOREIGN KEY (`room_id`) REFERENCES `rooms`(`id`),
-  FOREIGN KEY (`contract_id`) REFERENCES `contracts`(`id`)
-) ENGINE=InnoDB;
-
-CREATE TABLE `invoice_details` (
-  `id` INT AUTO_INCREMENT PRIMARY KEY,
-  `invoice_id` INT NOT NULL,
-  `service_id` INT NULL,
-  `quantity` DECIMAL(10,2) NOT NULL DEFAULT 1,
-  `applied_price` DECIMAL(10,2) NOT NULL,
-  `subtotal` DECIMAL(10,2) NOT NULL,
-  FOREIGN KEY (`invoice_id`) REFERENCES `invoices`(`id`) ON DELETE CASCADE,
-  FOREIGN KEY (`service_id`) REFERENCES `services`(`id`) ON DELETE SET NULL
-) ENGINE=InnoDB;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;

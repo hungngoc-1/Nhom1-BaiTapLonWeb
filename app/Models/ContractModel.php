@@ -720,5 +720,113 @@ class ContractModel {
         }
         return $ok;
     }
+
+    /**
+     * Lấy danh sách hợp đồng có yêu cầu xác minh lý do không đóng tiền phòng tháng đầu từ bên Hóa đơn
+     */
+    public function getPendingOverdueVerifications(): array {
+        $sql = "
+            SELECT c.*, r.room_number, r.price AS room_price,
+                   u.full_name AS tenant_name, u.phone AS tenant_phone, u.email AS tenant_email
+            FROM contracts c
+            JOIN rooms r ON r.id = c.room_id
+            LEFT JOIN users u ON u.id = c.tenant_id
+            WHERE c.unpaid_notice_sent = 1 AND (c.termination_verification_case IS NULL OR c.termination_verification_case = 'none')
+        ";
+        require_once __DIR__ . '/ReportModel.php';
+        $mgr = ReportModel::getManagerBuildingInfo();
+        if ($mgr) {
+            $sql .= " AND (r.building_id = {$mgr['id']} OR r.room_number LIKE '{$mgr['prefix']}%')";
+        }
+        $sql .= " ORDER BY c.unpaid_notice_sent_at DESC, r.room_number ASC";
+        try {
+            return $this->conn->query($sql)->fetchAll(PDO::FETCH_ASSOC);
+        } catch (PDOException $e) {
+            return [];
+        }
+    }
+
+    /**
+     * Xác nhận lý do không đóng tiền:
+     * - Case 'expired_no_renew': Hết thời gian thuê và không muốn gia hạn -> Đã hoàn cọc
+     * - Case 'early_move_out': Bỏ phòng trước khi hết hợp đồng -> Không hoàn cọc (Mất cọc)
+     */
+    public function resolveOverdueVerification(int $contractId, string $caseKey, string $note = ''): array {
+        if ($contractId <= 0) return ['ok' => false, 'msg' => 'Không tìm thấy hợp đồng.'];
+        
+        $c = $this->conn->query("SELECT c.*, r.room_number, u.full_name FROM contracts c JOIN rooms r ON r.id = c.room_id LEFT JOIN users u ON u.id = c.tenant_id WHERE c.id = $contractId")->fetch(PDO::FETCH_ASSOC);
+        if (!$c) return ['ok' => false, 'msg' => 'Hợp đồng không tồn tại.'];
+
+        $this->conn->beginTransaction();
+        try {
+            if ($caseKey === 'expired_no_renew') {
+                // Trường hợp 1: Khách đã hết thời gian thuê và không muốn gia hạn -> Đã hoàn cọc
+                $termReason = 'Hết thời gian thuê và không muốn gia hạn (Đã hoàn lại tiền cọc)';
+                if ($note !== '') $termReason .= ' - ' . $note;
+
+                $st = $this->conn->prepare("
+                    UPDATE contracts 
+                    SET deposit_status = 'refunded',
+                        termination_verification_case = 'expired_no_renew',
+                        status = 'terminated',
+                        terminated_at = CURDATE(),
+                        termination_reason = ?,
+                        unpaid_notice_resolved_at = NOW(),
+                        refund_confirmed_invoice = 0
+                    WHERE id = ?
+                ");
+                $st->execute([$termReason, $contractId]);
+
+                // Trả phòng về available
+                $this->conn->prepare("UPDATE rooms SET status = 'available' WHERE id = ?")->execute([$c['room_id']]);
+
+                // Cập nhật lại tổng tiền các hóa đơn liên quan (không tính cọc)
+                $stInv = $this->conn->prepare("SELECT id FROM invoices WHERE contract_id = ?");
+                $stInv->execute([$contractId]);
+                $invIds = $stInv->fetchAll(PDO::FETCH_COLUMN);
+                foreach ($invIds as $invId) {
+                    $stSum = $this->conn->prepare("SELECT COALESCE(SUM(subtotal), 0) FROM invoice_details WHERE invoice_id = ?");
+                    $stSum->execute([$invId]);
+                    $baseTotal = (float)$stSum->fetchColumn();
+                    if ($baseTotal > 0) {
+                        $this->conn->prepare("UPDATE invoices SET total_amount = ? WHERE id = ?")->execute([$baseTotal, $invId]);
+                    }
+                }
+
+                $this->conn->commit();
+                return ['ok' => true, 'msg' => "Đã xác nhận phòng {$c['room_number']}: Khách hết hạn hợp đồng và không gia hạn. Trạng thái cọc chuyển thành ĐÃ HOÀN CỌC và đã gửi thông báo xác nhận về trang Hóa đơn!"];
+
+            } elseif ($caseKey === 'early_move_out') {
+                // Trường hợp 2: Bỏ phòng trước khi hết hợp đồng -> Không được hoàn cọc (Mất cọc)
+                $termReason = 'Bỏ phòng / chuyển đi trước khi hết hợp đồng (Tịch thu cọc, không hoàn cọc)';
+                if ($note !== '') $termReason .= ' - ' . $note;
+
+                $st = $this->conn->prepare("
+                    UPDATE contracts 
+                    SET deposit_status = 'forfeited',
+                        termination_verification_case = 'early_move_out',
+                        status = 'terminated',
+                        terminated_at = CURDATE(),
+                        termination_reason = ?,
+                        unpaid_notice_resolved_at = NOW(),
+                        refund_confirmed_invoice = 1
+                    WHERE id = ?
+                ");
+                $st->execute([$termReason, $contractId]);
+
+                // Trả phòng về available
+                $this->conn->prepare("UPDATE rooms SET status = 'available' WHERE id = ?")->execute([$c['room_id']]);
+
+                $this->conn->commit();
+                return ['ok' => true, 'msg' => "Đã xác nhận phòng {$c['room_number']}: Khách bỏ phòng trước hạn hợp đồng. Trạng thái cọc chuyển thành MẤT CỌC (Không hoàn cọc)!"];
+            } else {
+                $this->conn->rollBack();
+                return ['ok' => false, 'msg' => 'Trường hợp xác nhận không hợp lệ.'];
+            }
+        } catch (Throwable $e) {
+            $this->conn->rollBack();
+            return ['ok' => false, 'msg' => 'Lỗi xử lý: ' . $e->getMessage()];
+        }
+    }
 }
 ?>

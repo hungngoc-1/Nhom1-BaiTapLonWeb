@@ -18,6 +18,28 @@ class InvoiceModel {
     public function __construct($pdo = null) {
         $this->db = $pdo instanceof PDO ? $pdo : Database::getConnection();
         $this->ensureColumns();
+        $this->ensureContractColumns();
+    }
+
+    private function ensureContractColumns(): void {
+        try {
+            $cols = $this->db->query("SHOW COLUMNS FROM contracts")->fetchAll(PDO::FETCH_COLUMN);
+            $alter = [];
+            if (!in_array('deposit_paid_percent', $cols, true))  $alter[] = "ADD COLUMN `deposit_paid_percent` INT DEFAULT 100";
+            if (!in_array('deposit_status', $cols, true))        $alter[] = "ADD COLUMN `deposit_status` ENUM('held', 'refunded', 'forfeited') DEFAULT 'held'";
+            if (!in_array('monthly_rent', $cols, true))          $alter[] = "ADD COLUMN `monthly_rent` DECIMAL(10,2) DEFAULT 0";
+            if (!in_array('first_month_rent_paid', $cols, true)) $alter[] = "ADD COLUMN `first_month_rent_paid` TINYINT(1) DEFAULT 0";
+            if (!in_array('first_month_paid_at', $cols, true))   $alter[] = "ADD COLUMN `first_month_paid_at` DATETIME NULL";
+            if (!in_array('first_month_paid_note', $cols, true)) $alter[] = "ADD COLUMN `first_month_paid_note` VARCHAR(255) NULL";
+            if (!in_array('unpaid_notice_sent', $cols, true))            $alter[] = "ADD COLUMN `unpaid_notice_sent` TINYINT(1) DEFAULT 0";
+            if (!in_array('unpaid_notice_sent_at', $cols, true))         $alter[] = "ADD COLUMN `unpaid_notice_sent_at` DATETIME NULL";
+            if (!in_array('termination_verification_case', $cols, true)) $alter[] = "ADD COLUMN `termination_verification_case` VARCHAR(30) DEFAULT 'none'";
+            if (!in_array('refund_confirmed_invoice', $cols, true))      $alter[] = "ADD COLUMN `refund_confirmed_invoice` TINYINT(1) DEFAULT 0";
+            if (!in_array('unpaid_notice_resolved_at', $cols, true))     $alter[] = "ADD COLUMN `unpaid_notice_resolved_at` DATETIME NULL";
+            if ($alter) {
+                $this->db->exec("ALTER TABLE `contracts` " . implode(', ', $alter));
+            }
+        } catch (PDOException $e) {}
     }
 
     private function ensureColumns(): void {
@@ -132,12 +154,24 @@ class InvoiceModel {
             $depPercent = (int)($row['deposit_paid_percent'] ?? 100);
             $depStatus = (string)($row['deposit_status'] ?? 'held');
 
+            // Tính số tiền cọc 50% còn thiếu (nếu khách mới cọc 50%)
+            $depositRemainingDue = 0;
+            if ($depStatus !== 'refunded' && $depStatus !== 'forfeited' && $depPercent > 0 && $depPercent < 100) {
+                $depositRemainingDue = $depAmount * ((100 - $depPercent) / 100);
+            }
+
             if ($depStatus === 'refunded') {
                 $row['deposit_label'] = 'Hoàn cọc';
                 $row['deposit_badge_class'] = 'bg-secondary-subtle text-secondary border border-secondary';
                 $row['deposit_icon'] = 'fa-solid fa-arrow-rotate-left';
                 $row['deposit_sub'] = 'Đã hoàn trả ' . number_format($depAmount, 0, ',', '.') . ' đ';
                 $row['deposit_key'] = 'refunded';
+            } elseif ($depStatus === 'forfeited') {
+                $row['deposit_label'] = 'Mất cọc';
+                $row['deposit_badge_class'] = 'bg-danger-subtle text-danger border border-danger';
+                $row['deposit_icon'] = 'fa-solid fa-ban';
+                $row['deposit_sub'] = 'Tịch thu do bỏ phòng trước hạn';
+                $row['deposit_key'] = 'forfeited';
             } elseif ($depPercent == 50 || ($depPercent > 0 && $depPercent < 100)) {
                 $row['deposit_label'] = 'Đã cọc 50%';
                 $row['deposit_badge_class'] = 'bg-warning-subtle text-warning-emphasis border border-warning';
@@ -151,6 +185,20 @@ class InvoiceModel {
                 $row['deposit_sub'] = number_format($depAmount, 0, ',', '.') . ' đ';
                 $row['deposit_key'] = 'completed';
             }
+
+            // Tiền phòng, điện, nước, dịch vụ cơ sở
+            $baseServicesTotal = (float)$row['breakdown']['room'] + (float)$row['breakdown']['elec'] + (float)$row['breakdown']['water'] + (float)$row['breakdown']['other'];
+
+            // Nếu khách đã đóng cọc 100% (hoặc hoàn cọc): Tổng cộng KHÔNG tính tiền cọc vào
+            // Nếu khách mới đóng 50% cọc: Tổng cộng TÍNH CẢ số tiền cọc 50% còn lại vào đó
+            if ($depositRemainingDue > 0) {
+                $row['total_amount'] = $baseServicesTotal + $depositRemainingDue;
+                $row['deposit_remaining_due'] = $depositRemainingDue;
+            } else {
+                $row['total_amount'] = $baseServicesTotal;
+                $row['deposit_remaining_due'] = 0;
+            }
+
             if (($f['status'] ?? '') === 'overdue' && !$row['is_overdue']) continue;
             if (($f['status'] ?? '') === 'unpaid' && $row['is_overdue']) continue;
             $out[] = $row;
@@ -378,7 +426,246 @@ class InvoiceModel {
 
         $st = $this->db->prepare("UPDATE contracts SET deposit_paid_percent = ?, deposit_status = ?, deposit_amount = ? WHERE id = ?");
         $st->execute([$percent, $status, $amount, $contractId]);
-        return ['ok' => true, 'msg' => 'Đã cập nhật trạng thái cọc thành công!'];
+
+        // Cập nhật lại tổng tiền hóa đơn:
+        // Nếu 50% => tổng cộng cộng thêm tiền cọc còn thiếu
+        // Nếu 100% (hoặc hoàn cọc) => tổng cộng KHÔNG tính tiền cọc
+        $depRemaining = ($status !== 'refunded' && $percent < 100) ? ($amount * (100 - $percent) / 100) : 0;
+
+        $invs = $this->db->prepare("SELECT id FROM invoices WHERE contract_id = ?");
+        $invs->execute([$contractId]);
+        $invoiceIds = $invs->fetchAll(PDO::FETCH_COLUMN);
+
+        foreach ($invoiceIds as $invId) {
+            $stSum = $this->db->prepare("SELECT COALESCE(SUM(subtotal), 0) FROM invoice_details WHERE invoice_id = ?");
+            $stSum->execute([$invId]);
+            $baseTotal = (float)$stSum->fetchColumn();
+
+            if ($baseTotal > 0) {
+                $newTotal = $baseTotal + $depRemaining;
+                $this->db->prepare("UPDATE invoices SET total_amount = ? WHERE id = ?")->execute([$newTotal, $invId]);
+            }
+        }
+
+        return ['ok' => true, 'msg' => 'Đã cập nhật trạng thái cọc thành công! Tổng cộng hóa đơn đã được tự động tính toán lại.'];
+    }
+
+    // ===================== CHỈNH SỬA THÔNG TIN HÓA ĐƠN =====================
+    public function updateInvoice(int $id, array $data): array {
+        $inv = $this->getInvoice($id);
+        if (!$inv) {
+            return ['ok' => false, 'msg' => 'Không tìm thấy hóa đơn cần cập nhật.'];
+        }
+        $dueDate = !empty($data['due_date']) ? $data['due_date'] : $inv['due_date'];
+        $status = in_array($data['status'] ?? '', ['paid', 'unpaid'], true) ? $data['status'] : $inv['status'];
+        $note = trim($data['payment_note'] ?? '');
+        $method = trim($data['payment_method'] ?? '');
+        $paidAt = ($status === 'paid') ? (!empty($data['paid_at']) ? $data['paid_at'] : ($inv['paid_at'] ?: date('Y-m-d H:i:s'))) : null;
+        if ($status === 'unpaid') {
+            $method = null;
+        }
+
+        $st = $this->db->prepare("
+            UPDATE invoices 
+            SET due_date = ?, status = ?, payment_note = ?, payment_method = ?, paid_at = ?
+            WHERE id = ?
+        ");
+        $st->execute([$dueDate, $status, $note, $method, $paidAt, $id]);
+        return ['ok' => true, 'msg' => 'Đã cập nhật thông tin hóa đơn ' . self::code($id) . ' thành công!'];
+    }
+
+    // ===================== QUẢN LÝ TIỀN CỌC & TIỀN PHÒNG THÁNG ĐẦU (BẢNG 1) =====================
+    public function getDepositAndFirstMonthContracts(array $f = []): array {
+        $this->ensureContractColumns();
+        $sql = "
+            SELECT c.*, r.room_number, r.price AS room_price, r.building_id,
+                   u.full_name AS tenant_name, u.phone AS tenant_phone, u.email AS tenant_email
+            FROM contracts c
+            JOIN rooms r ON r.id = c.room_id
+            LEFT JOIN users u ON u.id = c.tenant_id
+            WHERE c.status = 'active'";
+        $p = [];
+        require_once __DIR__ . '/ReportModel.php';
+        $mgr = ReportModel::getManagerBuildingInfo();
+        if ($mgr) {
+            $sql .= " AND (r.building_id = ? OR r.room_number LIKE ?)";
+            $p[] = $mgr['id'];
+            $p[] = $mgr['prefix'] . '%';
+        }
+        if (!empty($f['room_id'])) {
+            $sql .= " AND c.room_id = ?";
+            $p[] = (int)$f['room_id'];
+        }
+        if (!empty($f['deposit_filter'])) {
+            if ($f['deposit_filter'] === 'partial_50') {
+                $sql .= " AND c.deposit_paid_percent = 50 AND c.deposit_status != 'refunded'";
+            } elseif ($f['deposit_filter'] === 'completed') {
+                $sql .= " AND c.deposit_paid_percent = 100 AND c.deposit_status != 'refunded'";
+            } elseif ($f['deposit_filter'] === 'refunded') {
+                $sql .= " AND c.deposit_status = 'refunded'";
+            }
+        }
+        if (isset($f['first_month_filter']) && $f['first_month_filter'] !== '') {
+            $sql .= " AND c.first_month_rent_paid = ?";
+            $p[] = (int)$f['first_month_filter'];
+        }
+        if (!empty($f['keyword'])) {
+            $sql .= " AND (r.room_number LIKE ? OR u.full_name LIKE ? OR c.contract_code LIKE ?)";
+            $kw = '%' . $f['keyword'] . '%';
+            array_push($p, $kw, $kw, $kw);
+        }
+        $sql .= " ORDER BY r.room_number ASC";
+        $st = $this->db->prepare($sql);
+        $st->execute($p);
+        $rows = $st->fetchAll(PDO::FETCH_ASSOC);
+
+        $out = [];
+        foreach ($rows as $row) {
+            $depAmount = (float)($row['deposit_amount'] ?? 0);
+            $depPercent = (int)($row['deposit_paid_percent'] ?? 100);
+            $depStatus = (string)($row['deposit_status'] ?? 'held');
+
+            if ($depStatus === 'refunded') {
+                $row['deposit_key'] = 'refunded';
+                $row['deposit_label'] = 'Hoàn cọc';
+                $row['deposit_badge_class'] = 'bg-secondary-subtle text-secondary border border-secondary';
+                $row['deposit_icon'] = 'fa-solid fa-arrow-rotate-left';
+                $row['deposit_paid_amount'] = 0;
+                $row['deposit_remaining_amount'] = 0;
+                $row['deposit_sub'] = 'Đã hoàn ' . number_format($depAmount, 0, ',', '.') . ' đ';
+            } elseif ($depStatus === 'forfeited') {
+                $row['deposit_key'] = 'forfeited';
+                $row['deposit_label'] = 'Mất cọc';
+                $row['deposit_badge_class'] = 'bg-danger-subtle text-danger border border-danger';
+                $row['deposit_icon'] = 'fa-solid fa-ban';
+                $row['deposit_paid_amount'] = $depAmount;
+                $row['deposit_remaining_amount'] = 0;
+                $row['deposit_sub'] = 'Tịch thu do bỏ phòng trước hạn';
+            } elseif ($depPercent == 50 || ($depPercent > 0 && $depPercent < 100)) {
+                $row['deposit_key'] = 'partial_50';
+                $row['deposit_label'] = 'Đã cọc 50%';
+                $row['deposit_badge_class'] = 'bg-warning-subtle text-warning-emphasis border border-warning';
+                $row['deposit_icon'] = 'fa-solid fa-clock-rotate-left';
+                $row['deposit_paid_amount'] = $depAmount * 0.5;
+                $row['deposit_remaining_amount'] = $depAmount * 0.5;
+                $row['deposit_sub'] = number_format($depAmount * 0.5, 0, ',', '.') . ' / ' . number_format($depAmount, 0, ',', '.') . ' đ';
+            } else {
+                $row['deposit_key'] = 'completed';
+                $row['deposit_label'] = 'Hoàn thành cọc (100%)';
+                $row['deposit_badge_class'] = 'bg-success-subtle text-success border border-success-subtle';
+                $row['deposit_icon'] = 'fa-solid fa-circle-check';
+                $row['deposit_paid_amount'] = $depAmount;
+                $row['deposit_remaining_amount'] = 0;
+                $row['deposit_sub'] = number_format($depAmount, 0, ',', '.') . ' đ';
+            }
+
+            // Tiền phòng tháng đầu & kiểm tra chưa đóng trong 5 ngày -> ngày thứ 6 trở đi
+            $rent = (float)($row['monthly_rent'] > 0 ? $row['monthly_rent'] : ($row['room_price'] ?? 0));
+            $row['first_month_rent'] = $rent;
+            $row['first_month_rent_paid'] = (int)($row['first_month_rent_paid'] ?? 0);
+
+            $startTs = strtotime($row['start_date']);
+            $todayTs = strtotime(date('Y-m-d'));
+            $daysDiff = max(1, (int)floor(($todayTs - $startTs) / 86400) + 1);
+            $row['days_from_start'] = $daysDiff;
+            $row['is_first_month_overdue'] = ($row['first_month_rent_paid'] == 0 && $daysDiff >= 6);
+            $row['unpaid_notice_sent'] = (int)($row['unpaid_notice_sent'] ?? 0);
+            $row['termination_verification_case'] = (string)($row['termination_verification_case'] ?? 'none');
+            $row['refund_confirmed_invoice'] = (int)($row['refund_confirmed_invoice'] ?? 0);
+
+            if ($row['first_month_rent_paid'] == 1) {
+                $row['first_month_label'] = 'Đã thu';
+                $row['first_month_badge_class'] = 'bg-success-subtle text-success border border-success-subtle';
+                $row['first_month_icon'] = 'fa-solid fa-circle-check';
+                $row['first_month_note_text'] = $row['first_month_paid_at'] ? date('d/m/Y', strtotime($row['first_month_paid_at'])) : 'Đã thu';
+            } elseif ($row['is_first_month_overdue']) {
+                $row['first_month_label'] = 'Chưa thanh toán (Quá hạn 5 ngày)';
+                $row['first_month_badge_class'] = 'bg-danger text-white border border-danger';
+                $row['first_month_icon'] = 'fa-solid fa-triangle-exclamation';
+                $row['first_month_note_text'] = 'Ngày thứ ' . $daysDiff . ' chưa nộp tiền';
+            } else {
+                $row['first_month_label'] = 'Chưa thu';
+                $row['first_month_badge_class'] = 'bg-warning-subtle text-warning-emphasis border border-warning';
+                $row['first_month_icon'] = 'fa-regular fa-clock';
+                $row['first_month_note_text'] = 'Trong hạn 5 ngày đầu (Ngày ' . $daysDiff . '/5)';
+            }
+
+            $out[] = $row;
+        }
+        return $out;
+    }
+
+    public function getDepositAndFirstMonthStats(array $contracts): array {
+        $stats = [
+            'total_contracts' => count($contracts),
+            'total_deposit_held' => 0.0,
+            'count_deposit_100' => 0,
+            'count_deposit_50' => 0,
+            'count_deposit_refunded' => 0,
+            'count_first_month_paid' => 0,
+            'count_first_month_unpaid' => 0,
+            'total_first_month_paid' => 0.0,
+            'total_first_month_unpaid' => 0.0,
+        ];
+        foreach ($contracts as $c) {
+            $stats['total_deposit_held'] += (float)$c['deposit_paid_amount'];
+            if ($c['deposit_key'] === 'completed') $stats['count_deposit_100']++;
+            elseif ($c['deposit_key'] === 'partial_50') $stats['count_deposit_50']++;
+            elseif ($c['deposit_key'] === 'refunded') $stats['count_deposit_refunded']++;
+
+            if ($c['first_month_rent_paid'] == 1) {
+                $stats['count_first_month_paid']++;
+                $stats['total_first_month_paid'] += (float)$c['first_month_rent'];
+            } else {
+                $stats['count_first_month_unpaid']++;
+                $stats['total_first_month_unpaid'] += (float)$c['first_month_rent'];
+            }
+        }
+        return $stats;
+    }
+
+    public function updateFirstMonthRent(int $contractId, int $isPaid, ?string $note = null): array {
+        if ($contractId <= 0) return ['ok' => false, 'msg' => 'Không tìm thấy hợp đồng để cập nhật.'];
+        try {
+            $paidAt = $isPaid ? date('Y-m-d H:i:s') : null;
+            $st = $this->db->prepare("UPDATE contracts SET first_month_rent_paid = ?, first_month_paid_at = ?, first_month_paid_note = ? WHERE id = ?");
+            $st->execute([$isPaid, $paidAt, $note, $contractId]);
+            return ['ok' => true, 'msg' => $isPaid ? 'Đã xác nhận thu tiền phòng tháng đầu thành công!' : 'Đã chuyển tiền phòng tháng đầu về trạng thái Chưa thu.'];
+        } catch (PDOException $e) {
+            return ['ok' => false, 'msg' => 'Lỗi cập nhật: ' . $e->getMessage()];
+        }
+    }
+
+    public function sendContractVerification(int $contractId): array {
+        if ($contractId <= 0) return ['ok' => false, 'msg' => 'Không tìm thấy hợp đồng.'];
+        $c = $this->db->query("SELECT c.*, r.room_number, u.full_name FROM contracts c JOIN rooms r ON r.id = c.room_id LEFT JOIN users u ON u.id = c.tenant_id WHERE c.id = $contractId")->fetch(PDO::FETCH_ASSOC);
+        if (!$c) return ['ok' => false, 'msg' => 'Hợp đồng không tồn tại.'];
+
+        $st = $this->db->prepare("UPDATE contracts SET unpaid_notice_sent = 1, unpaid_notice_sent_at = NOW() WHERE id = ?");
+        $st->execute([$contractId]);
+        return ['ok' => true, 'msg' => "Đã gửi thông báo quá hạn tiền phòng tháng đầu của phòng {$c['room_number']} ({$c['full_name']}) sang trang Hợp đồng để xác minh lý do!"];
+    }
+
+    public function confirmRefundInvoice(int $contractId): array {
+        if ($contractId <= 0) return ['ok' => false, 'msg' => 'Không tìm thấy hợp đồng.'];
+        $st = $this->db->prepare("UPDATE contracts SET refund_confirmed_invoice = 1 WHERE id = ?");
+        $st->execute([$contractId]);
+        return ['ok' => true, 'msg' => 'Đã xác nhận đối soát hoàn cọc thành công!'];
+    }
+
+    public function getRefundNotifications(): array {
+        $sql = "SELECT c.*, r.room_number, u.full_name AS tenant_name, u.phone AS tenant_phone 
+                FROM contracts c 
+                JOIN rooms r ON r.id = c.room_id 
+                LEFT JOIN users u ON u.id = c.tenant_id 
+                WHERE (c.termination_verification_case = 'expired_no_renew' AND c.refund_confirmed_invoice = 0)
+                   OR (c.termination_verification_case = 'early_move_out' AND c.refund_confirmed_invoice = 0)";
+        require_once __DIR__ . '/ReportModel.php';
+        $mgr = ReportModel::getManagerBuildingInfo();
+        if ($mgr) {
+            $sql .= " AND (r.building_id = {$mgr['id']} OR r.room_number LIKE '{$mgr['prefix']}%')";
+        }
+        return $this->db->query($sql)->fetchAll(PDO::FETCH_ASSOC);
     }
 
     // ===================== KHOẢN CHI CHO BÊN THỨ 3 (ĐIỆN, NƯỚC, DỊCH VỤ) =====================
