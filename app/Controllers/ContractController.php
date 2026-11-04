@@ -339,7 +339,8 @@ class ContractController {
             $depositAmount = round($monthlyRent * 0.5, 2);
             $depositPaidPercent = 50;
         } else {
-            $endDate = trim($_POST['end_date'] ?? date('Y-m-d', strtotime($startDate . ' + 6 months')));
+            // Hợp đồng chính thức cố định thời hạn đúng 6 tháng theo yêu cầu
+            $endDate = date('Y-m-d', strtotime($startDate . ' + 6 months'));
             $depositAmount = $monthlyRent;
             $depositPaidPercent = 100;
         }
