@@ -17,6 +17,90 @@ if ($route === 'auth/logout') {
     exit;
 }
 
+// ==============================================================================
+// 2. BẢO MẬT & PHÂN QUYỀN TRUY CẬP (ACCESS CONTROL & ROUTE GUARDING)
+// Ngăn chặn lỗ hổng Broken Access Control (OWASP Top 10)
+// ==============================================================================
+$currentUserRole = $_SESSION['role'] ?? null;
+$isLoggedIn = !empty($_SESSION['user_id']) || !empty($_SESSION['username']);
+
+// Danh sách các route công khai (Khách vãng lai / Postman test API được phép truy cập)
+$publicRoutes = [
+    'login',
+    'auth/login',
+    'auth/process',
+    'auth/logout',
+    'showcase',
+    'web360',
+    'xemphong',
+    'api/reports/summary',
+    'api/reports/revenue',
+    'api/reports/debt',
+    'api/reports/utilities'
+];
+
+// Nếu đã đăng nhập mà truy cập trang đăng nhập -> Tự động chuyển hướng về trang chủ phù hợp
+if ($isLoggedIn && in_array($route, ['login', 'auth/login'], true)) {
+    if ($currentUserRole === 'tenant') {
+        header("Location: index.php?route=tenant/portal");
+    } elseif ($currentUserRole === 'manager' || $currentUserRole === 'landlord') {
+        header("Location: index.php?route=overview");
+    } else {
+        header("Location: index.php?route=dashboard");
+    }
+    exit;
+}
+
+// Nếu CHƯA đăng nhập mà cố tình truy cập các trang nội bộ -> Chặn và đẩy về trang login
+if (!$isLoggedIn && !in_array($route, $publicRoutes, true)) {
+    $_SESSION['flash_error'] = "Vui lòng đăng nhập để truy cập hệ thống!";
+    header("Location: index.php?route=auth/login");
+    exit;
+}
+
+// Phân quyền chặt chẽ cho Khách thuê (role === 'tenant')
+// Khách chỉ được xem Cổng Khách Thuê và các route con của mình, tuyệt đối cấm vào trang quản lý
+if ($isLoggedIn && $currentUserRole === 'tenant') {
+    $tenantAllowedRoutes = [
+        'tenant',
+        'tenant/portal',
+        'tenant/dashboard',
+        'tenant/request',
+        'tenant/contract-pdf',
+        'tenant/invoice-detail',
+        'tenant/contract',
+        'api/tenant/contract',
+        'api/reports/summary',
+        'api/reports/revenue',
+        'api/reports/debt',
+        'api/reports/utilities',
+        'auth/logout',
+        'showcase',
+        'web360',
+        'xemphong'
+    ];
+
+    if (!in_array($route, $tenantAllowedRoutes, true)) {
+        $_SESSION['flash_error'] = "Tài khoản khách thuê không có quyền truy cập vào khu vực quản trị nội bộ!";
+        header("Location: index.php?route=tenant/portal");
+        exit;
+    }
+}
+
+// Phân quyền chặt chẽ cho Quản lý Tòa nhà (role === 'manager' hoặc 'landlord')
+// Quản lý KHÔNG được vào trang Quản lý các Tòa nhà (dashboard) và KHÔNG được quản lý tài khoản (accounts, users)
+if ($isLoggedIn && in_array($currentUserRole, ['manager', 'landlord'], true)) {
+    if ($route === 'dashboard') {
+        header("Location: index.php?route=overview");
+        exit;
+    }
+    if (in_array($route, ['accounts', 'users'], true)) {
+        $_SESSION['flash_error'] = "Quản lý không có quyền quản lý tài khoản người dùng và khách thuê!";
+        header("Location: index.php?route=overview");
+        exit;
+    }
+}
+
 // Nạp các Controller cần thiết
 require_once __DIR__ . '/app/Controllers/DashboardController.php';
 require_once __DIR__ . '/app/Controllers/AuthController.php';
@@ -25,11 +109,20 @@ require_once __DIR__ . '/app/Controllers/TenantController.php';
 require_once __DIR__ . '/app/Controllers/ContractController.php';
 require_once __DIR__ . '/app/Controllers/UtilitiesController.php';
 require_once __DIR__ . '/app/Controllers/InvoiceController.php';
+require_once __DIR__ . '/app/Controllers/AccountController.php';
+require_once __DIR__ . '/app/Controllers/TenantPortalController.php';
+require_once __DIR__ . '/app/Controllers/ReportApiController.php';
 
 // ==========================================
-// 2. BỘ ĐIỀU HƯỚNG CÁC TRANG (ROUTER)
+// 3. BỘ ĐIỀU HƯỚNG CÁC TRANG (ROUTER)
 // ==========================================
 switch ($route) {
+    // --- QUẢN LÝ TÀI KHOẢN (ADMIN & QUẢN LÝ) ---
+    case 'accounts':
+    case 'users':
+        (new AccountController())->index();
+        break;
+
     case 'dashboard':
         $dashboardController = new DashboardController();
         $dashboardController->index();
@@ -57,13 +150,13 @@ switch ($route) {
         $roomController->index();
         break;
 
-    // --- PHÂN HỆ QUẢN LÝ KHÁCH THUÊ (ĐANG XÂY DỰNG) ---
+    // --- PHÂN HỆ QUẢN LÝ KHÁCH THUÊ ---
     case 'tenants':
         (new TenantController())->index();
         break;
         
     // ==========================================
-    // PHÂN HỆ QUẢN LÝ HỢP ĐỒNG (HỦNG NGỌC PHỤ TRÁCH)
+    // PHÂN HỆ QUẢN LÝ HỢP ĐỒNG
     // ==========================================
     case 'contracts':
         $contractController = new ContractController();
@@ -115,6 +208,25 @@ switch ($route) {
         $contractController->delete();
         break;
 
+    // --- CỔNG THÔNG TIN KHÁCH THUÊ (TENANT PORTAL) ---
+    case 'tenant':
+    case 'tenant/portal':
+    case 'tenant/dashboard':
+        (new TenantPortalController())->index();
+        break;
+
+    case 'tenant/request':
+        (new TenantPortalController())->submitRequest();
+        break;
+
+    case 'tenant/contract-pdf':
+        (new TenantPortalController())->contractPdf();
+        break;
+
+    case 'tenant/invoice-detail':
+        (new TenantPortalController())->invoiceDetail();
+        break;
+
     case 'tenant/contract': // Xem hợp đồng dành cho phân quyền khách thuê
         $contractController = new ContractController();
         $contractController->tenantContract();
@@ -143,7 +255,7 @@ switch ($route) {
         $utilitiesController->searchApi();
         break;
 
-    // --- CÁC PHÂN HỆ ĐANG XÂY DỰNG ---
+    // --- PHÂN HỆ HÓA ĐƠN ---
     case 'invoices':
         (new InvoiceController())->index();
         break;
@@ -168,6 +280,14 @@ switch ($route) {
         (new InvoiceController())->delete();
         break;
 
+    case 'invoices/update-deposit':
+        (new InvoiceController())->updateDeposit();
+        break;
+
+    case 'invoices/add-expense':
+        (new InvoiceController())->addExpense();
+        break;
+
     case 'invoices/export':
         (new InvoiceController())->export();
         break;
@@ -176,10 +296,23 @@ switch ($route) {
         header("Location: index.php?route=overview");
         exit;
 
-    case 'web360':
-    case 'xemphong':
-        header("Location: TrangXemPhong/");
-        exit;
+    // ==============================================================================
+    // PHÂN HỆ API BÁO CÁO DOANH THU, CÔNG NỢ, ĐIỆN NƯỚC (NGƯỜI 5 — ĐỖ MINH NGUYỆT)
+    // ==============================================================================
+    case 'api/reports/summary':
+        (new ReportApiController())->summary();
+        break;
+
+    case 'api/reports/revenue':
+        (new ReportApiController())->revenue();
+        break;
+
+    case 'api/reports/debt':
+        (new ReportApiController())->debt();
+        break;
+
+    case 'api/reports/utilities':
+        (new ReportApiController())->utilities();
         break;
 
     default:

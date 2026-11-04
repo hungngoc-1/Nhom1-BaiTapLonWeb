@@ -1,11 +1,14 @@
 <?php
 require_once __DIR__ . '/../Models/TenantModel.php';
+require_once __DIR__ . '/../Models/RoomModel.php';
 
 class TenantController {
     private TenantModel $model;
+    private RoomModel $roomModel;
 
     public function __construct() {
         $this->model = new TenantModel();
+        $this->roomModel = new RoomModel();
     }
 
     public function index(): void {
@@ -27,38 +30,94 @@ class TenantController {
             $action = $_POST['action'] ?? '';
 
             if ($action === 'create') {
-                $username = trim($_POST['username'] ?? '');
-                $password = trim($_POST['password'] ?? '123456');
-                $fullName = trim($_POST['full_name'] ?? '');
-                $phone    = trim($_POST['phone'] ?? '');
-                $email    = trim($_POST['email'] ?? '');
+                $fullName         = trim($_POST['full_name'] ?? '');
+                $cccd             = trim($_POST['cccd'] ?? '');
+                $phone            = trim($_POST['phone'] ?? '');
+                $birthday         = trim($_POST['birthday'] ?? '');
+                $gender           = trim($_POST['gender'] ?? 'Nam');
+                $email            = trim($_POST['email'] ?? '');
+                $occupation       = trim($_POST['occupation'] ?? '');
+                $hometown         = trim($_POST['hometown'] ?? '');
+                $emergencyContact = trim($_POST['emergency_contact'] ?? '');
+                $status           = trim($_POST['status'] ?? 'Đang thuê');
+                $roomId           = (int)($_POST['room_id'] ?? 0);
+                $roommateName     = trim($_POST['roommate_name'] ?? '');
+                $roommatePhone    = trim($_POST['roommate_phone'] ?? '');
 
-                if ($username === '' || $fullName === '' || $phone === '' || $email === '') {
-                    $_SESSION['tenant_flash_error'] = 'Vui lòng nhập đầy đủ Họ tên, Tài khoản, SĐT và Email!';
+                if ($fullName === '' || $phone === '') {
+                    $_SESSION['tenant_flash_error'] = 'Vui lòng nhập đầy đủ Họ và tên và Số điện thoại khách thuê!';
                 } else {
                     try {
-                        $this->model->createTenant($username, $password !== '' ? $password : '123456', $fullName, $phone, $email);
-                        $_SESSION['tenant_flash_success'] = "Đã thêm khách thuê '{$fullName}' vào hệ thống!";
+                        $newTenantId = $this->model->createTenantFull(
+                            $fullName,
+                            $cccd,
+                            $phone,
+                            $birthday ?: null,
+                            $gender,
+                            $email,
+                            $occupation,
+                            $hometown,
+                            $emergencyContact,
+                            $status,
+                            $roommateName ?: null,
+                            $roommatePhone ?: null
+                        );
+
+                        if ($roomId > 0) {
+                            $this->model->assignRoomToTenant($newTenantId, $roomId, $roommateName, $roommatePhone);
+                            $_SESSION['tenant_flash_success'] = "Đã thêm khách thuê '{$fullName}' và gán vào phòng thành công! Tài khoản đăng nhập: {$phone} (Mật khẩu: 123)";
+                        } else {
+                            $_SESSION['tenant_flash_success'] = "Đã thêm khách thuê '{$fullName}' thành công! Tài khoản đăng nhập: {$phone} (Mật khẩu: 123)";
+                        }
                     } catch (PDOException $e) {
-                        $_SESSION['tenant_flash_error'] = 'Không thể thêm: Tên đăng nhập hoặc Email đã tồn tại trong CSDL!';
+                        $_SESSION['tenant_flash_error'] = 'Lỗi lưu thông tin: ' . $e->getMessage();
                     }
                 }
                 header("Location: index.php?route=tenants");
                 exit;
             } elseif ($action === 'update') {
-                $id       = (int)($_POST['id'] ?? 0);
-                $fullName = trim($_POST['full_name'] ?? '');
-                $phone    = trim($_POST['phone'] ?? '');
-                $email    = trim($_POST['email'] ?? '');
+                $id               = (int)($_POST['id'] ?? 0);
+                $fullName         = trim($_POST['full_name'] ?? '');
+                $cccd             = trim($_POST['cccd'] ?? '');
+                $phone            = trim($_POST['phone'] ?? '');
+                $birthday         = trim($_POST['birthday'] ?? '');
+                $gender           = trim($_POST['gender'] ?? 'Nam');
+                $email            = trim($_POST['email'] ?? '');
+                $occupation       = trim($_POST['occupation'] ?? '');
+                $hometown         = trim($_POST['hometown'] ?? '');
+                $emergencyContact = trim($_POST['emergency_contact'] ?? '');
+                $status           = trim($_POST['status'] ?? 'Đang thuê');
+                $roomId           = (int)($_POST['room_id'] ?? 0);
+                $roommateName     = trim($_POST['roommate_name'] ?? '');
+                $roommatePhone    = trim($_POST['roommate_phone'] ?? '');
 
-                if ($id <= 0 || $fullName === '' || $phone === '' || $email === '') {
+                if ($id <= 0 || $fullName === '' || $phone === '') {
                     $_SESSION['tenant_flash_error'] = 'Vui lòng nhập đầy đủ thông tin khách thuê!';
                 } else {
                     try {
-                        $this->model->updateTenant($id, $fullName, $phone, $email);
-                        $_SESSION['tenant_flash_success'] = "Đã cập nhật thông tin khách thuê '{$fullName}' thành công!";
+                        $this->model->updateTenantFull(
+                            $id,
+                            $fullName,
+                            $cccd,
+                            $phone,
+                            $birthday ?: null,
+                            $gender,
+                            $email,
+                            $occupation,
+                            $hometown,
+                            $emergencyContact,
+                            $status,
+                            $roommateName ?: null,
+                            $roommatePhone ?: null
+                        );
+
+                        if ($roomId > 0) {
+                            $this->model->assignRoomToTenant($id, $roomId, $roommateName, $roommatePhone);
+                        }
+
+                        $_SESSION['tenant_flash_success'] = "Đã cập nhật thông tin khách thuê '{$fullName}' thành công! (Tài khoản: {$phone}, Mật khẩu: 123)";
                     } catch (PDOException $e) {
-                        $_SESSION['tenant_flash_error'] = 'Không thể cập nhật: Email đã bị trùng với tài khoản khác!';
+                        $_SESSION['tenant_flash_error'] = 'Không thể cập nhật: ' . $e->getMessage();
                     }
                 }
                 header("Location: index.php?route=tenants");
@@ -75,6 +134,26 @@ class TenantController {
                 }
                 header("Location: index.php?route=tenants");
                 exit;
+            } elseif ($action === 'approve_request') {
+                $reqId = (int)($_POST['request_id'] ?? 0);
+                $note = trim($_POST['manager_note'] ?? 'Đã xác nhận và cập nhật thông tin.');
+                if ($reqId > 0 && $this->portalModel->approveRequest($reqId, $note)) {
+                    $_SESSION['tenant_flash_success'] = 'Đã phê duyệt yêu cầu và tự động cập nhật thông tin khách thuê!';
+                } else {
+                    $_SESSION['tenant_flash_error'] = 'Không thể phê duyệt yêu cầu.';
+                }
+                header("Location: index.php?route=tenants");
+                exit;
+            } elseif ($action === 'reject_request') {
+                $reqId = (int)($_POST['request_id'] ?? 0);
+                $note = trim($_POST['manager_note'] ?? 'Yêu cầu không được phê duyệt.');
+                if ($reqId > 0 && $this->portalModel->rejectRequest($reqId, $note)) {
+                    $_SESSION['tenant_flash_success'] = 'Đã từ chối yêu cầu điều chỉnh.';
+                } else {
+                    $_SESSION['tenant_flash_error'] = 'Không thể từ chối yêu cầu.';
+                }
+                header("Location: index.php?route=tenants");
+                exit;
             }
         }
 
@@ -84,11 +163,12 @@ class TenantController {
 
         $keyword    = trim($_GET['keyword'] ?? '');
         $stayStatus = trim($_GET['stay_status'] ?? '');
+        $selectedRoomId = (int)($_GET['room_id'] ?? 0);
 
-        $stats   = $this->model->getTenantStats();
-        $tenants = $this->model->getTenants($keyword, $stayStatus);
+        $stats    = $this->model->getTenantStats();
+        $tenants  = $this->model->getTenants($keyword, $stayStatus);
+        $allRooms = $this->roomModel->getRooms();
 
         require_once __DIR__ . '/../views/tenants/index.php';
     }
 }
-?>

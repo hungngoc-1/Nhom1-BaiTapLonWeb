@@ -137,10 +137,22 @@ class AuthController {
                 $_SESSION['phone'] = $user['phone'] ?? '';
                 $_SESSION['email'] = $user['email'] ?? '';
                 $_SESSION['role'] = $user['role'];
+                $_SESSION['user'] = $user;
                 unset($_SESSION['old_username']);
 
                 $_SESSION['flash_success'] = "Đăng nhập thành công! Xin chào " . $user['full_name'] . ".";
-                header("Location: index.php?route=dashboard");
+                if (($user['role'] ?? '') === 'admin') {
+                    header("Location: index.php?route=dashboard");
+                } elseif (($user['role'] ?? '') === 'tenant') {
+                    header("Location: index.php?route=tenant/portal");
+                } else {
+                    require_once __DIR__ . '/../Models/ReportModel.php';
+                    $reportModel = new ReportModel();
+                    $allowed = $reportModel->getAllowedBuildingIds();
+                    $assignedBuilding = reset($allowed) ?: 'A';
+                    $_SESSION['selected_building_id'] = $assignedBuilding;
+                    header("Location: index.php?route=overview&building_id=" . urlencode($assignedBuilding));
+                }
                 exit;
             } else {
                 $_SESSION['flash_error'] = "Tên đăng nhập hoặc mật khẩu không chính xác.";

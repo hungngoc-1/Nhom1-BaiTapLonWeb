@@ -12,6 +12,7 @@ class ReportModel {
             session_start();
         }
         $this->initDefaultBuildings();
+        $this->initDefaultRoomTypes();
     }
 
     /**
@@ -20,8 +21,118 @@ class ReportModel {
      * - Tòa B: Tầng 2 (P201, P202...)
      * - Tòa C: Tầng 3 (P301, P302...)
      */
+    
+    /**
+     * Khởi tạo danh mục các Loại phòng / Hạng phòng tiêu biểu trong hệ thống
+     */
+    public function initDefaultRoomTypes(): void {
+        if (empty($_SESSION['room_types'])) {
+            $_SESSION['room_types'] = [
+                'RT01' => [
+                    'id'          => 'RT01',
+                    'name'        => 'Phòng Đơn Tiêu Chuẩn',
+                    'price'       => 2800000,
+                    'area'        => '18 - 22m²',
+                    'amenities'   => 'Điều hòa, Nóng lạnh, Giường đệm, Tủ quần áo',
+                    'badge_color' => '#0284c7'
+                ],
+                'RT02' => [
+                    'id'          => 'RT02',
+                    'name'        => 'Phòng Studio Full Nội Thất',
+                    'price'       => 3800000,
+                    'area'        => '25 - 28m²',
+                    'amenities'   => 'Bếp riêng, Tủ lạnh, Máy giặt, Sofa, Ban công',
+                    'badge_color' => '#308f86'
+                ],
+                'RT03' => [
+                    'id'          => 'RT03',
+                    'name'        => 'Phòng Duplex Gác Lửng',
+                    'price'       => 4500000,
+                    'area'        => '32 - 36m²',
+                    'amenities'   => 'Gác lửng đúc cao cấp, Bếp từ, Tủ lạnh 2 cánh, Kính lớn',
+                    'badge_color' => '#7c3aed'
+                ],
+                'RT04' => [
+                    'id'          => 'RT04',
+                    'name'        => 'Căn Hộ 1 Phòng Ngủ (1PN)',
+                    'price'       => 5500000,
+                    'area'        => '40 - 45m²',
+                    'amenities'   => '1PN + 1 Khách, Khóa vân tay, Đầy đủ thiết bị cao cấp',
+                    'badge_color' => '#d97706'
+                ],
+                'RT05' => [
+                    'id'          => 'RT05',
+                    'name'        => 'Phòng Ban Công Thoáng Mát',
+                    'price'       => 3300000,
+                    'area'        => '22 - 25m²',
+                    'amenities'   => 'Ban công đón nắng, Điều hòa Inverter, Nóng lạnh, Bàn làm việc',
+                    'badge_color' => '#059669'
+                ]
+            ];
+        }
+    }
+
+    public function getRoomTypes(): array {
+        $this->initDefaultRoomTypes();
+        return $_SESSION['room_types'] ?? [];
+    }
+
+    public function addRoomType(string $name, float $price, string $area, string $amenities): string {
+        $this->initDefaultRoomTypes();
+        $id = 'RT' . str_pad((string)(count($_SESSION['room_types']) + 1), 2, '0', STR_PAD_LEFT);
+        if (isset($_SESSION['room_types'][$id])) {
+            $id = 'RT' . rand(10, 99);
+        }
+        $_SESSION['room_types'][$id] = [
+            'id'          => $id,
+            'name'        => $name,
+            'price'       => $price,
+            'area'        => $area !== '' ? $area : '25m²',
+            'amenities'   => $amenities !== '' ? $amenities : 'Đầy đủ tiện nghi',
+            'badge_color' => '#308f86'
+        ];
+        return $id;
+    }
+    /**
+     * Lấy thông tin tòa nhà được phân công của Quản lý đang đăng nhập
+     * Trả về null nếu là Admin (Toàn quyền, không bị giới hạn)
+     */
+    public static function getManagerBuildingInfo(): ?array {
+        if (session_status() === PHP_SESSION_NONE) session_start();
+        $role = $_SESSION['role'] ?? '';
+        if ($role !== 'manager' && $role !== 'landlord') {
+            return null; // Admin không bị giới hạn
+        }
+
+        $username = (string)($_SESSION['username'] ?? '');
+        $userId   = (int)($_SESSION['user_id'] ?? 0);
+
+        if ($username === 'quanly_a' || $userId === 2) {
+            return ['id' => 1, 'code' => 'A', 'prefix' => 'A', 'name' => 'Tòa A - StayMate Sunrise'];
+        } elseif ($username === 'quanly_b' || $userId === 3) {
+            return ['id' => 2, 'code' => 'B', 'prefix' => 'B', 'name' => 'Tòa B - StayMate Emerald'];
+        } elseif ($username === 'quanly_c' || $userId === 4) {
+            return ['id' => 3, 'code' => 'C', 'prefix' => 'C', 'name' => 'Tòa C - StayMate Horizon'];
+        }
+
+        try {
+            $db = Database::getConnection();
+            $stmt = $db->prepare("SELECT id, name FROM buildings WHERE manager_id = :uid LIMIT 1");
+            $stmt->execute([':uid' => $userId]);
+            $row = $stmt->fetch(PDO::FETCH_ASSOC);
+            if ($row) {
+                $bId = (int)$row['id'];
+                $code = $bId === 1 ? 'A' : ($bId === 2 ? 'B' : 'C');
+                return ['id' => $bId, 'code' => $code, 'prefix' => $code, 'name' => $row['name']];
+            }
+        } catch (Exception $e) {}
+
+        return ['id' => 1, 'code' => 'A', 'prefix' => 'A', 'name' => 'Tòa A - StayMate Sunrise'];
+    }
+
     private function initDefaultBuildings(): void {
-        if (empty($_SESSION['buildings_config'])) {
+        $needReset = empty($_SESSION['buildings_config']) || ($_SESSION['buildings_config']['A']['room_prefix'] ?? '') !== 'A' || ($_SESSION['buildings_config']['B']['room_prefix'] ?? '') !== 'B' || ($_SESSION['buildings_config']['C']['room_prefix'] ?? '') !== 'C';
+        if ($needReset) {
             $_SESSION['buildings_config'] = [
                 'A' => [
                     'id'          => 'A',
@@ -29,8 +140,8 @@ class ReportModel {
                     'name'        => 'Tòa A - StayMate Sunrise',
                     'address'     => 'Số 128 Cầu Giấy, Quận Cầu Giấy, TP. Hà Nội',
                     'manager'     => 'Quản lý Tòa A (Nguyễn Văn Quản)',
-                    'manager_acc' => 'quanly_a',
-                    'room_prefix' => 'A',
+                    'manager_acc' => 'nhanvien',
+                    'room_prefix' => 'P1',
                     'theme'       => 'teal'
                 ],
                 'B' => [
@@ -40,7 +151,7 @@ class ReportModel {
                     'address'     => 'Số 45 Nguyễn Chí Thanh, Quận Đống Đa, TP. Hà Nội',
                     'manager'     => 'Quản lý Tòa B (Trần Thị Bích)',
                     'manager_acc' => 'quanly_b',
-                    'room_prefix' => 'B',
+                    'room_prefix' => 'P2',
                     'theme'       => 'blue'
                 ],
                 'C' => [
@@ -50,18 +161,66 @@ class ReportModel {
                     'address'     => 'Số 88 Nguyễn Trãi, Quận Thanh Xuân, TP. Hà Nội',
                     'manager'     => 'Quản lý Tòa C (Lê Hoàng Nam)',
                     'manager_acc' => 'quanly_c',
-                    'room_prefix' => 'C',
+                    'room_prefix' => 'P3',
                     'theme'       => 'yellow'
                 ]
             ];
         }
     }
 
+    
+    /**
+     * Lấy danh sách ID các tòa nhà mà tài khoản hiện tại được phép quản lý / truy cập
+     * - Admin: Được xem và quản lý tất cả các tòa (all)
+     * - Quản lý (landlord): Chỉ xem và quản lý đúng tòa nhà được phân công
+     * - Khách thuê (tenant): Xem tòa nhà có phòng đang thuê
+     */
+    public function getAllowedBuildingIds(): array {
+        if (session_status() === PHP_SESSION_NONE) session_start();
+        $role     = $_SESSION['role'] ?? 'admin';
+        $username = $_SESSION['username'] ?? '';
+        $allBlds  = $this->getBuildingsConfig();
+
+        if ($role === 'admin') {
+            return array_keys($allBlds);
+        }
+
+        if ($role === 'landlord') {
+            $allowed = [];
+            foreach ($allBlds as $bId => $bInfo) {
+                $acc = $bInfo['manager_acc'] ?? '';
+                if (
+                    strcasecmp($acc, $username) === 0 ||
+                    ($bId === 'A' && in_array($username, ['quanly_a', 'nhanvien', 'quanly'])) ||
+                    ($bId === 'B' && in_array($username, ['quanly_b'])) ||
+                    ($bId === 'C' && in_array($username, ['quanly_c']))
+                ) {
+                    $allowed[] = (string)$bId;
+                }
+            }
+            return !empty($allowed) ? $allowed : ['A'];
+        }
+
+        // Khách thuê (tenant): tìm tòa dựa vào phòng đang có hợp đồng
+        if ($role === 'tenant') {
+            $userId = (int)($_SESSION['user_id'] ?? 0);
+            $stmt = $this->conn->prepare("SELECT r.room_number FROM contracts c JOIN rooms r ON c.room_id = r.id WHERE c.tenant_id = :uid LIMIT 1");
+            $stmt->execute([':uid' => $userId]);
+            $rn = (string)$stmt->fetchColumn();
+            if (str_starts_with($rn, 'P1')) return ['A'];
+            if (str_starts_with($rn, 'P2')) return ['B'];
+            if (str_starts_with($rn, 'P3')) return ['C'];
+            return ['A'];
+        }
+
+        return array_keys($allBlds);
+    }
+
     public function getBuildingsConfig(): array {
         return $_SESSION['buildings_config'] ?? [];
     }
 
-    public function addBuilding(string $code, string $name, string $address, string $manager, string $managerAcc, string $roomPrefix, string $theme = 'teal'): string {
+    public function addBuilding(string $code, string $name, string $address, string $manager, string $managerAcc, string $roomPrefix, string $theme = 'teal', array $roomTypes = [], string $managerPhone = '', string $managerEmail = ''): string {
         $id = strtoupper(preg_replace('/[^A-Za-z0-9]/', '', str_replace('BLD-', '', $code)));
         if ($id === '' || isset($_SESSION['buildings_config'][$id])) {
             $id = 'B' . count($_SESSION['buildings_config']) . rand(10, 99);
@@ -74,25 +233,33 @@ class ReportModel {
             'code'        => $code !== '' ? strtoupper($code) : ('BLD-' . $id),
             'name'        => $name,
             'address'     => $address !== '' ? $address : 'TP. Hà Nội',
-            'manager'     => $manager !== '' ? $manager : 'Quản Trị Viên',
-            'manager_acc' => $managerAcc !== '' ? $managerAcc : 'admin01',
+            'manager'       => $manager !== '' ? $manager : 'Quản Trị Viên',
+            'manager_acc'   => $managerAcc !== '' ? $managerAcc : 'admin01',
+            'manager_phone' => $managerPhone !== '' ? $managerPhone : '',
+            'manager_email' => $managerEmail !== '' ? $managerEmail : ($managerAcc !== '' ? $managerAcc . '@nhatro.com' : ''),
             'room_prefix' => strtoupper($roomPrefix),
+            'room_types'  => !empty($roomTypes) ? $roomTypes : ['Phòng Đơn Tiêu Chuẩn'],
             'theme'       => in_array($theme, ['teal', 'blue', 'yellow'], true) ? $theme : 'teal'
         ];
         return $id;
     }
 
-    public function updateBuilding(string $id, string $code, string $name, string $address, string $manager, string $managerAcc, string $roomPrefix): bool {
+    public function updateBuilding(string $id, string $code, string $name, string $address, string $manager, string $managerAcc, string $roomPrefix = '', array $roomTypes = [], string $managerPhone = '', string $managerEmail = ''): bool {
         if (!isset($_SESSION['buildings_config'][$id])) {
             return false;
         }
         $_SESSION['buildings_config'][$id]['code']        = $code !== '' ? strtoupper($code) : $_SESSION['buildings_config'][$id]['code'];
         $_SESSION['buildings_config'][$id]['name']        = $name;
         $_SESSION['buildings_config'][$id]['address']     = $address;
-        $_SESSION['buildings_config'][$id]['manager']     = $manager;
-        $_SESSION['buildings_config'][$id]['manager_acc'] = $managerAcc;
+        $_SESSION['buildings_config'][$id]['manager']       = $manager;
+        $_SESSION['buildings_config'][$id]['manager_acc']   = $managerAcc;
+        $_SESSION['buildings_config'][$id]['manager_phone'] = $managerPhone;
+        $_SESSION['buildings_config'][$id]['manager_email'] = $managerEmail;
         if ($roomPrefix !== '') {
             $_SESSION['buildings_config'][$id]['room_prefix'] = strtoupper($roomPrefix);
+        }
+        if (!empty($roomTypes)) {
+            $_SESSION['buildings_config'][$id]['room_types'] = $roomTypes;
         }
         return true;
     }
@@ -126,6 +293,12 @@ class ReportModel {
             $rooms = $this->getRoomsList($id);
             $invoices = $this->getDebtList('', '', $id);
 
+            if (empty($bld['room_types'])) {
+                if ($id === 'A') $bld['room_types'] = ['Phòng Đơn Tiêu Chuẩn', 'Phòng Ban Công Thoáng Mát'];
+                elseif ($id === 'B') $bld['room_types'] = ['Phòng Studio Full Nội Thất', 'Phòng Ban Công Thoáng Mát'];
+                elseif ($id === 'C') $bld['room_types'] = ['Phòng Studio Full Nội Thất', 'Phòng Duplex Gác Lửng', 'Căn Hộ 1 Phòng Ngủ (1PN)'];
+                else $bld['room_types'] = ['Phòng Tiêu Chuẩn'];
+            }
             $bld['total_rooms']      = $stats['total_rooms'];
             $bld['rented_rooms']     = $stats['rented_rooms'];
             $bld['empty_rooms']      = $stats['empty_rooms'];

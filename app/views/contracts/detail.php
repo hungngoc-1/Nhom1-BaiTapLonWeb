@@ -46,6 +46,16 @@ $durationDays = max(1, (int)round(($endTs - $startTs) / 86400));
         .navbar-custom { background: #ffffff; padding: 12px 20px; box-shadow: 0 4px 20px rgba(0, 0, 0, 0.04); z-index: 100; border-bottom: 1px solid #f1f5f9; }
         .brand-text { color: var(--teal-main); font-weight: 900; font-size: 1.4rem; }
         .text-teal-main { color: var(--teal-main) !important; }
+        .nav-pills { gap: 6px; flex-wrap: nowrap !important; }
+        .nav-pills .nav-link { 
+            color: #475569; font-weight: 800; font-size: 0.88rem; 
+            padding: 8px 14px; border-radius: 50px; transition: all 0.2s; white-space: nowrap; 
+        }
+        .nav-pills .nav-link i { margin-right: 6px; }
+        .nav-pills .nav-link:hover { color: var(--teal-main); background: #f0fdfa; }
+        .nav-pills .nav-link.active { background-color: var(--teal-main); color: white; box-shadow: 0 6px 15px rgba(48, 143, 134, 0.35); }
+        .avatar-circle { width: 46px; height: 46px; background-color: var(--teal-main); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-weight: 900; font-size: 1rem; border: 3px solid #ffffff; box-shadow: 0 6px 15px rgba(48, 143, 134, 0.4); transition: 0.2s; }
+        .btn-back-content { background: white; border: 3px solid #ffffff; color: #334155; font-weight: 800; font-size: 0.9rem; padding: 8px 22px; border-radius: 50px; text-decoration: none; display: inline-flex; align-items: center; box-shadow: 0 8px 20px rgba(0,0,0,0.08); }
         .btn-teal-custom { background: var(--teal-main); border-radius: 50px; font-weight: 800; color: white; padding: 9px 22px; border: 2px solid var(--teal-hover); box-shadow: 0 8px 20px rgba(48, 143, 134, 0.35); font-size: 0.88rem; }
         .btn-teal-custom:hover { background: var(--teal-hover); color: white; }
         .btn-back-content { background: white; border: 2px solid #e2e8f0; color: #334155; font-weight: 800; font-size: 0.88rem; padding: 8px 20px; border-radius: 50px; text-decoration: none; display: inline-flex; align-items: center; }
@@ -86,13 +96,38 @@ $durationDays = max(1, (int)round(($endTs - $startTs) / 86400));
                 <i class="fa-solid fa-house-chimney text-teal-main fs-4"></i>
                 <div class="brand-text">StayMate</div>
             </a>
-            <div class="d-flex align-items-center gap-3">
-                <a href="index.php?route=tenant/contract&id=<?= (int)$contract['id'] ?>" class="btn btn-sm btn-outline-teal rounded-pill px-3 fw-bold" target="_blank" style="border-color:var(--teal-main); color:var(--teal-main);">
-                    <i class="fa-solid fa-user-shield me-1"></i> Mở Trang Phân Quyền Khách Thuê
-                </a>
-                <a href="index.php?route=contracts" class="btn btn-sm btn-light border rounded-pill px-3 fw-bold">
-                    <i class="fa-solid fa-arrow-left me-1"></i> Quay lại DS Hợp đồng
-                </a>
+            <ul class="nav nav-pills flex-nowrap me-auto d-none d-lg-flex">
+                <li class="nav-item"><a class="nav-link" href="index.php?route=overview"><i class="fa-solid fa-border-all"></i> Tổng quan</a></li>
+                <li class="nav-item"><a class="nav-link" href="index.php?route=rooms"><i class="fa-solid fa-bed"></i> Phòng trọ</a></li>
+                <li class="nav-item"><a class="nav-link" href="index.php?route=tenants"><i class="fa-solid fa-users"></i> Khách thuê</a></li>
+                <li class="nav-item"><a class="nav-link active" href="index.php?route=contracts"><i class="fa-solid fa-file-signature"></i> Hợp đồng</a></li>
+                <li class="nav-item"><a class="nav-link" href="index.php?route=utilities"><i class="fa-solid fa-bolt"></i> Điện Nước</a></li>
+                <li class="nav-item"><a class="nav-link" href="index.php?route=showcase" target="_blank"><i class="fa-regular fa-eye"></i> Xem phòng khách</a></li>
+            </ul>
+            <div class="d-flex align-items-center gap-4">
+                <div class="dropdown">
+                    <div class="d-flex align-items-center gap-2 cursor-pointer" data-bs-toggle="dropdown" style="cursor: pointer;">
+                        <div class="avatar-circle">AS</div>
+                        <div class="text-start d-none d-sm-block lh-sm">
+                            <div class="fw-bold text-dark" style="font-size: 0.9rem;"><?= htmlspecialchars($_SESSION['full_name'] ?? 'Quản trị viên Hệ thống') ?> <i class="fa-solid fa-angle-down ms-1 text-muted fs-6"></i></div>
+                            <div class="text-muted text-capitalize" style="font-size: 0.75rem;"><?= htmlspecialchars($_SESSION['role'] ?? 'admin') ?></div>
+                        </div>
+                    </div>
+                    <ul class="dropdown-menu dropdown-menu-end shadow border-0 rounded-4 mt-2 p-2">
+                        <li>
+                            <button type="button" class="dropdown-item rounded-3 py-2 fw-bold" data-bs-toggle="modal" data-bs-target="#profileModal">
+                                <i class="fa-solid fa-id-card me-2 text-teal-main" style="color:#308f86;"></i> Thông tin tài khoản
+                            </button>
+                        </li>
+                        <li>
+                            <button type="button" class="dropdown-item rounded-3 py-2 fw-bold" data-bs-toggle="modal" data-bs-target="#changePasswordModal">
+                                <i class="fa-solid fa-key me-2 text-warning"></i> Đổi mật khẩu
+                            </button>
+                        </li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li><a class="dropdown-item rounded-3 py-2 text-danger fw-bold" href="index.php?route=auth/logout"><i class="fa-solid fa-right-from-bracket me-2"></i> Đăng xuất</a></li>
+                    </ul>
+                </div>
             </div>
         </div>
     </nav>
@@ -500,5 +535,68 @@ $durationDays = max(1, (int)round(($endTs - $startTs) / 86400));
         }
     });
     </script>
+
+    <!-- MODAL DOI MAT KHAU -->
+    <div class="modal fade" id="changePasswordModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content border-0 shadow-lg rounded-4">
+                <div class="modal-header bg-light rounded-top-4">
+                    <h5 class="modal-title fw-bold text-teal-main"><i class="fa-solid fa-key me-2 text-warning"></i> Đổi Mật Khẩu</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <form method="POST" action="index.php?route=dashboard">
+                    <input type="hidden" name="action" value="change_password">
+                    <div class="modal-body p-4">
+                        <div class="mb-3">
+                            <label class="form-label fw-bold small text-muted">Mật khẩu hiện tại</label>
+                            <input type="password" name="old_password" class="form-control rounded-3" placeholder="Nhập mật khẩu hiện tại" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label fw-bold small text-muted">Mật khẩu mới</label>
+                            <input type="password" name="new_password" class="form-control rounded-3" placeholder="Nhập mật khẩu mới" required minlength="4">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label fw-bold small text-muted">Xác nhận mật khẩu mới</label>
+                            <input type="password" name="confirm_password" class="form-control rounded-3" placeholder="Nhập lại mật khẩu mới" required minlength="4">
+                        </div>
+                    </div>
+                    <div class="modal-footer bg-light">
+                        <button type="button" class="btn btn-outline-secondary rounded-pill px-4" data-bs-dismiss="modal">Hủy</button>
+                        <button type="submit" class="btn btn-teal-custom px-4" style="background:#308f86;color:#fff;border-radius:50px;"><i class="fa-solid fa-check me-1"></i> Lưu thay đổi</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL THONG TIN TAI KHOAN -->
+    <div class="modal fade" id="profileModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content border-0 shadow-lg rounded-4">
+                <div class="modal-header bg-light rounded-top-4">
+                    <h5 class="modal-title fw-bold text-teal-main"><i class="fa-solid fa-user-shield me-2"></i> Thông tin Tài khoản</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body p-4">
+                    <div class="d-flex align-items-center gap-3 mb-3">
+                        <div class="rounded-circle text-white d-flex align-items-center justify-content-center fw-bold fs-4" style="width:60px; height:60px; background:#308f86;">AS</div>
+                        <div>
+                            <h5 class="fw-bold mb-0"><?= htmlspecialchars($_SESSION['full_name'] ?? 'Quản trị viên Hệ thống') ?></h5>
+                            <span class="badge bg-success rounded-pill text-uppercase"><?= htmlspecialchars($_SESSION['role'] ?? 'admin') ?></span>
+                        </div>
+                    </div>
+                    <ul class="list-group list-group-flush border rounded-3">
+                        <li class="list-group-item d-flex justify-content-between"><span class="text-muted">Tên đăng nhập:</span> <strong><?= htmlspecialchars($_SESSION['username'] ?? 'admin01') ?></strong></li>
+                        <li class="list-group-item d-flex justify-content-between"><span class="text-muted">Email:</span> <strong><?= htmlspecialchars($_SESSION['email'] ?? 'admin@nhatro.com') ?></strong></li>
+                        <li class="list-group-item d-flex justify-content-between"><span class="text-muted">Số điện thoại:</span> <strong><?= htmlspecialchars($_SESSION['phone'] ?? '0901234567') ?></strong></li>
+                    </ul>
+                </div>
+                <div class="modal-footer bg-light">
+                    <button type="button" class="btn btn-outline-secondary rounded-pill px-4" data-bs-dismiss="modal">Đóng</button>
+                    <a href="index.php?route=auth/logout" class="btn btn-danger rounded-pill px-4"><i class="fa-solid fa-right-from-bracket me-1"></i> Đăng xuất</a>
+                </div>
+            </div>
+        </div>
+    </div>
 </body>
 </html>

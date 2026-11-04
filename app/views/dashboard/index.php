@@ -1,5 +1,7 @@
 <?php
 date_default_timezone_set('Asia/Ho_Chi_Minh');
+$allowedBldIds = $allowedBldIds ?? ($this->reportModel->getAllowedBuildingIds());
+$userRole = $_SESSION['role'] ?? 'admin';
 $userFullName = $_SESSION['full_name'] ?? 'Quản trị viên Hệ thống';
 $userRole     = $_SESSION['role'] ?? 'admin';
 $userName     = $_SESSION['username'] ?? 'admin01';
@@ -245,14 +247,19 @@ if (!empty($filterBuilding) && $filterBuilding !== 'all' && isset($buildings[$fi
                     </div>
                     <ul class="dropdown-menu dropdown-menu-end shadow border-0 rounded-4 mt-2 p-2">
                         <li>
+                            <a class="dropdown-item rounded-3 py-2 fw-bold text-teal-main" href="index.php?route=tenant/portal" target="_blank">
+                                <i class="fa-solid fa-user-shield me-2 text-teal-main"></i> Cổng khách thuê
+                            </a>
+                        </li>
+                        <li>
                             <button type="button" class="dropdown-item rounded-3 py-2 fw-bold" data-bs-toggle="modal" data-bs-target="#profileModal">
-                                <i class="fa-solid fa-id-card me-2 text-teal-main"></i> Hồ sơ tài khoản
+                                <i class="fa-solid fa-id-card me-2 text-teal-main"></i> Thông tin tài khoản
                             </button>
                         </li>
                         <li>
-                            <a class="dropdown-item rounded-3 py-2 fw-bold" href="index.php?route=overview">
-                                <i class="fa-solid fa-chart-pie me-2 text-primary"></i> Trang Tổng quan
-                            </a>
+                            <button type="button" class="dropdown-item rounded-3 py-2 fw-bold" data-bs-toggle="modal" data-bs-target="#changePasswordModal">
+                                <i class="fa-solid fa-key me-2 text-warning"></i> Đổi mật khẩu
+                            </button>
                         </li>
                         <li><hr class="dropdown-divider"></li>
                         <li><a class="dropdown-item rounded-3 py-2 text-danger fw-bold" href="index.php?route=auth/logout"><i class="fa-solid fa-right-from-bracket me-2"></i> Đăng xuất</a></li>
@@ -368,33 +375,74 @@ if (!empty($filterBuilding) && $filterBuilding !== 'all' && isset($buildings[$fi
 
         <!-- Toolbar Tòa nhà -->
         <div class="d-flex flex-wrap justify-content-between align-items-center mb-4 gap-3">
-            <!-- Dropdown chọn Tòa nhà hoạt động thực tế -->
-            <div class="dropdown">
-                <button class="toolbar-select" type="button" data-bs-toggle="dropdown" aria-expanded="false">
-                    <i class="fa-solid fa-building"></i>
-                    Đang xem:
-                    <?php if ($filterBuilding === 'all' || !isset($buildings[$filterBuilding])): ?>
-                        Tất cả <?= $totalBuildingsCount ?> Tòa nhà
-                    <?php else: ?>
-                        <?= htmlspecialchars($buildings[$filterBuilding]['name']) ?>
-                    <?php endif; ?>
-                    <i class="fa-solid fa-angle-down ms-1"></i>
-                </button>
-                <ul class="dropdown-menu shadow border-0 rounded-4 p-2 mt-2">
-                    <li>
-                        <a class="dropdown-item rounded-3 py-2 fw-bold <?= $filterBuilding === 'all' ? 'bg-light text-teal-main' : '' ?>" href="index.php?route=dashboard&building_id=all">
-                            <i class="fa-solid fa-layer-group me-2 text-teal-main"></i> Tất cả <?= $totalBuildingsCount ?> Tòa nhà (<?= $stats['total_rooms'] ?> phòng)
-                        </a>
-                    </li>
-                    <li><hr class="dropdown-divider"></li>
-                    <?php foreach ($buildings as $bId => $bItem): ?>
+            <div class="d-flex flex-wrap align-items-center gap-2">
+                <!-- Dropdown chọn Tòa nhà đang xem -->
+                <div class="dropdown">
+                    <button class="toolbar-select" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                        <i class="fa-solid fa-building"></i>
+                        Đang xem:
+                        <?php if ($filterBuilding === 'all' || !isset($buildings[$filterBuilding])): ?>
+                            Tất cả <?= $totalBuildingsCount ?> Tòa nhà
+                        <?php else: ?>
+                            <?= htmlspecialchars($buildings[$filterBuilding]['name']) ?>
+                        <?php endif; ?>
+                        <i class="fa-solid fa-angle-down ms-1"></i>
+                    </button>
+                    <ul class="dropdown-menu shadow border-0 rounded-4 p-2 mt-2">
                         <li>
-                            <a class="dropdown-item rounded-3 py-2 fw-bold <?= $filterBuilding === (string)$bId ? 'bg-light text-teal-main' : '' ?>" href="index.php?route=dashboard&building_id=<?= urlencode((string)$bId) ?>">
-                                <i class="fa-solid fa-building me-2 text-teal-main"></i> <?= htmlspecialchars($bItem['name']) ?> (<?= $bItem['total_rooms'] ?> phòng)
+                            <a class="dropdown-item rounded-3 py-2 fw-bold <?= $filterBuilding === 'all' ? 'bg-light text-teal-main' : '' ?>" href="index.php?route=dashboard&building_id=all">
+                                <i class="fa-solid fa-layer-group me-2 text-teal-main"></i> Tất cả <?= $totalBuildingsCount ?> Tòa nhà (<?= $stats['total_rooms'] ?> phòng)
                             </a>
                         </li>
-                    <?php endforeach; ?>
-                </ul>
+                        <li><hr class="dropdown-divider"></li>
+                        <?php foreach ($buildings as $bId => $bItem): ?>
+                            <li>
+                                <a class="dropdown-item rounded-3 py-2 fw-bold <?= $filterBuilding === (string)$bId ? 'bg-light text-teal-main' : '' ?>" href="index.php?route=dashboard&building_id=<?= urlencode((string)$bId) ?>">
+                                    <i class="fa-solid fa-building me-2 text-teal-main"></i> <?= htmlspecialchars($bItem['name']) ?> (<?= $bItem['total_rooms'] ?> phòng)
+                                </a>
+                            </li>
+                        <?php endforeach; ?>
+                    </ul>
+                </div>
+
+                <!-- Ô Danh sách loại phòng bên cạnh chỗ Đang xem -->
+                <div class="dropdown">
+                    <button class="toolbar-select" type="button" data-bs-toggle="dropdown" aria-expanded="false" style="background:#ffffff; color:#0f766e; border: 1.5px solid #99f6e4;">
+                        <i class="fa-solid fa-shapes text-teal-main me-1"></i>
+                        Danh sách loại phòng
+                        <span class="badge rounded-pill ms-1" style="background:rgba(48,143,134,0.15); color:var(--teal-main); font-size:0.75rem;"><?= count($roomTypesList ?? []) ?></span>
+                        <i class="fa-solid fa-angle-down ms-1 text-muted" style="font-size:0.8rem;"></i>
+                    </button>
+                    <div class="dropdown-menu shadow-lg border-0 rounded-4 p-3 mt-2" style="min-width: 330px; max-width: 380px;">
+                        <div class="d-flex justify-content-between align-items-center mb-2 pb-2 border-bottom">
+                            <span class="fw-bold text-dark small"><i class="fa-solid fa-layer-group text-teal-main me-1"></i> Các Loại phòng hiện có</span>
+                            <button type="button" class="btn btn-sm btn-outline-teal-custom py-0 px-2" style="font-size:0.75rem; border-radius:12px;" data-bs-toggle="modal" data-bs-target="#addRoomTypeModal">
+                                <i class="fa-solid fa-plus me-1"></i> Thêm mới
+                            </button>
+                        </div>
+                        <div class="d-flex flex-column gap-2" style="max-height: 280px; overflow-y: auto;">
+                            <?php foreach (($roomTypesList ?? []) as $rtKey => $rtItem): ?>
+                                <div class="p-2 rounded-3 border bg-light-subtle">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <div class="fw-bold text-teal-main" style="font-size:0.85rem;">
+                                            <i class="fa-solid fa-tag me-1" style="font-size:0.75rem; color: <?= htmlspecialchars($rtItem['badge_color'] ?? '#308f86') ?>;"></i>
+                                            <?= htmlspecialchars($rtItem['name']) ?>
+                                        </div>
+                                        <span class="fw-bold text-danger" style="font-size:0.8rem;"><?= number_format($rtItem['price'], 0, ',', '.') ?> đ</span>
+                                    </div>
+                                    <div class="text-muted small mt-1 d-flex justify-content-between" style="font-size:0.75rem;">
+                                        <span><i class="fa-solid fa-vector-square me-1"></i>DT: <?= htmlspecialchars($rtItem['area'] ?? '--') ?></span>
+                                    </div>
+                                    <?php if (!empty($rtItem['amenities'])): ?>
+                                        <div class="text-secondary small mt-1" style="font-size:0.72rem; line-height: 1.3;">
+                                            <i class="fa-solid fa-check text-success me-1"></i><?= htmlspecialchars($rtItem['amenities']) ?>
+                                        </div>
+                                    <?php endif; ?>
+                                </div>
+                            <?php endforeach; ?>
+                        </div>
+                    </div>
+                </div>
             </div>
 
             <div class="d-flex flex-wrap gap-2">
@@ -403,6 +451,9 @@ if (!empty($filterBuilding) && $filterBuilding !== 'all' && isset($buildings[$fi
                         <i class="fa-solid fa-rotate-left me-1"></i> Hiện Tất cả <?= $totalBuildingsCount ?> Tòa
                     </a>
                 <?php endif; ?>
+                <button type="button" class="btn btn-outline-teal-custom" data-bs-toggle="modal" data-bs-target="#manageAccountsModal" style="border: 2px solid var(--teal-main); color: var(--teal-main); font-weight: 800; border-radius: 50px; padding: 10px 22px; background: #ffffff; display: inline-flex; align-items: center; transition: 0.2s;">
+                    <i class="fa-solid fa-users-gear me-2"></i> Quản lý Tài khoản
+                </button>
                 <button type="button" class="btn btn-teal-custom" data-bs-toggle="modal" data-bs-target="#addBuildingModal">
                     <i class="fa-solid fa-plus me-1"></i> Thêm Tòa nhà
                 </button>
@@ -411,7 +462,7 @@ if (!empty($filterBuilding) && $filterBuilding !== 'all' && isset($buildings[$fi
 
         <!-- Building Grid (Hiển thị số liệu thực tế từ CSDL cho từng Tòa nhà) -->
         <div class="row g-4 mb-4">
-            <?php foreach ($displayedBuildings as $bId => $bld): ?>
+            <?php foreach ($displayedBuildings as $bId => $bld): $isAllowed = true; ?>
                 <?php
                     $theme = $bld['theme'] ?? 'teal';
                     $badgeStyle = '';
@@ -427,7 +478,6 @@ if (!empty($filterBuilding) && $filterBuilding !== 'all' && isset($buildings[$fi
                     <div class="building-card">
                         <div class="position-relative z-2">
                             <span class="badge-bld" style="<?= $badgeStyle ?>"><?= htmlspecialchars($bld['code']) ?></span>
-                            <span class="badge bg-light text-secondary border ms-1" style="font-size:0.7rem;">Nhóm phòng <?= htmlspecialchars($bld['room_prefix']) ?>xx</span>
                         </div>
                         <div class="house-shadow"></div>
                         <svg class="house-img" viewBox="0 0 120 120">
@@ -484,12 +534,24 @@ if (!empty($filterBuilding) && $filterBuilding !== 'all' && isset($buildings[$fi
                             <i class="fa-solid fa-location-dot" style="color:var(--teal-main);"></i> <?= htmlspecialchars($bld['address']) ?>
                         </div>
                         
+                        
+                        
                         <div class="manager-info text-muted position-relative z-2">
-                            <span><i class="fa-solid fa-user-tie me-1"></i> Quản lý riêng:</span>
-                            <span class="text-dark fw-bold">
-                                <?= htmlspecialchars($bld['manager']) ?>
+                            <div>
+                                <i class="fa-solid fa-user-tie me-1 text-teal-main"></i> <strong>Quản lý riêng:</strong>
+                                <span class="text-dark fw-bold"><?= htmlspecialchars($bld['manager']) ?></span>
                                 <span style="color:var(--teal-main); font-weight:600;">(<?= htmlspecialchars($bld['manager_acc']) ?>)</span>
-                            </span>
+                            </div>
+                            <?php if (!empty($bld['manager_phone']) || !empty($bld['manager_email'])): ?>
+                                <div class="small mt-1 text-secondary" style="font-size: 0.76rem;">
+                                    <?php if (!empty($bld['manager_phone'])): ?>
+                                        <span class="me-2"><i class="fa-solid fa-phone me-1 text-teal-main"></i><?= htmlspecialchars($bld['manager_phone']) ?></span>
+                                    <?php endif; ?>
+                                    <?php if (!empty($bld['manager_email'])): ?>
+                                        <span><i class="fa-solid fa-envelope me-1 text-teal-main"></i><?= htmlspecialchars($bld['manager_email']) ?></span>
+                                    <?php endif; ?>
+                                </div>
+                            <?php endif; ?>
                         </div>
 
                         <!-- 3 ô số liệu Phòng lấy trực tiếp từ bảng `rooms` trong SQL -->
@@ -535,11 +597,50 @@ if (!empty($filterBuilding) && $filterBuilding !== 'all' && isset($buildings[$fi
     <!-- CÁC MODAL TƯƠNG TÁC TRỰC TIẾP VỚI CSDL TRÊN TRANG TÒA NHÀ -->
     <!-- ========================================================= -->
 
-    <!-- 1. MODAL THÊM TÒA NHÀ MỚI -->
-    <div class="modal fade" id="addBuildingModal" tabindex="-1" aria-hidden="true">
+    
+    <!-- ================= MODAL THÊM LOẠI PHÒNG MỚI ================= -->
+    <div class="modal fade" id="addRoomTypeModal" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content border-0 shadow-lg rounded-4">
                 <div class="modal-header bg-light rounded-top-4">
+                    <h5 class="modal-title fw-bold text-teal-main"><i class="fa-solid fa-shapes me-2"></i> Thêm Loại Phòng Mới</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <form method="POST" action="index.php?route=dashboard">
+                    <input type="hidden" name="action" value="add_room_type">
+                    <div class="modal-body p-4">
+                        <div class="mb-3">
+                            <label class="form-label fw-bold small text-muted">Tên loại phòng <span class="text-danger">*</span></label>
+                            <input type="text" name="rt_name" class="form-control rounded-3" placeholder="Ví dụ: Phòng Duplex Penthouse, Phòng Studio Mini..." required>
+                        </div>
+                        <div class="row g-2 mb-3">
+                            <div class="col-6">
+                                <label class="form-label fw-bold small text-muted">Giá tham khảo (VNĐ/tháng) <span class="text-danger">*</span></label>
+                                <input type="number" name="rt_price" class="form-control rounded-3" placeholder="VD: 4500000" value="3500000" required step="50000">
+                            </div>
+                            <div class="col-6">
+                                <label class="form-label fw-bold small text-muted">Diện tích (m²)</label>
+                                <input type="text" name="rt_area" class="form-control rounded-3" placeholder="VD: 25 - 30m²" value="25m²">
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label fw-bold small text-muted">Tiện ích đặc trưng</label>
+                            <textarea name="rt_amenities" class="form-control rounded-3" rows="2" placeholder="Ví dụ: Điều hòa Inverter, Nóng lạnh, Tủ lạnh, Bếp từ, Ban công riêng..."></textarea>
+                        </div>
+                    </div>
+                    <div class="modal-footer bg-light">
+                        <button type="button" class="btn btn-outline-secondary rounded-pill px-4" data-bs-dismiss="modal">Hủy</button>
+                        <button type="submit" class="btn btn-teal-custom px-4"><i class="fa-solid fa-check me-1"></i> Lưu loại phòng</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    <!-- 1. MODAL THÊM TÒA NHÀ MỚI (RỘNG RÃI, VỪA KHUNG HÌNH MÁY TÍNH) -->
+    <div class="modal fade" id="addBuildingModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable" style="max-width: 820px;">
+            <div class="modal-content border-0 shadow-lg rounded-4">
+                <div class="modal-header bg-light rounded-top-4 py-3 px-4">
                     <h5 class="modal-title fw-bold text-teal-main"><i class="fa-solid fa-building-circle-arrow-right me-2"></i> Thêm Tòa Nhà Mới</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
@@ -547,33 +648,67 @@ if (!empty($filterBuilding) && $filterBuilding !== 'all' && isset($buildings[$fi
                     <form method="POST" action="index.php?route=dashboard">
                         <input type="hidden" name="action" value="add_building">
                         <div class="row g-3">
-                            <div class="col-md-5">
-                                <label class="form-label fw-bold small text-muted">Mã tòa nhà</label>
-                                <input type="text" name="code" class="form-control" placeholder="VD: BLD-D" value="BLD-D" required>
+                            <!-- Nhóm 1: Thông tin Tòa nhà -->
+                            <div class="col-md-4">
+                                <label class="form-label fw-bold small text-muted">Mã tòa nhà <span class="text-danger">*</span></label>
+                                <input type="text" name="code" class="form-control rounded-3" placeholder="VD: BLD-D" value="BLD-D" required>
                             </div>
-                            <div class="col-md-7">
-                                <label class="form-label fw-bold small text-muted">Nhóm mã phòng (Prefix SQL)</label>
-                                <input type="text" name="room_prefix" class="form-control" placeholder="VD: P4 (khớp phòng P401...)" value="P4" required>
-                            </div>
-                            <div class="col-12">
-                                <label class="form-label fw-bold small text-muted">Tên tòa nhà</label>
-                                <input type="text" name="name" class="form-control" placeholder="VD: Tòa D - StayMate Diamond" required>
+                            <div class="col-md-8">
+                                <label class="form-label fw-bold small text-muted">Tên tòa nhà <span class="text-danger">*</span></label>
+                                <input type="text" name="name" class="form-control rounded-3" placeholder="VD: Tòa D - StayMate Diamond" required>
                             </div>
                             <div class="col-12">
-                                <label class="form-label fw-bold small text-muted">Địa chỉ</label>
-                                <input type="text" name="address" class="form-control" placeholder="VD: Số 102 Xuân Thủy, Cầu Giấy, Hà Nội" required>
+                                <label class="form-label fw-bold small text-muted">Địa chỉ tòa nhà <span class="text-danger">*</span></label>
+                                <input type="text" name="address" class="form-control rounded-3" placeholder="VD: Số 102 Xuân Thủy, Cầu Giấy, Hà Nội" required>
                             </div>
-                            <div class="col-md-7">
-                                <label class="form-label fw-bold small text-muted">Người quản lý</label>
-                                <input type="text" name="manager" class="form-control" value="Quản Trị Viên">
+
+                            <!-- Nhóm 2: Thông tin Người quản lý (Rõ ràng hơn: Tên, SĐT, Email, Tài khoản, Mật khẩu) -->
+                            <div class="col-12 mt-3 pt-2 border-top">
+                                <div class="fw-bold text-teal-main small mb-1"><i class="fa-solid fa-user-tie me-1"></i> Thông tin Người quản lý tòa nhà</div>
                             </div>
-                            <div class="col-md-5">
-                                <label class="form-label fw-bold small text-muted">Tài khoản quản lý</label>
-                                <input type="text" name="manager_acc" class="form-control" value="admin01">
+                            <div class="col-md-4">
+                                <label class="form-label fw-bold small text-muted">Tên người quản lý <span class="text-danger">*</span></label>
+                                <input type="text" name="manager" class="form-control rounded-3" placeholder="VD: Nguyễn Văn An" required>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label fw-bold small text-muted">Số điện thoại <span class="text-danger">*</span></label>
+                                <input type="text" name="manager_phone" class="form-control rounded-3" placeholder="VD: 0912 345 678" required>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label fw-bold small text-muted">Email liên hệ <span class="text-danger">*</span></label>
+                                <input type="email" name="manager_email" class="form-control rounded-3" placeholder="VD: an.nguyen@gmail.com" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-bold small text-muted">Tài khoản quản lý <span class="text-danger">*</span></label>
+                                <input type="text" name="manager_acc" class="form-control rounded-3" placeholder="VD: quanly_d" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-bold small text-muted">Mật khẩu ban đầu</label>
+                                <input type="text" name="manager_pwd" class="form-control rounded-3 bg-light" value="123" readonly title="Mật khẩu mặc định khởi tạo luôn là 123">
+                            </div>
+
+                            <!-- Nhóm 3: Các hạng phòng có trong tòa -->
+                            <div class="col-12 mt-3 pt-2 border-top">
+                                <label class="form-label fw-bold small text-teal-main mb-1 d-block"><i class="fa-solid fa-shapes me-1"></i> Chọn các Loại / Hạng phòng có trong tòa nhà này:</label>
+                                <div class="p-3 rounded-3 border bg-light-subtle" style="max-height: 180px; overflow-y: auto;">
+                                    <div class="row g-2">
+                                        <?php foreach (($roomTypesList ?? []) as $rtKey => $rtItem): ?>
+                                            <div class="col-md-6">
+                                                <div class="form-check p-2 bg-white rounded-3 border">
+                                                    <input class="form-check-input ms-0 me-2" type="checkbox" name="room_types[]" value="<?= htmlspecialchars($rtItem['name']) ?>" id="rt_add_<?= htmlspecialchars($rtKey) ?>" checked>
+                                                    <label class="form-check-label fw-bold small text-dark cursor-pointer" for="rt_add_<?= htmlspecialchars($rtKey) ?>">
+                                                        <?= htmlspecialchars($rtItem['name']) ?>
+                                                        <span class="text-muted d-block" style="font-size: 0.75rem;"><?= number_format($rtItem['price'], 0, ',', '.') ?> đ • <?= htmlspecialchars($rtItem['area']) ?></span>
+                                                    </label>
+                                                </div>
+                                            </div>
+                                        <?php endforeach; ?>
+                                    </div>
+                                </div>
                             </div>
                         </div>
-                        <div class="d-flex justify-content-end gap-2 mt-4">
-                            <button type="button" class="btn btn-outline-secondary rounded-pill px-4" data-bs-dismiss="modal">Hủy</button>
+                        <div class="d-flex justify-content-end gap-2 mt-4 pt-3 border-top">
+                            <button type="button" class="btn btn-outline-secondary px-4 rounded-pill fw-bold" data-bs-dismiss="modal">Hủy</button>
                             <button type="submit" class="btn btn-teal-custom px-4">Lưu tòa nhà</button>
                         </div>
                     </form>
@@ -700,11 +835,11 @@ if (!empty($filterBuilding) && $filterBuilding !== 'all' && isset($buildings[$fi
             </div>
         </div>
 
-        <!-- Modal Chỉnh sửa Tòa nhà -->
+        <!-- Modal Chỉnh sửa Tòa nhà (Rộng rãi, đầy đủ SĐT, Email, Loại phòng, vừa vặn máy tính) -->
         <div class="modal fade" id="editBldModal_<?= htmlspecialchars((string)$bId) ?>" tabindex="-1" aria-hidden="true">
-            <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable" style="max-width: 820px;">
                 <div class="modal-content border-0 shadow-lg rounded-4">
-                    <div class="modal-header bg-light rounded-top-4">
+                    <div class="modal-header bg-light rounded-top-4 py-3 px-4">
                         <h5 class="modal-title fw-bold text-teal-main"><i class="fa-solid fa-pen-to-square me-2"></i> Chỉnh sửa <?= htmlspecialchars($bld['name']) ?></h5>
                         <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                     </div>
@@ -713,40 +848,72 @@ if (!empty($filterBuilding) && $filterBuilding !== 'all' && isset($buildings[$fi
                             <input type="hidden" name="action" value="edit_building">
                             <input type="hidden" name="building_id" value="<?= htmlspecialchars((string)$bId) ?>">
                             <div class="row g-3">
-                                <div class="col-md-6">
-                                    <label class="form-label fw-bold small text-muted">Mã tòa nhà</label>
-                                    <input type="text" name="code" class="form-control" value="<?= htmlspecialchars($bld['code']) ?>" required>
+                                <!-- Nhóm 1: Thông tin Tòa nhà -->
+                                <div class="col-md-4">
+                                    <label class="form-label fw-bold small text-muted">Mã tòa nhà <span class="text-danger">*</span></label>
+                                    <input type="text" name="code" class="form-control rounded-3" value="<?= htmlspecialchars($bld['code']) ?>" required>
                                 </div>
-                                <div class="col-md-6">
-                                    <label class="form-label fw-bold small text-muted">Nhóm phòng SQL (Prefix)</label>
-                                    <input type="text" name="room_prefix" class="form-control" value="<?= htmlspecialchars($bld['room_prefix']) ?>" required>
-                                </div>
-                                <div class="col-12">
-                                    <label class="form-label fw-bold small text-muted">Tên tòa nhà</label>
-                                    <input type="text" name="name" class="form-control" value="<?= htmlspecialchars($bld['name']) ?>" required>
+                                <div class="col-md-8">
+                                    <label class="form-label fw-bold small text-muted">Tên tòa nhà <span class="text-danger">*</span></label>
+                                    <input type="text" name="name" class="form-control rounded-3" value="<?= htmlspecialchars($bld['name']) ?>" required>
                                 </div>
                                 <div class="col-12">
-                                    <label class="form-label fw-bold small text-muted">Địa chỉ</label>
-                                    <input type="text" name="address" class="form-control" value="<?= htmlspecialchars($bld['address']) ?>" required>
+                                    <label class="form-label fw-bold small text-muted">Địa chỉ tòa nhà <span class="text-danger">*</span></label>
+                                    <input type="text" name="address" class="form-control rounded-3" value="<?= htmlspecialchars($bld['address']) ?>" required>
                                 </div>
-                                <div class="col-md-7">
-                                    <label class="form-label fw-bold small text-muted">Người quản lý</label>
-                                    <input type="text" name="manager" class="form-control" value="<?= htmlspecialchars($bld['manager']) ?>" required>
+
+                                <!-- Nhóm 2: Thông tin Người quản lý (Tên, SĐT, Email, Tài khoản) -->
+                                <div class="col-12 mt-3 pt-2 border-top">
+                                    <div class="fw-bold text-teal-main small mb-1"><i class="fa-solid fa-user-tie me-1"></i> Thông tin Người quản lý tòa nhà</div>
                                 </div>
-                                <div class="col-md-5">
-                                    <label class="form-label fw-bold small text-muted">Tài khoản quản lý</label>
-                                    <input type="text" name="manager_acc" class="form-control" value="<?= htmlspecialchars($bld['manager_acc']) ?>" required>
+                                <div class="col-md-4">
+                                    <label class="form-label fw-bold small text-muted">Tên người quản lý <span class="text-danger">*</span></label>
+                                    <input type="text" name="manager" class="form-control rounded-3" value="<?= htmlspecialchars($bld['manager']) ?>" required>
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="form-label fw-bold small text-muted">Số điện thoại <span class="text-danger">*</span></label>
+                                    <input type="text" name="manager_phone" class="form-control rounded-3" value="<?= htmlspecialchars($bld['manager_phone'] ?? '0912 345 678') ?>" required>
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="form-label fw-bold small text-muted">Email liên hệ <span class="text-danger">*</span></label>
+                                    <input type="email" name="manager_email" class="form-control rounded-3" value="<?= htmlspecialchars($bld['manager_email'] ?? ($bld['manager_acc'] . '@nhatro.com')) ?>" required>
+                                </div>
+                                <div class="col-12">
+                                    <label class="form-label fw-bold small text-muted">Tài khoản quản lý <span class="text-danger">*</span></label>
+                                    <input type="text" name="manager_acc" class="form-control rounded-3" value="<?= htmlspecialchars($bld['manager_acc']) ?>" required>
+                                </div>
+
+                                <!-- Nhóm 3: Các loại phòng thuộc tòa này -->
+                                <div class="col-12 mt-3 pt-2 border-top">
+                                    <label class="form-label fw-bold small text-teal-main mb-1 d-block"><i class="fa-solid fa-shapes me-1"></i> Chọn các Loại / Hạng phòng có trong tòa nhà này:</label>
+                                    <div class="p-3 rounded-3 border bg-light-subtle" style="max-height: 180px; overflow-y: auto;">
+                                        <div class="row g-2">
+                                            <?php foreach (($roomTypesList ?? []) as $rtKey => $rtItem): ?>
+                                                <?php $isChecked = in_array($rtItem['name'], $bld['room_types'] ?? [], true); ?>
+                                                <div class="col-md-6">
+                                                    <div class="form-check p-2 bg-white rounded-3 border">
+                                                        <input class="form-check-input ms-0 me-2" type="checkbox" name="room_types[]" value="<?= htmlspecialchars($rtItem['name']) ?>" id="rt_edit_<?= htmlspecialchars($bId . '_' . $rtKey) ?>" <?= $isChecked ? 'checked' : '' ?>>
+                                                        <label class="form-check-label fw-bold small text-dark cursor-pointer" for="rt_edit_<?= htmlspecialchars($bId . '_' . $rtKey) ?>">
+                                                            <?= htmlspecialchars($rtItem['name']) ?>
+                                                            <span class="text-muted d-block" style="font-size: 0.75rem;"><?= number_format($rtItem['price'], 0, ',', '.') ?> đ • <?= htmlspecialchars($rtItem['area']) ?></span>
+                                                        </label>
+                                                    </div>
+                                                </div>
+                                            <?php endforeach; ?>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
-                            <div class="d-flex justify-content-end gap-2 mt-4">
-                                <button type="button" class="btn btn-outline-secondary rounded-pill px-4" data-bs-dismiss="modal">Hủy</button>
-                                <button type="submit" class="btn btn-teal-custom px-4">Lưu thay đổi</button>
+                            <div class="d-flex justify-content-end gap-2 mt-4 pt-3 border-top">
+                                <button type="button" class="btn btn-outline-secondary px-4 rounded-pill fw-bold" data-bs-dismiss="modal">Hủy</button>
+                                <button type="submit" class="btn btn-teal-custom px-4">Cập nhật tòa nhà</button>
                             </div>
                         </form>
                     </div>
                 </div>
             </div>
         </div>
+                            
     <?php endforeach; ?>
 
     <!-- 3. MODAL DANH SÁCH TẤT CẢ PHÒNG TRỌ TỪ SQL (Khi bấm thẻ Tỷ lệ lấp đầy) -->
@@ -997,5 +1164,192 @@ if (!empty($filterBuilding) && $filterBuilding !== 'all' && isset($buildings[$fi
         // Xóa sạch bộ nhớ tạm trình duyệt cũ lưu những hành động xem trang trước đây
         try { localStorage.removeItem("staymate_activity_logs"); } catch(e) {}
     </script>
+
+    <!-- MODAL DOI MAT KHAU -->
+    <div class="modal fade" id="changePasswordModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content border-0 shadow-lg rounded-4">
+                <div class="modal-header bg-light rounded-top-4">
+                    <h5 class="modal-title fw-bold text-teal-main"><i class="fa-solid fa-key me-2 text-warning"></i> Đổi Mật Khẩu</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <form method="POST" action="index.php?route=dashboard">
+                    <input type="hidden" name="action" value="change_password">
+                    <div class="modal-body p-4">
+                        <div class="mb-3">
+                            <label class="form-label fw-bold small text-muted">Mật khẩu hiện tại</label>
+                            <input type="password" name="old_password" class="form-control rounded-3" placeholder="Nhập mật khẩu hiện tại" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label fw-bold small text-muted">Mật khẩu mới</label>
+                            <input type="password" name="new_password" class="form-control rounded-3" placeholder="Nhập mật khẩu mới" required minlength="4">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label fw-bold small text-muted">Xác nhận mật khẩu mới</label>
+                            <input type="password" name="confirm_password" class="form-control rounded-3" placeholder="Nhập lại mật khẩu mới" required minlength="4">
+                        </div>
+                    </div>
+                    <div class="modal-footer bg-light">
+                        <button type="button" class="btn btn-outline-secondary rounded-pill px-4" data-bs-dismiss="modal">Hủy</button>
+                        <button type="submit" class="btn btn-teal-custom px-4"><i class="fa-solid fa-check me-1"></i> Lưu thay đổi</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+
+    <!-- 4. MODAL POPUP QUAN LY TAI KHOAN (Hiện danh sách tài khoản hiện có, cho phép Xóa và Sửa, không cần Thêm) -->
+    <div class="modal fade" id="manageAccountsModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable" style="max-width: 960px;">
+            <div class="modal-content border-0 shadow-lg rounded-4">
+                <div class="modal-header bg-light rounded-top-4 py-3 px-4">
+                    <div class="d-flex align-items-center gap-2">
+                        <div class="p-2 bg-white rounded-circle shadow-sm" style="color:var(--teal-main);">
+                            <i class="fa-solid fa-users-gear fs-5"></i>
+                        </div>
+                        <div>
+                            <h5 class="modal-title fw-bold text-teal-main mb-0">Quản Lý Tài Khoản Hệ Thống</h5>
+                            <span class="text-muted small">Danh sách tài khoản hiện có trong hệ thống (Sửa / Xóa)</span>
+                        </div>
+                    </div>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body p-4">
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle mb-0">
+                            <thead class="table-light text-secondary small fw-bold">
+                                <tr>
+                                    <th class="ps-3 py-3" style="width: 50px;">STT</th>
+                                    <th class="py-3">Tài khoản & Họ tên</th>
+                                    <th class="py-3">Số điện thoại</th>
+                                    <th class="py-3">Email liên hệ</th>
+                                    <th class="py-3 text-center">Vai trò</th>
+                                    <th class="pe-3 py-3 text-end" style="width: 140px;">Hành động</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <?php if (!empty($allAccountsList)): ?>
+                                    <?php foreach ($allAccountsList as $idx => $acc): ?>
+                                        <?php
+                                            $roleBadge = '';
+                                            if ($acc['role'] === 'admin') {
+                                                $roleBadge = '<span class="badge rounded-pill" style="background:#ede9fe; color:#6d28d9; font-weight:700;"><i class="fa-solid fa-shield-halved me-1"></i>Admin</span>';
+                                            } elseif ($acc['role'] === 'landlord') {
+                                                $roleBadge = '<span class="badge rounded-pill" style="background:#ccfbf1; color:#0f766e; font-weight:700;"><i class="fa-solid fa-user-tie me-1"></i>Quản lý</span>';
+                                            } else {
+                                                $roleBadge = '<span class="badge rounded-pill" style="background:#e0f2fe; color:#0369a1; font-weight:700;"><i class="fa-solid fa-user me-1"></i>Khách thuê</span>';
+                                            }
+                                            $isSelf = (isset($_SESSION['user_id']) && (int)$_SESSION['user_id'] === (int)$acc['id']);
+                                        ?>
+                                        <tr>
+                                            <td class="ps-3 fw-bold text-muted"><?= $idx + 1 ?></td>
+                                            <td>
+                                                <div class="fw-bold text-dark"><?= htmlspecialchars($acc['full_name']) ?></div>
+                                                <div class="small text-muted font-monospace"><i class="fa-regular fa-user me-1"></i><?= htmlspecialchars($acc['username']) ?></div>
+                                            </td>
+                                            <td>
+                                                <span class="small fw-semibold text-secondary">
+                                                    <?= !empty($acc['phone']) ? htmlspecialchars($acc['phone']) : '<span class="text-muted font-italic">Chưa có</span>' ?>
+                                                </span>
+                                            </td>
+                                            <td>
+                                                <span class="small text-secondary">
+                                                    <?= !empty($acc['email']) ? htmlspecialchars($acc['email']) : '<span class="text-muted font-italic">Chưa có</span>' ?>
+                                                </span>
+                                            </td>
+                                            <td class="text-center"><?= $roleBadge ?></td>
+                                            <td class="pe-3 text-end">
+                                                <div class="btn-group gap-1">
+                                                    <!-- Nút Sửa -->
+                                                    <button type="button" class="btn btn-sm btn-outline-warning rounded-pill px-3 fw-bold" data-bs-toggle="modal" data-bs-target="#editUserModal_<?= $acc['id'] ?>" title="Sửa thông tin tài khoản">
+                                                        <i class="fa-solid fa-pen-to-square me-1"></i> Sửa
+                                                    </button>
+                                                    
+                                                    <!-- Nút Xóa -->
+                                                    <?php if (!$isSelf): ?>
+                                                        <form method="POST" action="index.php?route=dashboard" class="d-inline" onsubmit="return confirm('Bạn có chắc chắn muốn xóa tài khoản này không?');">
+                                                            <input type="hidden" name="action" value="delete_user_account">
+                                                            <input type="hidden" name="user_id" value="<?= $acc['id'] ?>">
+                                                            <button type="submit" class="btn btn-sm btn-outline-danger rounded-pill px-2 fw-bold" title="Xóa tài khoản">
+                                                                <i class="fa-solid fa-trash-can"></i>
+                                                            </button>
+                                                        </form>
+                                                    <?php endif; ?>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    <?php endforeach; ?>
+                                <?php else: ?>
+                                    <tr>
+                                        <td colspan="6" class="text-center py-4 text-muted">Không có tài khoản nào trong hệ thống.</td>
+                                    </tr>
+                                <?php endif; ?>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="modal-footer bg-light rounded-bottom-4 py-2 px-4 d-flex justify-content-between align-items-center">
+                    <span class="small text-muted"><i class="fa-solid fa-circle-info me-1"></i> Tổng cộng <?= count($allAccountsList ?? []) ?> tài khoản</span>
+                    <button type="button" class="btn btn-secondary rounded-pill px-4" data-bs-dismiss="modal">Đóng</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL CON CHỈNH SỬA TỪNG TÀI KHOẢN -->
+    <?php if (!empty($allAccountsList)): ?>
+        <?php foreach ($allAccountsList as $acc): ?>
+            <div class="modal fade" id="editUserModal_<?= $acc['id'] ?>" tabindex="-1" aria-hidden="true" style="z-index: 1060;">
+                <div class="modal-dialog modal-dialog-centered" style="max-width: 520px;">
+                    <div class="modal-content border-0 shadow-lg rounded-4">
+                        <div class="modal-header bg-light rounded-top-4 py-3 px-4">
+                            <h6 class="modal-title fw-bold text-teal-main mb-0">
+                                <i class="fa-solid fa-user-pen me-2"></i> Chỉnh sửa tài khoản: <span class="text-dark"><?= htmlspecialchars($acc['username']) ?></span>
+                            </h6>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <div class="modal-body p-4">
+                            <form method="POST" action="index.php?route=dashboard">
+                                <input type="hidden" name="action" value="edit_user_account">
+                                <input type="hidden" name="user_id" value="<?= $acc['id'] ?>">
+                                <div class="mb-3">
+                                    <label class="form-label fw-bold small text-muted">Họ và tên <span class="text-danger">*</span></label>
+                                    <input type="text" name="full_name" class="form-control rounded-3" value="<?= htmlspecialchars($acc['full_name']) ?>" required>
+                                </div>
+                                <div class="row g-2 mb-3">
+                                    <div class="col-6">
+                                        <label class="form-label fw-bold small text-muted">Số điện thoại</label>
+                                        <input type="text" name="phone" class="form-control rounded-3" value="<?= htmlspecialchars($acc['phone']) ?>" placeholder="0912 345 678">
+                                    </div>
+                                    <div class="col-6">
+                                        <label class="form-label fw-bold small text-muted">Email <span class="text-danger">*</span></label>
+                                        <input type="email" name="email" class="form-control rounded-3" value="<?= htmlspecialchars($acc['email']) ?>" required>
+                                    </div>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label fw-bold small text-muted">Phân quyền</label>
+                                    <select name="role" class="form-select rounded-3">
+                                        <option value="tenant" <?= $acc['role'] === 'tenant' ? 'selected' : '' ?>>Khách thuê</option>
+                                        <option value="landlord" <?= $acc['role'] === 'landlord' ? 'selected' : '' ?>>Quản lý tòa nhà</option>
+                                        <option value="admin" <?= $acc['role'] === 'admin' ? 'selected' : '' ?>>Quản trị viên (Admin)</option>
+                                    </select>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label fw-bold small text-muted">Mật khẩu mới (Bỏ trống nếu giữ nguyên)</label>
+                                    <input type="password" name="new_password" class="form-control rounded-3" placeholder="Nhập mật khẩu mới nếu muốn đổi">
+                                </div>
+                                <div class="d-flex justify-content-end gap-2 pt-3 border-top">
+                                    <button type="button" class="btn btn-outline-secondary rounded-pill px-4" data-bs-dismiss="modal">Hủy</button>
+                                    <button type="submit" class="btn btn-teal-custom px-4"><i class="fa-solid fa-check me-1"></i> Lưu thông tin</button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        <?php endforeach; ?>
+    <?php endif; ?>
+    
 </body>
 </html>

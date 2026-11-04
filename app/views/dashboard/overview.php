@@ -79,10 +79,10 @@ $currentMonthFilter  = $_GET['month_year'] ?? '';
         .brand-text { color: var(--teal-main); font-weight: 900; font-size: 1.4rem; line-height: 1; letter-spacing: -0.5px;}
         .brand-sub { color: #64748b; font-size: 0.75rem; font-weight: 600; }
         
-        .nav-pills { gap: 10px; }
+        .nav-pills { gap: 6px; flex-wrap: nowrap !important; }
         .nav-pills .nav-link { 
-            color: #475569; font-weight: 800; font-size: 0.95rem; 
-            padding: 10px 20px; border-radius: 50px; transition: all 0.2s; white-space: nowrap; 
+            color: #475569; font-weight: 800; font-size: 0.88rem; 
+            padding: 8px 14px; border-radius: 50px; transition: all 0.2s; white-space: nowrap; 
         }
         .nav-pills .nav-link i { margin-right: 6px; }
         .nav-pills .nav-link:hover { color: var(--teal-main); background: #f0fdfa; }
@@ -223,7 +223,7 @@ $currentMonthFilter  = $_GET['month_year'] ?? '';
 
     <nav class="navbar navbar-expand-lg navbar-custom sticky-top">
         <div class="container-fluid px-4 px-xl-5 d-flex justify-content-between align-items-center">
-            <a class="brand-logo me-5" href="index.php?route=dashboard">
+            <a class="brand-logo me-3 me-xl-4" href="index.php?route=dashboard">
                 <i class="fa-solid fa-house-chimney text-teal-main"></i>
                 <div>
                     <div class="brand-text">StayMate</div>
@@ -232,16 +232,22 @@ $currentMonthFilter  = $_GET['month_year'] ?? '';
             </a>
 
             <!-- MENU ĐÃ ĐƯỢC CHỈNH SỬA LẠI THEO CHUẨN -->
-            <ul class="nav nav-pills me-auto d-none d-lg-flex">
+            <ul class="nav nav-pills flex-nowrap me-auto d-none d-lg-flex">
                 <li class="nav-item"><a class="nav-link active" href="index.php?route=overview"><i class="fa-solid fa-border-all"></i> Tổng quan</a></li>
                 <li class="nav-item"><a class="nav-link" href="index.php?route=rooms"><i class="fa-solid fa-bed"></i> Phòng trọ</a></li>
                 <li class="nav-item"><a class="nav-link" href="index.php?route=tenants"><i class="fa-solid fa-users"></i> Khách thuê</a></li>
                 <li class="nav-item"><a class="nav-link" href="index.php?route=contracts"><i class="fa-solid fa-file-signature"></i> Hợp đồng</a></li>
                 <li class="nav-item"><a class="nav-link" href="index.php?route=utilities"><i class="fa-solid fa-bolt"></i> Điện Nước</a></li>
                 <li class="nav-item"><a class="nav-link" href="index.php?route=invoices"><i class="fa-solid fa-file-invoice-dollar"></i> Hóa đơn</a></li>
+                <li class="nav-item"><a class="nav-link" href="index.php?route=showcase" target="_blank"><i class="fa-regular fa-eye"></i> Xem phòng khách</a></li>
+                <li class="nav-item"><a class="nav-link" href="index.php?route=tenant/portal" target="_blank"><i class="fa-solid fa-user-shield text-teal-main"></i> Cổng khách thuê</a></li>
             </ul>
 
             <div class="d-flex align-items-center gap-4">
+                <!-- Icon Chuông Thông Báo -->
+                <div class="text-secondary cursor-pointer" title="Thông báo">
+                    <i class="fa-solid fa-bell fs-5"></i>
+                </div>
                 <!-- Dropdown Tài khoản -->
                 <div class="dropdown">
                     <div class="d-flex align-items-center gap-2 cursor-pointer" data-bs-toggle="dropdown">
@@ -252,7 +258,16 @@ $currentMonthFilter  = $_GET['month_year'] ?? '';
                         </div>
                     </div>
                     <ul class="dropdown-menu dropdown-menu-end shadow border-0 rounded-4 mt-2 p-2">
-                        <li><a class="dropdown-item rounded-3 py-2 fw-bold" href="index.php?route=dashboard"><i class="fa-solid fa-city me-2 text-teal-main"></i> Quản lý Tòa nhà</a></li>
+                        <li>
+                            <button type="button" class="dropdown-item rounded-3 py-2 fw-bold" data-bs-toggle="modal" data-bs-target="#profileModal">
+                                <i class="fa-solid fa-id-card me-2 text-teal-main"></i> Thông tin tài khoản
+                            </button>
+                        </li>
+                        <li>
+                            <button type="button" class="dropdown-item rounded-3 py-2 fw-bold" data-bs-toggle="modal" data-bs-target="#changePasswordModal">
+                                <i class="fa-solid fa-key me-2 text-warning"></i> Đổi mật khẩu
+                            </button>
+                        </li>
                         <li><hr class="dropdown-divider"></li>
                         <li><a class="dropdown-item rounded-3 py-2 text-danger fw-bold" href="index.php?route=auth/logout"><i class="fa-solid fa-right-from-bracket me-2"></i> Đăng xuất</a></li>
                     </ul>
@@ -278,11 +293,13 @@ $currentMonthFilter  = $_GET['month_year'] ?? '';
         <?php endif; ?>
         
         <!-- Nút Quay Lại Trang Tòa Nhà -->
+        <?php if (($userRole ?? '') === 'admin'): ?>
         <div class="d-flex justify-content-start align-items-center mb-4 position-relative z-2">
             <a href="index.php?route=dashboard" class="btn-back-content">
                 <i class="fa-solid fa-arrow-left me-2"></i> Quay lại Tòa nhà
             </a>
         </div>
+        <?php endif; ?>
 
         <div class="header-title-wrapper">
             <div>
@@ -1037,5 +1054,70 @@ $currentMonthFilter  = $_GET['month_year'] ?? '';
             renderActivityLogs();
         });
     </script>
+
+    <!-- MODAL DOI MAT KHAU -->
+    <div class="modal fade" id="changePasswordModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content border-0 shadow-lg rounded-4">
+                <div class="modal-header bg-light rounded-top-4">
+                    <h5 class="modal-title fw-bold text-teal-main"><i class="fa-solid fa-key me-2 text-warning"></i> Đổi Mật Khẩu</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <form method="POST" action="index.php?route=dashboard">
+                    <input type="hidden" name="action" value="change_password">
+                    <div class="modal-body p-4">
+                        <div class="mb-3">
+                            <label class="form-label fw-bold small text-muted">Mật khẩu hiện tại</label>
+                            <input type="password" name="old_password" class="form-control rounded-3" placeholder="Nhập mật khẩu hiện tại" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label fw-bold small text-muted">Mật khẩu mới</label>
+                            <input type="password" name="new_password" class="form-control rounded-3" placeholder="Nhập mật khẩu mới" required minlength="4">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label fw-bold small text-muted">Xác nhận mật khẩu mới</label>
+                            <input type="password" name="confirm_password" class="form-control rounded-3" placeholder="Nhập lại mật khẩu mới" required minlength="4">
+                        </div>
+                    </div>
+                    <div class="modal-footer bg-light">
+                        <button type="button" class="btn btn-outline-secondary rounded-pill px-4" data-bs-dismiss="modal">Hủy</button>
+                        <button type="submit" class="btn btn-teal-custom px-4"><i class="fa-solid fa-check me-1"></i> Lưu thay đổi</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+
+    <!-- MODAL THONG TIN TAI KHOAN -->
+    <div class="modal fade" id="profileModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content border-0 shadow-lg rounded-4">
+                <div class="modal-header bg-light rounded-top-4">
+                    <h5 class="modal-title fw-bold text-teal-main"><i class="fa-solid fa-user-shield me-2"></i> Thông tin Tài khoản</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body p-4">
+                    <div class="d-flex align-items-center gap-3 mb-3">
+                        <div class="rounded-circle text-white d-flex align-items-center justify-content-center fw-bold fs-4" style="width:60px; height:60px; background:var(--teal-main);">AS</div>
+                        <div>
+                            <h5 class="fw-bold mb-0"><?= htmlspecialchars($userFullName) ?></h5>
+                            <span class="badge bg-success rounded-pill text-uppercase"><?= htmlspecialchars($userRole) ?></span>
+                        </div>
+                    </div>
+                    <ul class="list-group list-group-flush border rounded-3">
+                        <li class="list-group-item d-flex justify-content-between"><span class="text-muted">Tên đăng nhập:</span> <strong><?= htmlspecialchars($userName) ?></strong></li>
+                        <li class="list-group-item d-flex justify-content-between"><span class="text-muted">Email:</span> <strong><?= htmlspecialchars($userEmail) ?></strong></li>
+                        <li class="list-group-item d-flex justify-content-between"><span class="text-muted">Số điện thoại:</span> <strong><?= htmlspecialchars($userPhone) ?></strong></li>
+                    </ul>
+                </div>
+                <div class="modal-footer bg-light">
+                    <button type="button" class="btn btn-outline-secondary rounded-pill px-4" data-bs-dismiss="modal">Đóng</button>
+                    <a href="index.php?route=auth/logout" class="btn btn-danger rounded-pill px-4"><i class="fa-solid fa-right-from-bracket me-1"></i> Đăng xuất</a>
+                </div>
+            </div>
+        </div>
+    </div>
+    
 </body>
 </html>
