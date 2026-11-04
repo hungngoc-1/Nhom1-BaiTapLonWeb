@@ -3,7 +3,9 @@
  * TRANG XEM HỢP ĐỒNG DÀNH CHO PHÂN QUYỀN KHÁCH THUÊ (TENANT PORTAL VIEW)
  * Phụ trách liên kết: Hùng Văn Ngọc (Nhóm trưởng) & Nguyễn Ánh Ngọc (Phân quyền khách thuê)
  */
-function h($s) { return htmlspecialchars((string)$s, ENT_QUOTES, 'UTF-8'); }
+if (!function_exists('h')) {
+    function h($s) { return htmlspecialchars((string)$s, ENT_QUOTES, 'UTF-8'); }
+}
 ?>
 <!DOCTYPE html>
 <html lang="vi">

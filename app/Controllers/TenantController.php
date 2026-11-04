@@ -1,14 +1,17 @@
 <?php
 require_once __DIR__ . '/../Models/TenantModel.php';
 require_once __DIR__ . '/../Models/RoomModel.php';
+require_once __DIR__ . '/../Models/TenantPortalModel.php';
 
 class TenantController {
     private TenantModel $model;
     private RoomModel $roomModel;
+    private TenantPortalModel $portalModel;
 
     public function __construct() {
         $this->model = new TenantModel();
         $this->roomModel = new RoomModel();
+        $this->portalModel = new TenantPortalModel();
     }
 
     public function index(): void {

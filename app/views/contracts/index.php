@@ -3,7 +3,9 @@
  * TRANG QUẢN LÝ HỢP ĐỒNG THUÊ PHÒNG (CONTRACTS MANAGEMENT)
  * Phụ trách: Hùng Văn Ngọc (Nhóm trưởng - MSSV: 224001738)
  */
-function h($s) { return htmlspecialchars((string)$s, ENT_QUOTES, 'UTF-8'); }
+if (!function_exists('h')) {
+    function h($s) { return htmlspecialchars((string)$s, ENT_QUOTES, 'UTF-8'); }
+}
 $today = date('Y-m-d');
 $nextMonthFirstDay = date('Y-m-01', strtotime('+1 month'));
 $sixMonthsEndDay = date('Y-m-d', strtotime('+6 months'));

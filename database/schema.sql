@@ -8,8 +8,17 @@ CREATE TABLE `users` (
   `password` VARCHAR(255) NOT NULL,
   `full_name` VARCHAR(100) NOT NULL,
   `phone` VARCHAR(20) NOT NULL,
+  `cccd` VARCHAR(20) NULL,
+  `birthday` DATE NULL,
+  `gender` VARCHAR(10) NULL DEFAULT 'Nam',
   `email` VARCHAR(100) NOT NULL UNIQUE,
-  `role` ENUM('admin', 'landlord', 'tenant') NOT NULL,
+  `occupation` VARCHAR(100) NULL,
+  `hometown` VARCHAR(255) NULL,
+  `emergency_contact` VARCHAR(100) NULL,
+  `status` VARCHAR(50) NULL DEFAULT 'Đang thuê',
+  `roommate_name` VARCHAR(100) NULL,
+  `roommate_phone` VARCHAR(20) NULL,
+  `role` ENUM('admin', 'landlord', 'tenant', 'manager') NOT NULL DEFAULT 'tenant',
   `preferred_room_id` INT NULL,
   `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=InnoDB;
@@ -30,6 +39,17 @@ CREATE TABLE `rooms` (
   `status` ENUM('available', 'rented', 'maintenance') DEFAULT 'available',
   `description` TEXT,
   `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB;
+
+CREATE TABLE `room_services` (
+  `id` INT AUTO_INCREMENT PRIMARY KEY,
+  `room_id` INT NOT NULL,
+  `service_name` VARCHAR(100) NOT NULL,
+  `unit_price` DECIMAL(10,2) NOT NULL,
+  `unit` VARCHAR(50) NOT NULL DEFAULT 'Tháng',
+  `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  INDEX (`room_id`),
+  FOREIGN KEY (`room_id`) REFERENCES `rooms`(`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB;
 
 CREATE TABLE `services` (
@@ -53,7 +73,7 @@ CREATE TABLE `contracts` (
   `deposit_amount` DECIMAL(10,2) NOT NULL,
   `deposit_date` DATE NULL,
   `deposit_paid_percent` INT DEFAULT 100,
-  `deposit_status` ENUM('held', 'refunded', 'forfeited') DEFAULT 'held',
+  `deposit_status` ENUM('held', 'paid', 'refunded', 'forfeited') DEFAULT 'held',
   `monthly_rent` DECIMAL(10,2) DEFAULT 0,
   `first_month_rent_paid` TINYINT(1) DEFAULT 0,
   `first_month_invoice_id` INT NULL,
@@ -74,6 +94,23 @@ CREATE TABLE `contracts` (
   `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   FOREIGN KEY (`room_id`) REFERENCES `rooms`(`id`),
   FOREIGN KEY (`tenant_id`) REFERENCES `users`(`id`)
+) ENGINE=InnoDB;
+
+CREATE TABLE `tenant_requests` (
+  `id` INT AUTO_INCREMENT PRIMARY KEY,
+  `tenant_id` INT NOT NULL,
+  `request_type` VARCHAR(50) NOT NULL DEFAULT 'profile_update',
+  `field_target` VARCHAR(100) NULL,
+  `old_value` TEXT NULL,
+  `new_value` TEXT NOT NULL,
+  `reason` TEXT NULL,
+  `status` ENUM('pending', 'approved', 'rejected') NOT NULL DEFAULT 'pending',
+  `manager_note` TEXT NULL,
+  `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  INDEX (`tenant_id`),
+  INDEX (`status`),
+  FOREIGN KEY (`tenant_id`) REFERENCES `users`(`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB;
 
 CREATE TABLE `utilities_readings` (

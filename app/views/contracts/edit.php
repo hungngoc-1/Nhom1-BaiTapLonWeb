@@ -3,7 +3,9 @@
  * TRANG CHỈNH SỬA HỢP ĐỒNG (EDIT CONTRACT)
  * Phụ trách: Hùng Văn Ngọc (Nhóm trưởng - MSSV: 224001738)
  */
-function h($s) { return htmlspecialchars((string)$s, ENT_QUOTES, 'UTF-8'); }
+if (!function_exists('h')) {
+    function h($s) { return htmlspecialchars((string)$s, ENT_QUOTES, 'UTF-8'); }
+}
 $monthlyRent = (float)($contract['monthly_rent'] ?? $contract['room_price'] ?? $contract['deposit_amount']);
 $depositDate = !empty($contract['deposit_date']) ? $contract['deposit_date'] : $contract['start_date'];
 $cType = $contract['contract_type'] ?? 'official_lease';

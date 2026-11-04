@@ -274,9 +274,13 @@ class RoomModel {
     }
 
     public function getRoomServices(int $roomId): array {
-        $stmt = $this->conn->prepare("SELECT * FROM room_services WHERE room_id = :room_id ORDER BY id ASC");
-        $stmt->execute([':room_id' => $roomId]);
-        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+        try {
+            $stmt = $this->conn->prepare("SELECT * FROM room_services WHERE room_id = :room_id ORDER BY id ASC");
+            $stmt->execute([':room_id' => $roomId]);
+            return $stmt->fetchAll(PDO::FETCH_ASSOC);
+        } catch (PDOException $e) {
+            return [];
+        }
     }
 
     public function saveRoomServices(int $roomId, array $services): void {
@@ -332,7 +336,9 @@ class RoomModel {
     }
 
     public function deleteRoom(int $id): bool {
-        $this->conn->prepare("DELETE FROM room_services WHERE room_id = :id")->execute([':id' => $id]);
+        try {
+            $this->conn->prepare("DELETE FROM room_services WHERE room_id = :id")->execute([':id' => $id]);
+        } catch (PDOException $e) {}
         $stmt = $this->conn->prepare("DELETE FROM rooms WHERE id = :id");
         return $stmt->execute([':id' => $id]);
     }

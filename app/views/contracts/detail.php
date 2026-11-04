@@ -3,7 +3,9 @@
  * TRANG CHI TIẾT VĂN BẢN HỢP ĐỒNG - IN A4 KÝ TRỰC TIẾP, KÝ ONLINE & LƯU BẢN SCAN
  * Phụ trách: Hùng Văn Ngọc (Nhóm trưởng - MSSV: 224001738)
  */
-function h($s) { return htmlspecialchars((string)$s, ENT_QUOTES, 'UTF-8'); }
+if (!function_exists('h')) {
+    function h($s) { return htmlspecialchars((string)$s, ENT_QUOTES, 'UTF-8'); }
+}
 
 $cType = $contract['contract_type'] ?? 'official_lease';
 $isHold = ($cType === 'deposit_hold');

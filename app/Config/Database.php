@@ -31,6 +31,7 @@ class Database {
                 self::$conn->setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE, PDO::FETCH_ASSOC);
 
                 self::ensureSchemaAndSeed(self::$conn);
+                self::ensureColumns(self::$conn);
             } catch (PDOException $exception) {
                 die("Lỗi kết nối CSDL: " . htmlspecialchars($exception->getMessage()));
             }
@@ -187,6 +188,68 @@ class Database {
                     }
                 }
             }
+        } catch (PDOException $e) {}
+    }
+
+    public static function ensureColumns(PDO $conn): void {
+        // Tự động tạo bảng room_services nếu chưa có
+        self::safeExec($conn, "
+            CREATE TABLE IF NOT EXISTS `room_services` (
+              `id` INT AUTO_INCREMENT PRIMARY KEY,
+              `room_id` INT NOT NULL,
+              `service_name` VARCHAR(100) NOT NULL,
+              `unit_price` DECIMAL(10,2) NOT NULL,
+              `unit` VARCHAR(50) NOT NULL DEFAULT 'Tháng',
+              `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+              INDEX (`room_id`)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+        ");
+
+        // Tự động tạo bảng tenant_requests nếu chưa có
+        self::safeExec($conn, "
+            CREATE TABLE IF NOT EXISTS `tenant_requests` (
+              `id` INT AUTO_INCREMENT PRIMARY KEY,
+              `tenant_id` INT NOT NULL,
+              `request_type` VARCHAR(50) NOT NULL DEFAULT 'profile_update',
+              `field_target` VARCHAR(100) NULL,
+              `old_value` TEXT NULL,
+              `new_value` TEXT NOT NULL,
+              `reason` TEXT NULL,
+              `status` ENUM('pending', 'approved', 'rejected') NOT NULL DEFAULT 'pending',
+              `manager_note` TEXT NULL,
+              `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+              `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+              INDEX (`tenant_id`),
+              INDEX (`status`)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+        ");
+
+        // Đảm bảo đầy đủ cột cho bảng users
+        try {
+            $userCols = $conn->query("SHOW COLUMNS FROM `users`")->fetchAll(PDO::FETCH_COLUMN);
+            $requiredUserCols = [
+                'cccd'              => "VARCHAR(20) NULL AFTER `phone`",
+                'birthday'          => "DATE NULL AFTER `cccd`",
+                'gender'            => "VARCHAR(10) NULL DEFAULT 'Nam' AFTER `birthday`",
+                'occupation'        => "VARCHAR(100) NULL AFTER `email`",
+                'hometown'          => "VARCHAR(255) NULL AFTER `occupation`",
+                'emergency_contact' => "VARCHAR(100) NULL AFTER `hometown`",
+                'status'            => "VARCHAR(50) NULL DEFAULT 'Đang thuê' AFTER `emergency_contact`",
+                'roommate_name'     => "VARCHAR(100) NULL AFTER `status`",
+                'roommate_phone'    => "VARCHAR(20) NULL AFTER `roommate_name`",
+                'preferred_room_id' => "INT NULL AFTER `role`",
+            ];
+            foreach ($requiredUserCols as $col => $def) {
+                if (!in_array($col, $userCols, true)) {
+                    self::safeExec($conn, "ALTER TABLE `users` ADD COLUMN `{$col}` {$def}");
+                }
+            }
+            self::safeExec($conn, "ALTER TABLE `users` MODIFY COLUMN `role` ENUM('admin', 'landlord', 'tenant', 'manager') NOT NULL DEFAULT 'tenant'");
+        } catch (PDOException $e) {}
+
+        // Đảm bảo contracts có đầy đủ giá trị
+        try {
+            self::safeExec($conn, "ALTER TABLE `contracts` MODIFY COLUMN `deposit_status` ENUM('held', 'paid', 'refunded', 'forfeited') DEFAULT 'held'");
         } catch (PDOException $e) {}
     }
 }
