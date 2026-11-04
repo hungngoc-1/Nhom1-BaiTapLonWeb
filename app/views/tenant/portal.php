@@ -1412,5 +1412,6 @@ $isManagerPreview = ($userRole === 'admin' || $userRole === 'manager' || $userRo
                 });
         }
     </script>
+<?php require_once dirname(__DIR__) . '/components/toast.php'; ?>
 </body>
 </html>

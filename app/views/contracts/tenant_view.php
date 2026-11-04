@@ -347,5 +347,6 @@ if (!function_exists('h')) {
     </main>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<?php require_once dirname(__DIR__) . '/components/toast.php'; ?>
 </body>
 </html>

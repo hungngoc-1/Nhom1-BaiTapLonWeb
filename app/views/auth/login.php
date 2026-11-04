@@ -585,5 +585,6 @@
             document.getElementById('forgotModal').classList.remove('show');
         }
     </script>
+<?php require_once dirname(__DIR__) . '/components/toast.php'; ?>
 </body>
 </html>

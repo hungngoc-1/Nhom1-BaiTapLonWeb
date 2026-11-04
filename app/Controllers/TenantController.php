@@ -178,6 +178,23 @@ class TenantController {
                 }
                 header("Location: index.php?route=tenants");
                 exit;
+            } elseif ($action === 'mark_lead_contacted') {
+                $leadId = (int)($_POST['lead_id'] ?? 0);
+                $custName = trim($_POST['customer_name'] ?? 'khách');
+                if ($leadId > 0 && $this->model->markLeadContacted($leadId)) {
+                    $_SESSION['tenant_flash_success'] = "Đã cập nhật: Đã liên hệ với {$custName} thành công! Khách đã chuyển sang bảng Khách Đã Liên Hệ.";
+                } else {
+                    $_SESSION['tenant_flash_error'] = 'Không thể cập nhật trạng thái liên hệ.';
+                }
+                header("Location: index.php?route=tenants#sec_leads");
+                exit;
+            } elseif ($action === 'delete_lead') {
+                $leadId = (int)($_POST['lead_id'] ?? 0);
+                if ($leadId > 0 && $this->model->deleteContactLead($leadId)) {
+                    $_SESSION['tenant_flash_success'] = 'Đã xóa yêu cầu liên hệ khỏi hệ thống.';
+                }
+                header("Location: index.php?route=tenants#sec_leads");
+                exit;
             }
         }
 
@@ -192,6 +209,8 @@ class TenantController {
         $stats    = $this->model->getTenantStats();
         $tenants  = $this->model->getTenants($keyword, $stayStatus);
         $allRooms = $this->roomModel->getRooms();
+        $pendingLeads = $this->model->getContactLeads('pending');
+        $contactedLeads = $this->model->getContactLeads('contacted');
 
         require_once __DIR__ . '/../views/tenants/index.php';
     }

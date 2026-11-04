@@ -60,21 +60,17 @@ $cType = $contract['contract_type'] ?? 'official_lease';
     </style>
 </head>
 <body>
-    <nav class="navbar navbar-custom sticky-top">
-        <div class="container-fluid px-4 px-xl-5 d-flex justify-content-between align-items-center">
-            <a class="navbar-brand d-flex align-items-center gap-2 text-decoration-none" href="index.php?route=dashboard">
-                <i class="fa-solid fa-house-chimney text-teal-main fs-4"></i>
-                <div class="brand-text">StayMate</div>
+    <nav class="navbar navbar-expand-lg navbar-custom sticky-top">
+        <div class="container-fluid px-3 px-xl-5">
+            <a class="brand-logo me-4" href="index.php?route=dashboard">
+                <i class="fa-solid fa-house-chimney text-teal-main"></i>
+                <div>
+                    <div class="brand-text">StayMate</div>
+                    <div class="brand-sub">Quản Lý Nhà Trọ</div>
+                </div>
             </a>
-            <ul class="nav nav-pills flex-nowrap me-auto d-none d-lg-flex">
-                <li class="nav-item"><a class="nav-link" href="index.php?route=overview"><i class="fa-solid fa-border-all"></i> Tổng quan</a></li>
-                <li class="nav-item"><a class="nav-link" href="index.php?route=rooms"><i class="fa-solid fa-bed"></i> Phòng trọ</a></li>
-                <li class="nav-item"><a class="nav-link" href="index.php?route=tenants"><i class="fa-solid fa-users"></i> Khách thuê</a></li>
-                <li class="nav-item"><a class="nav-link active" href="index.php?route=contracts"><i class="fa-solid fa-file-signature"></i> Hợp đồng</a></li>
-                <li class="nav-item"><a class="nav-link" href="index.php?route=utilities"><i class="fa-solid fa-bolt"></i> Điện Nước</a></li>
-                <li class="nav-item"><a class="nav-link" href="index.php?route=showcase" target="_blank"><i class="fa-regular fa-eye"></i> Xem phòng khách</a></li>
-            </ul>
-            <div class="d-flex align-items-center gap-4">
+
+            <div class="d-flex align-items-center gap-3 order-lg-3">
                 <div class="dropdown">
                     <div class="d-flex align-items-center gap-2 cursor-pointer" data-bs-toggle="dropdown" style="cursor: pointer;">
                         <div class="avatar-circle">AS</div>
@@ -98,6 +94,24 @@ $cType = $contract['contract_type'] ?? 'official_lease';
                         <li><a class="dropdown-item rounded-3 py-2 text-danger fw-bold" href="index.php?route=auth/logout"><i class="fa-solid fa-right-from-bracket me-2"></i> Đăng xuất</a></li>
                     </ul>
                 </div>
+
+                <button class="btn-hamburger d-lg-none" type="button" data-bs-toggle="collapse" data-bs-target="#staymateMobileNav">
+                    <i class="fa-solid fa-bars"></i>
+                </button>
+            </div>
+
+            <div class="collapse navbar-collapse mobile-nav-collapse order-lg-2" id="staymateMobileNav">
+                <ul class="nav nav-pills flex-nowrap me-auto">
+                    <li class="nav-item"><a class="nav-link" href="index.php?route=overview"><i class="fa-solid fa-border-all"></i> Tổng quan</a></li>
+                    <li class="nav-item"><a class="nav-link" href="index.php?route=rooms"><i class="fa-solid fa-bed"></i> Phòng trọ</a></li>
+                    <li class="nav-item"><a class="nav-link" href="index.php?route=tenants"><i class="fa-solid fa-users"></i> Khách thuê</a></li>
+                    <li class="nav-item"><a class="nav-link active" href="index.php?route=contracts"><i class="fa-solid fa-file-signature"></i> Hợp đồng</a></li>
+                    <li class="nav-item"><a class="nav-link" href="index.php?route=utilities"><i class="fa-solid fa-bolt"></i> Điện Nước</a></li>
+                    <li class="nav-item"><a class="nav-link" href="index.php?route=invoices"><i class="fa-solid fa-file-invoice-dollar"></i> Hóa đơn</a></li>
+                    <li class="nav-item"><a class="nav-link" href="index.php?route=accounts"><i class="fa-solid fa-user-gear"></i> Tài khoản</a></li>
+                    <li class="nav-item"><a class="nav-link" href="index.php?route=showcase" target="_blank"><i class="fa-regular fa-eye"></i> Xem phòng khách</a></li>
+                    <li class="nav-item"><a class="nav-link" href="index.php?route=tenant/portal" target="_blank"><i class="fa-solid fa-user-shield text-teal-main"></i> Cổng khách thuê</a></li>
+                </ul>
             </div>
         </div>
     </nav>
@@ -482,5 +496,6 @@ $cType = $contract['contract_type'] ?? 'official_lease';
             </div>
         </div>
     </div>
+<?php require_once dirname(__DIR__) . '/components/toast.php'; ?>
 </body>
 </html>

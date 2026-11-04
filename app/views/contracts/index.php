@@ -38,18 +38,29 @@ $sixMonthsEndDay = date('Y-m-d', strtotime('+6 months'));
             color: #1e293b;
         }
 
-        /* ================= NAVBAR CHUẨN TRANG ĐIỆN NƯỚC & TỔNG QUAN ================= */
-        .navbar-custom { background: #ffffff; padding: 12px 20px; box-shadow: 0 4px 20px rgba(0, 0, 0, 0.04); z-index: 100; border-bottom: 1px solid #f1f5f9; }
+                /* ================= NAVBAR CHUẨN ĐỒNG BỘ 100% VỚI KHÁCH THUÊ ================= */
+        .navbar-custom { background: #ffffff; padding: 12px 20px; box-shadow: 0 4px 20px rgba(0,0,0,0.04); z-index: 100; border-bottom: 1px solid #f1f5f9; }
         .brand-logo { display: flex; align-items: center; gap: 10px; text-decoration: none; }
         .brand-logo i { color: var(--teal-main); font-size: 2.2rem; }
         .brand-text { color: var(--teal-main); font-weight: 900; font-size: 1.4rem; line-height: 1; letter-spacing: -0.5px; }
         .brand-sub { color: #64748b; font-size: 0.75rem; font-weight: 600; }
-        .text-teal-main { color: var(--teal-main) !important; }
-        
+
         .nav-pills { gap: 6px; flex-wrap: nowrap !important; }
         .nav-pills .nav-link { 
             color: #475569; font-weight: 800; font-size: 0.88rem; 
             padding: 8px 14px; border-radius: 50px; transition: all 0.2s; white-space: nowrap; 
+        }
+        .nav-pills .nav-link i { margin-right: 6px; }
+        .nav-pills .nav-link:hover { color: var(--teal-main); background: #f0fdfa; }
+        .nav-pills .nav-link.active { background-color: var(--teal-main); color: #ffffff; box-shadow: 0 6px 15px rgba(48, 143, 134, 0.35); }
+
+        .avatar-circle { width: 46px; height: 46px; background: var(--teal-main); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: #fff; font-weight: 900; border: 3px solid #fff; box-shadow: 0 6px 15px rgba(48, 143, 134, 0.4); }
+
+        .btn-hamburger { width: 44px; height: 44px; border-radius: 14px; background: #f0fdfa; border: 2px solid #99f6e4; color: var(--teal-main); display: inline-flex; align-items: center; justify-content: center; font-size: 1.25rem; }
+        @media (max-width: 991.98px) {
+            .mobile-nav-collapse { background: #fff; border-radius: 22px; padding: 14px; margin-top: 12px; border: 2px solid #ccfbf1; box-shadow: 0 12px 30px rgba(0,0,0,.08); }
+            .mobile-nav-collapse .nav-pills { flex-direction: column; gap: 6px; }
+            .mobile-nav-collapse .nav-link { border-radius: 16px; padding: 11px 16px; }
         }
 
         .header-content-wrapper {
@@ -163,31 +174,18 @@ $sixMonthsEndDay = date('Y-m-d', strtotime('+6 months'));
 <body>
 
     <!-- THANH ĐIỀU HƯỚNG CHÍNH (ĐỒNG NHẤT HỆ THỐNG) -->
-    <nav class="navbar navbar-expand-lg navbar-custom sticky-top shadow-sm">
-        <div class="container-fluid px-4 px-xl-5">
-            <a class="navbar-brand" href="index.php?route=dashboard">
-                <i class="fa-solid fa-house-chimney-user"></i> StayMate
+        <!-- THANH ĐIỀU HƯỚNG CHÍNH (ĐỒNG NHẤT 100% HỆ THỐNG) -->
+    <nav class="navbar navbar-expand-lg navbar-custom sticky-top">
+        <div class="container-fluid px-3 px-xl-5">
+            <a class="brand-logo me-4" href="index.php?route=dashboard">
+                <i class="fa-solid fa-house-chimney text-teal-main"></i>
+                <div>
+                    <div class="brand-text">StayMate</div>
+                    <div class="brand-sub">Quản Lý Nhà Trọ</div>
+                </div>
             </a>
 
-            <ul class="nav nav-pills flex-nowrap me-auto d-none d-lg-flex">
-                <li class="nav-item"><a class="nav-link" href="index.php?route=overview"><i class="fa-solid fa-border-all"></i> Tổng quan</a></li>
-                <li class="nav-item"><a class="nav-link" href="index.php?route=rooms"><i class="fa-solid fa-bed"></i> Phòng trọ</a></li>
-                <li class="nav-item"><a class="nav-link" href="index.php?route=tenants"><i class="fa-solid fa-users"></i> Khách thuê</a></li>
-                <li class="nav-item"><a class="nav-link active" href="index.php?route=contracts"><i class="fa-solid fa-file-signature"></i> Hợp đồng</a></li>
-                <li class="nav-item"><a class="nav-link" href="index.php?route=utilities"><i class="fa-solid fa-bolt"></i> Điện Nước</a></li>
-                <li class="nav-item"><a class="nav-link" href="index.php?route=showcase" target="_blank"><i class="fa-regular fa-eye"></i> Xem phòng khách</a></li>
-                <li class="nav-item"><a class="nav-link" href="index.php?route=tenant/portal" target="_blank"><i class="fa-solid fa-user-shield text-teal-main"></i> Cổng khách thuê</a></li>
-            </ul>
-
-            <div class="d-flex align-items-center gap-4">
-                <div class="position-relative" style="color: #64748b; cursor: pointer;" title="Hợp đồng sắp hết hạn">
-                    <i class="fa-solid fa-bell fs-4"></i>
-                    <?php if (($stats['expiring_soon'] ?? 0) > 0): ?>
-                        <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger border border-white">
-                            <?= (int)$stats['expiring_soon'] ?>
-                        </span>
-                    <?php endif; ?>
-                </div>
+            <div class="d-flex align-items-center gap-3 order-lg-3">
                 <div class="dropdown">
                     <div class="d-flex align-items-center gap-2 cursor-pointer" data-bs-toggle="dropdown" style="cursor: pointer;">
                         <div class="avatar-circle">AS</div>
@@ -211,6 +209,24 @@ $sixMonthsEndDay = date('Y-m-d', strtotime('+6 months'));
                         <li><a class="dropdown-item rounded-3 py-2 text-danger fw-bold" href="index.php?route=auth/logout"><i class="fa-solid fa-right-from-bracket me-2"></i> Đăng xuất</a></li>
                     </ul>
                 </div>
+
+                <button class="btn-hamburger d-lg-none" type="button" data-bs-toggle="collapse" data-bs-target="#staymateMobileNav">
+                    <i class="fa-solid fa-bars"></i>
+                </button>
+            </div>
+
+            <div class="collapse navbar-collapse mobile-nav-collapse order-lg-2" id="staymateMobileNav">
+                <ul class="nav nav-pills flex-nowrap me-auto">
+                    <li class="nav-item"><a class="nav-link" href="index.php?route=overview"><i class="fa-solid fa-border-all"></i> Tổng quan</a></li>
+                    <li class="nav-item"><a class="nav-link" href="index.php?route=rooms"><i class="fa-solid fa-bed"></i> Phòng trọ</a></li>
+                    <li class="nav-item"><a class="nav-link" href="index.php?route=tenants"><i class="fa-solid fa-users"></i> Khách thuê</a></li>
+                    <li class="nav-item"><a class="nav-link active" href="index.php?route=contracts"><i class="fa-solid fa-file-signature"></i> Hợp đồng</a></li>
+                    <li class="nav-item"><a class="nav-link" href="index.php?route=utilities"><i class="fa-solid fa-bolt"></i> Điện Nước</a></li>
+                    <li class="nav-item"><a class="nav-link" href="index.php?route=invoices"><i class="fa-solid fa-file-invoice-dollar"></i> Hóa đơn</a></li>
+                    <li class="nav-item"><a class="nav-link" href="index.php?route=accounts"><i class="fa-solid fa-user-gear"></i> Tài khoản</a></li>
+                    <li class="nav-item"><a class="nav-link" href="index.php?route=showcase" target="_blank"><i class="fa-regular fa-eye"></i> Xem phòng khách</a></li>
+                    <li class="nav-item"><a class="nav-link" href="index.php?route=tenant/portal" target="_blank"><i class="fa-solid fa-user-shield text-teal-main"></i> Cổng khách thuê</a></li>
+                </ul>
             </div>
         </div>
     </nav>
@@ -305,9 +321,7 @@ $sixMonthsEndDay = date('Y-m-d', strtotime('+6 months'));
                     </div>
                 </div>
                 <div class="d-flex align-items-center gap-2">
-                    <a href="index.php?route=tenant/contract" class="btn btn-outline-teal rounded-pill px-3 py-2 fw-bold" target="_blank">
-                        <i class="fa-solid fa-link me-1"></i> Link Phân Quyền Khách
-                    </a>
+                    
                     <button type="button" class="btn-teal-custom" data-bs-toggle="modal" data-bs-target="#contractModal" onclick="resetContractModal()">
                         <i class="fa-solid fa-file-circle-plus me-2"></i> Lập Hợp đồng mới
                     </button>
@@ -613,8 +627,8 @@ $sixMonthsEndDay = date('Y-m-d', strtotime('+6 months'));
 
     <!-- ================= MODAL 2: LẬP HỢP ĐỒNG THUÊ PHÒNG (HĐ 1 HOẶC HĐ 2) ================= -->
     <div class="modal fade" id="contractModal" tabindex="-1" aria-hidden="true">
-        <div class="modal-dialog modal-lg modal-dialog-centered">
-            <form method="POST" action="index.php?route=contracts/store" class="modal-content" style="border-radius: 26px; border: 4px solid #fff;">
+        <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
+            <form method="POST" action="index.php?route=contracts/store" class="modal-content shadow-lg" style="border-radius: 26px; border: 4px solid #fff; overflow: hidden; max-height: 92vh;">
                 <input type="hidden" name="parent_contract_id" id="contract_parent_id" value="">
 
                 <div class="modal-header border-bottom-0 pb-0">
@@ -677,7 +691,7 @@ $sixMonthsEndDay = date('Y-m-d', strtotime('+6 months'));
                                     <option value="<?= (int)$t['id'] ?>"
                                             data-assigned-room-id="<?= (int)($t['assigned_room_id'] ?? 0) ?>"
                                             data-assigned-room-price="<?= (float)($t['assigned_room_price'] ?? 0) ?>"
-                                            data-phone="<?= h($t['phone'] ?? '') ?>">
+                                            data-assigned-room-number="<?= h($t['assigned_room_number'] ?? '') ?>" data-phone="<?= h($t['phone'] ?? '') ?>">
                                         <?= h($t['full_name']) ?> - <?= h($t['phone']) ?>
                                         <?= !empty($t['assigned_room_number']) ? ' (Đã chọn P.' . h($t['assigned_room_number']) . ')' : '' ?>
                                     </option>
@@ -763,7 +777,7 @@ $sixMonthsEndDay = date('Y-m-d', strtotime('+6 months'));
                         <div class="col-md-4">
                             <label class="form-label small fw-bold mb-1">Hình thức thực hiện</label>
                             <select name="signature_type" class="form-select">
-                                <option value="paper" selected>Ký Giấy A4 Trực Tiếp (Có lưu Scan)</option>
+                                <option value="paper" selected>Ký Giấy A4 (Có lưu Scan)</option>
                                 <option value="online">Chữ ký điện tử Online</option>
                             </select>
                         </div>
@@ -887,6 +901,67 @@ $sixMonthsEndDay = date('Y-m-d', strtotime('+6 months'));
     </footer>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+    <!-- MODAL XÁC NHẬN LÝ DO KHÔNG ĐÓNG TIỀN PHÒNG THÁNG ĐẦU -->
+    <div class="modal fade" id="verificationModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content border-0 shadow-lg rounded-4">
+                <div class="modal-header bg-light rounded-top-4">
+                    <h5 class="modal-title fw-bold text-danger">
+                        <i class="fa-solid fa-clipboard-check me-2"></i> Xác Nhận Xử Lý Hợp Đồng &amp; Tiền Cọc
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <form method="POST" action="index.php?route=contracts/resolve-verification">
+                    <input type="hidden" name="contract_id" id="verify_contract_id">
+                    <div class="modal-body p-4">
+                        <div class="p-3 rounded-4 mb-3" style="background:#fff5f5;border:2px solid #fecaca">
+                            <div class="small fw-bold text-muted">Phòng &amp; Khách thuê cần xác nhận</div>
+                            <div class="fw-black text-danger fs-5" id="verify_room_info">—</div>
+                            <div class="small fw-bold text-dark mt-1" id="verify_deposit_info">Tiền cọc: 0 đ</div>
+                        </div>
+
+                        <label class="form-label fw-bold small text-uppercase text-muted">
+                            Chọn nguyên nhân không đóng tiền phòng <span class="text-danger">*</span>
+                        </label>
+                        <div class="d-flex flex-column gap-3 mb-3">
+                            <div class="form-check p-3 rounded-3 border bg-light">
+                                <input class="form-check-input ms-0 me-2" type="radio" name="case_key" id="case_expired" value="expired_no_renew" checked required>
+                                <label class="form-check-label fw-bold text-success" for="case_expired">
+                                    <i class="fa-solid fa-circle-check me-1"></i> Khách đã hết thời gian thuê &amp; Không muốn gia hạn
+                                    <div class="small fw-normal text-muted mt-1">
+                                        &rarr; Trạng thái cọc sẽ tự động chuyển thành <strong>Đã hoàn cọc</strong>, kết thúc hợp đồng và gửi thông báo xác nhận sang trang Hóa đơn để đối soát.
+                                    </div>
+                                </label>
+                            </div>
+
+                            <div class="form-check p-3 rounded-3 border bg-light">
+                                <input class="form-check-input ms-0 me-2" type="radio" name="case_key" id="case_early" value="early_move_out" required>
+                                <label class="form-check-label fw-bold text-danger" for="case_early">
+                                    <i class="fa-solid fa-ban me-1"></i> Bỏ phòng / chuyển đi trước khi hết hợp đồng
+                                    <div class="small fw-normal text-muted mt-1">
+                                        &rarr; Khách <strong>KHÔNG ĐƯỢC HOÀN CỌC</strong> (Mất cọc/Tịch thu cọc theo điều khoản hợp đồng), hợp đồng thanh lý và giải phóng phòng.
+                                    </div>
+                                </label>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label fw-bold small text-uppercase text-muted">Ghi chú xác nhận</label>
+                            <input type="text" name="verification_note" class="form-control" placeholder="VD: Khách trả phòng ngày 05/11, đã bàn giao đủ chìa khóa...">
+                        </div>
+                    </div>
+                    <div class="modal-footer bg-light">
+                        <button type="button" class="btn btn-outline-secondary rounded-pill px-4" data-bs-dismiss="modal">Hủy</button>
+                        <button type="submit" class="btn btn-danger rounded-pill px-4 fw-bold">
+                            <i class="fa-solid fa-check me-1"></i> Xác nhận &amp; Cập nhật trạng thái
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
     <script>
     function formatVnd(n) {
         return new Intl.NumberFormat('vi-VN').format(Math.round(n || 0)) + ' đ';
@@ -924,20 +999,63 @@ $sixMonthsEndDay = date('Y-m-d', strtotime('+6 months'));
     // Tự động nhảy phòng khi chọn khách thuê
     function onContractTenantSelect(selectEl) {
         const opt = selectEl.options[selectEl.selectedIndex];
-        if (!opt) return;
-
-        const assignedRoomId = opt.dataset.assignedRoomId;
         const roomSelect = document.getElementById('contract_room_id');
-        if (assignedRoomId && parseInt(assignedRoomId, 10) > 0) {
-            roomSelect.value = assignedRoomId;
-            onContractRoomSelect(roomSelect);
-        } else if (selectEl.value === '') {
+        if (!roomSelect) return;
+
+        if (!opt || !selectEl.value) {
             roomSelect.value = '';
             resetRoomServicesDisplay();
             document.getElementById('contract_monthly_rent').value = '';
             document.getElementById('contract_deposit').value = '0';
             document.getElementById('contract_service_fee').value = '0';
             syncDepositAndPreview();
+            return;
+        }
+
+        const assignedRoomId = opt.dataset.assignedRoomId;
+        const assignedRoomNumber = (opt.dataset.assignedRoomNumber || '').trim();
+        let matched = false;
+
+        // 1. Khớp theo ID phòng
+        if (assignedRoomId && parseInt(assignedRoomId, 10) > 0) {
+            roomSelect.value = assignedRoomId;
+            if (roomSelect.value === String(assignedRoomId)) {
+                matched = true;
+            }
+        }
+
+        // 2. Nếu chưa khớp theo ID, khớp theo tên/số phòng
+        if (!matched && assignedRoomNumber) {
+            for (let i = 0; i < roomSelect.options.length; i++) {
+                const rOpt = roomSelect.options[i];
+                const rName = (rOpt.dataset.roomName || rOpt.text.split(' - ')[0]).trim();
+                if (rName.toLowerCase() === assignedRoomNumber.toLowerCase()) {
+                    roomSelect.selectedIndex = i;
+                    matched = true;
+                    break;
+                }
+            }
+        }
+
+        // 3. Nếu phòng chưa có trong select (thuộc tòa khác hoặc phòng ẩn), tạo option mới để gán đúng
+        if (!matched && assignedRoomId && parseInt(assignedRoomId, 10) > 0) {
+            const price = parseFloat(opt.dataset.assignedRoomPrice || 0);
+            const newOpt = document.createElement('option');
+            newOpt.value = assignedRoomId;
+            newOpt.dataset.roomName = assignedRoomNumber || ('Phòng #' + assignedRoomId);
+            newOpt.dataset.price = price;
+            newOpt.dataset.serviceFee = 0;
+            newOpt.dataset.electricRate = 3500;
+            newOpt.dataset.waterRate = 20000;
+            newOpt.dataset.services = '[]';
+            newOpt.textContent = (assignedRoomNumber ? assignedRoomNumber : ('P.' + assignedRoomId)) + ' - ' + formatVnd(price) + ' (Phòng của khách)';
+            roomSelect.appendChild(newOpt);
+            roomSelect.value = assignedRoomId;
+            matched = true;
+        }
+
+        if (matched) {
+            onContractRoomSelect(roomSelect);
         }
     }
 
@@ -1224,6 +1342,15 @@ $sixMonthsEndDay = date('Y-m-d', strtotime('+6 months'));
         }
     });
     
+    
+function openVerificationModal(contractId, room, tenant, deposit) {
+        document.getElementById('verify_contract_id').value = contractId;
+        document.getElementById('verify_room_info').textContent = 'Phòng ' + room + (tenant ? ' · ' + tenant : '');
+        document.getElementById('verify_deposit_info').textContent = 'Tiền cọc quy định: ' + Math.round(deposit).toLocaleString('vi-VN') + ' đ';
+        new bootstrap.Modal(document.getElementById('verificationModal')).show();
+    }
+</script>
+
     <!-- MODAL XÁC NHẬN LÝ DO KHÔNG ĐÓNG TIỀN PHÒNG THÁNG ĐẦU -->
     <div class="modal fade" id="verificationModal" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">
@@ -1284,13 +1411,6 @@ $sixMonthsEndDay = date('Y-m-d', strtotime('+6 months'));
         </div>
     </div>
 
-    function openVerificationModal(contractId, room, tenant, deposit) {
-        document.getElementById('verify_contract_id').value = contractId;
-        document.getElementById('verify_room_info').textContent = 'Phòng ' + room + (tenant ? ' · ' + tenant : '');
-        document.getElementById('verify_deposit_info').textContent = 'Tiền cọc quy định: ' + Math.round(deposit).toLocaleString('vi-VN') + ' đ';
-        new bootstrap.Modal(document.getElementById('verificationModal')).show();
-    }
-</script>
 
     <!-- MODAL DOI MAT KHAU -->
     <div class="modal fade" id="changePasswordModal" tabindex="-1" aria-hidden="true">
@@ -1346,6 +1466,7 @@ $sixMonthsEndDay = date('Y-m-d', strtotime('+6 months'));
                         <li class="list-group-item d-flex justify-content-between"><span class="text-muted">Email:</span> <strong><?= htmlspecialchars($_SESSION['email'] ?? 'admin@nhatro.com') ?></strong></li>
                         <li class="list-group-item d-flex justify-content-between"><span class="text-muted">Số điện thoại:</span> <strong><?= htmlspecialchars($_SESSION['phone'] ?? '0901234567') ?></strong></li>
                     </ul>
+            </div>
                 </div>
                 <div class="modal-footer bg-light">
                     <button type="button" class="btn btn-outline-secondary rounded-pill px-4" data-bs-dismiss="modal">Đóng</button>
@@ -1354,5 +1475,6 @@ $sixMonthsEndDay = date('Y-m-d', strtotime('+6 months'));
             </div>
         </div>
     </div>
+<?php require_once dirname(__DIR__) . '/components/toast.php'; ?>
 </body>
 </html>

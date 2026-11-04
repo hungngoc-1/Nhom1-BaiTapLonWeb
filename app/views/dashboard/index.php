@@ -60,6 +60,18 @@ if (!empty($filterBuilding) && $filterBuilding !== 'all' && isset($buildings[$fi
         .brand-text { color: var(--teal-main); font-weight: 900; font-size: 1.4rem; line-height: 1; letter-spacing: -0.5px;}
         .brand-sub { color: #64748b; font-size: 0.75rem; font-weight: 600; }
 
+        
+        .nav-pills .nav-link { border-radius: 50px; font-weight: 600; color: #64748b; padding: 8px 18px; margin: 0 4px; transition: 0.2s ease; font-size: 0.9rem; }
+        .nav-pills .nav-link:hover { color: var(--teal-main); background: #f0fdfa; }
+        .nav-pills .nav-link.active { background-color: var(--teal-main); color: #fff; box-shadow: 0 4px 12px rgba(48, 143, 134, 0.3); }
+        .btn-hamburger { background: #f1f5f9; border: none; border-radius: 12px; width: 40px; height: 40px; display: inline-flex; align-items: center; justify-content: center; color: #1e293b; font-size: 1.15rem; cursor: pointer; transition: 0.2s; }
+        .btn-hamburger:hover { background: #e2e8f0; }
+        @media (max-width: 991.98px) {
+            .mobile-nav-collapse { background: #ffffff; border-radius: 18px; padding: 14px; margin-top: 10px; box-shadow: 0 10px 25px rgba(0,0,0,0.08); border: 1px solid #f1f5f9; }
+            .mobile-nav-collapse .nav-pills { flex-direction: column; width: 100%; gap: 6px; }
+            .mobile-nav-collapse .nav-pills .nav-link { margin: 0; border-radius: 12px; }
+        }
+
         /* KHUNG WELCOME BANNER NÂNG CẤP */
         .welcome-banner {
             background-color: #ffffff;
@@ -234,6 +246,22 @@ if (!empty($filterBuilding) && $filterBuilding !== 'all' && isset($buildings[$fi
                     <div class="brand-sub">Quản Lý Nhà Trọ</div>
                 </div>
             </a>
+
+            <button class="btn-hamburger d-lg-none" type="button" data-bs-toggle="collapse" data-bs-target="#staymateNavbarNav" aria-controls="staymateNavbarNav" aria-expanded="false" aria-label="Mở Menu"><i class="fa-solid fa-bars"></i></button>
+            <div class="collapse navbar-collapse mobile-nav-collapse" id="staymateNavbarNav">
+                <ul class="nav nav-pills flex-nowrap me-auto">
+                    <li class="nav-item"><a class="nav-link active" href="index.php?route=overview"><i class="fa-solid fa-border-all"></i> Tổng quan</a></li>
+                    <li class="nav-item"><a class="nav-link" href="index.php?route=rooms"><i class="fa-solid fa-bed"></i> Phòng trọ</a></li>
+                    <li class="nav-item"><a class="nav-link" href="index.php?route=tenants"><i class="fa-solid fa-users"></i> Khách thuê</a></li>
+                    <li class="nav-item"><a class="nav-link" href="index.php?route=contracts"><i class="fa-solid fa-file-signature"></i> Hợp đồng</a></li>
+                    <li class="nav-item"><a class="nav-link" href="index.php?route=utilities"><i class="fa-solid fa-bolt"></i> Điện Nước</a></li>
+                    <li class="nav-item"><a class="nav-link" href="index.php?route=invoices"><i class="fa-solid fa-file-invoice-dollar"></i> Hóa đơn</a></li>
+                    <li class="nav-item"><a class="nav-link" href="index.php?route=accounts"><i class="fa-solid fa-user-gear"></i> Tài khoản</a></li>
+                    <li class="nav-item"><a class="nav-link" href="index.php?route=showcase" target="_blank"><i class="fa-regular fa-eye"></i> Xem phòng khách</a></li>
+                    <li class="nav-item"><a class="nav-link" href="index.php?route=tenant/portal" target="_blank"><i class="fa-solid fa-user-shield text-teal-main"></i> Cổng khách thuê</a></li>
+                </ul>
+            </div>
+
             
             <div class="d-flex align-items-center gap-4">
                 <!-- Dropdown Tài khoản -->
@@ -1352,5 +1380,6 @@ if (!empty($filterBuilding) && $filterBuilding !== 'all' && isset($buildings[$fi
         <?php endforeach; ?>
     <?php endif; ?>
     
+<?php require_once dirname(__DIR__) . '/components/toast.php'; ?>
 </body>
 </html>

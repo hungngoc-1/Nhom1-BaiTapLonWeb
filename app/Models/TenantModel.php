@@ -101,7 +101,7 @@ class TenantModel {
             ':password'  => password_hash($password, PASSWORD_DEFAULT),
             ':full_name' => $fullName,
             ':phone'     => $phone,
-            ':email'     => $email,
+            ':email'     => $cleanEmail,
         ]);
     }
 
@@ -119,6 +119,8 @@ class TenantModel {
         ?string $roommateName = null,
         ?string $roommatePhone = null
     ): int {
+        $cleanEmail = trim((string)$email);
+        $cleanEmail = ($cleanEmail === "") ? null : $cleanEmail;
         $username = $phone;
         $hashedPassword = password_hash('123', PASSWORD_DEFAULT);
 
@@ -151,7 +153,7 @@ class TenantModel {
                 ':phone'             => $phone,
                 ':birthday'          => $birthday,
                 ':gender'            => $gender,
-                ':email'             => $email,
+                ':email'             => $cleanEmail,
                 ':occupation'        => $occupation,
                 ':hometown'          => $hometown,
                 ':emergency_contact' => $emergencyContact,
@@ -181,7 +183,7 @@ class TenantModel {
             ':phone'             => $phone,
             ':birthday'          => $birthday,
             ':gender'            => $gender,
-            ':email'             => $email,
+            ':email'             => $cleanEmail,
             ':occupation'        => $occupation,
             ':hometown'          => $hometown,
             ':emergency_contact' => $emergencyContact,
@@ -199,7 +201,7 @@ class TenantModel {
         return $stmt->execute([
             ':full_name' => $fullName,
             ':phone'     => $phone,
-            ':email'     => $email,
+            ':email'     => $cleanEmail,
             ':id'        => $id,
         ]);
     }
@@ -240,7 +242,7 @@ class TenantModel {
             ':phone'             => $phone,
             ':birthday'          => $birthday,
             ':gender'            => $gender,
-            ':email'             => $email,
+            ':email'             => $cleanEmail,
             ':occupation'        => $occupation,
             ':hometown'          => $hometown,
             ':emergency_contact' => $emergencyContact,
@@ -339,5 +341,36 @@ class TenantModel {
         $stmt = $this->conn->prepare("DELETE FROM users WHERE id = :id AND role = 'tenant'");
         return $stmt->execute([':id' => $id]);
     }
+
+    public function getContactLeads(string $status = ''): array {
+        try {
+            if ($status !== '') {
+                $stmt = $this->conn->prepare("SELECT * FROM tenant_contact_leads WHERE status = :st ORDER BY id DESC");
+                $stmt->execute([':st' => $status]);
+            } else {
+                $stmt = $this->conn->query("SELECT * FROM tenant_contact_leads ORDER BY status ASC, id DESC");
+            }
+            return $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
+        } catch (PDOException $e) {
+            return [];
+        }
+    }
+
+    public function markLeadContacted(int $leadId): bool {
+        try {
+            $stmt = $this->conn->prepare("UPDATE tenant_contact_leads SET status = 'contacted', contacted_at = NOW() WHERE id = :id");
+            return $stmt->execute([':id' => $leadId]);
+        } catch (PDOException $e) {
+            return false;
+        }
+    }
+
+    public function deleteContactLead(int $leadId): bool {
+        try {
+            $stmt = $this->conn->prepare("DELETE FROM tenant_contact_leads WHERE id = :id");
+            return $stmt->execute([':id' => $leadId]);
+        } catch (PDOException $e) {
+            return false;
+        }
+    }
 }
-?>

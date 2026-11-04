@@ -153,6 +153,8 @@ $adminName = $_SESSION['full_name'] ?? 'Quản trị viên Hệ thống';
                 <li class="nav-item"><a class="nav-link active" href="index.php?route=tenants"><i class="fa-solid fa-users"></i> Khách thuê</a></li>
                 <li class="nav-item"><a class="nav-link" href="index.php?route=contracts"><i class="fa-solid fa-file-signature"></i> Hợp đồng</a></li>
                 <li class="nav-item"><a class="nav-link" href="index.php?route=utilities"><i class="fa-solid fa-bolt"></i> Điện Nước</a></li>
+                <li class="nav-item"><a class="nav-link" href="index.php?route=invoices"><i class="fa-solid fa-file-invoice-dollar"></i> Hóa đơn</a></li>
+                <li class="nav-item"><a class="nav-link" href="index.php?route=accounts"><i class="fa-solid fa-user-gear"></i> Tài khoản</a></li>
                 <li class="nav-item"><a class="nav-link" href="index.php?route=showcase" target="_blank"><i class="fa-regular fa-eye"></i> Xem phòng khách</a></li>
                 <li class="nav-item"><a class="nav-link" href="index.php?route=tenant/portal" target="_blank"><i class="fa-solid fa-user-shield text-teal-main"></i> Cổng khách thuê</a></li>
             </ul>
@@ -182,6 +184,24 @@ $adminName = $_SESSION['full_name'] ?? 'Quản trị viên Hệ thống';
             </div>
         <?php endif; ?>
 
+                <?php if (!empty($pendingLeads)): ?>
+            <div class="alert alert-warning rounded-4 p-3 mb-4 border-2 border-warning shadow-sm d-flex justify-content-between align-items-center flex-wrap gap-3 position-relative z-2">
+                <div class="d-flex align-items-center gap-3">
+                    <div class="rounded-circle bg-warning text-dark d-flex align-items-center justify-content-center fw-bold fs-4 flex-shrink-0" style="width:48px;height:48px;">
+                        <i class="fa-solid fa-phone-volume"></i>
+                    </div>
+                    <div>
+                        <div class="fw-black text-dark fs-6">
+                            Có <span class="badge bg-danger fs-6 px-2.5 py-1 rounded-pill"><?= count($pendingLeads) ?></span> khách xem phòng đang <strong class="text-danger text-uppercase">Cần liên hệ tư vấn!</strong>
+                        </div>
+                        <div class="small text-muted mt-0.5">Khách vừa gửi thông tin từ trang Xem phòng. Quản lý hãy bấm gọi lại và cập nhật trạng thái liên hệ.</div>
+                    </div>
+                </div>
+                <a href="#sec_leads" onclick="goToLeadsSection(); return false;" class="btn btn-warning rounded-pill px-4 py-2 fw-bold shadow-xs text-dark text-decoration-none">
+                    <i class="fa-solid fa-list-check me-1"></i> Xem danh sách cần liên hệ
+                </a>
+            </div>
+        <?php endif; ?>
         <div class="section-box">
             <form method="GET" action="index.php" class="row g-3 align-items-end mb-4 pb-3 border-bottom border-light">
                 <input type="hidden" name="route" value="tenants">
@@ -308,9 +328,191 @@ $adminName = $_SESSION['full_name'] ?? 'Quản trị viên Hệ thống';
                 </table>
             </div>
         </div>
+            <!-- ================= KHU VỰC: KHÁCH ĐĂNG KÝ LIÊN HỆ TỪ TRANG XEM PHÒNG ================= -->
+        <div class="section-box mt-4" id="sec_leads" style="scroll-margin-top: 90px;">
+            <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+                <div>
+                    <h4 class="fw-bold text-dark mb-1">
+                        <i class="fa-solid fa-headset text-teal-main me-2"></i>Khách Đăng Ký Liên Hệ Từ Trang Xem Phòng
+                    </h4>
+                    <div class="small text-muted">
+                        Danh sách khách hàng để lại thông tin cần tư vấn hoặc đến xem phòng trực tiếp
+                    </div>
+                </div>
+
+                <!-- Tabs chọn Bảng: Cần liên hệ vs Đã liên hệ -->
+                <ul class="nav nav-pills gap-2" id="leadsTab" role="tablist">
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link active rounded-pill px-3 py-1.5 fw-bold" id="tab-pending-btn" data-bs-toggle="pill" data-bs-target="#pane-pending-leads" type="button" role="tab">
+                            <i class="fa-solid fa-phone-volume me-1 text-danger"></i> Cần liên hệ
+                            <span class="badge bg-danger rounded-pill ms-1"><?= count($pendingLeads ?? []) ?></span>
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link rounded-pill px-3 py-1.5 fw-bold text-secondary" id="tab-contacted-btn" data-bs-toggle="pill" data-bs-target="#pane-contacted-leads" type="button" role="tab">
+                            <i class="fa-solid fa-phone-check me-1 text-success"></i> Đã liên hệ
+                            <span class="badge bg-success rounded-pill ms-1"><?= count($contactedLeads ?? []) ?></span>
+                        </button>
+                    </li>
+                </ul>
+            </div>
+
+            <div class="tab-content">
+                <!-- BẢNG 1: KHÁCH CẦN LIÊN HỆ (PENDING) -->
+                <div class="tab-pane fade show active" id="pane-pending-leads" role="tabpanel">
+                    <div class="table-rounded-wrap table-responsive">
+                        <table class="table table-staymate align-middle mb-0">
+                            <thead>
+                                <tr>
+                                    <th style="width: 50px;">STT</th>
+                                    <th>HỌ VÀ TÊN KHÁCH</th>
+                                    <th>SỐ ĐIỆN THOẠI</th>
+                                    <th>PHÒNG QUAN TÂM</th>
+                                    <th>KHUNG GIỜ HẸN XEM</th>
+                                    <th>GHI CHÚ / YÊU CẦU</th>
+                                    <th>THỜI GIAN GỬI</th>
+                                    <th class="text-end" style="width: 220px;">THAO TÁC</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <?php if (!empty($pendingLeads)): ?>
+                                    <?php foreach ($pendingLeads as $idx => $ld): ?>
+                                        <tr class="bg-warning-subtle">
+                                            <td class="text-muted fw-bold"><?= $idx + 1 ?></td>
+                                            <td>
+                                                <div class="fw-black text-dark fs-6"><?= h($ld['customer_name']) ?></div>
+                                                <span class="badge bg-warning text-dark border rounded-pill" style="font-size: 0.7rem;"><i class="fa-solid fa-clock me-1"></i>Chờ gọi</span>
+                                            </td>
+                                            <td>
+                                                <a href="tel:<?= h($ld['phone']) ?>" class="fw-black text-danger fs-6 text-decoration-none d-inline-flex align-items-center gap-1">
+                                                    <i class="fa-solid fa-phone-flip"></i> <?= h($ld['phone']) ?>
+                                                </a>
+                                            </td>
+                                            <td>
+                                                <span class="badge bg-white text-teal-main border border-teal px-2.5 py-1.5 fw-bold fs-7">
+                                                    <?= h($ld['room_label'] ?: 'Tư vấn phòng chung') ?>
+                                                </span>
+                                            </td>
+                                            <td>
+                                                <small class="text-dark fw-bold"><i class="fa-regular fa-clock text-warning me-1"></i><?= h($ld['visit_time'] ?: 'Càng sớm càng tốt') ?></small>
+                                            </td>
+                                            <td>
+                                                <small class="text-muted"><?= h($ld['note'] ?: '—') ?></small>
+                                            </td>
+                                            <td>
+                                                <small class="text-muted"><?= date('H:i d/m/Y', strtotime($ld['created_at'])) ?></small>
+                                            </td>
+                                            <td class="text-end">
+                                                <div class="d-inline-flex gap-2">
+                                                    <!-- Nút Đã liên hệ -->
+                                                    <form method="POST" action="index.php?route=tenants" class="m-0">
+                                                        <input type="hidden" name="csrf_token" value="<?= h($csrf) ?>">
+                                                        <input type="hidden" name="action" value="mark_lead_contacted">
+                                                        <input type="hidden" name="lead_id" value="<?= (int)$ld['id'] ?>">
+                                                        <input type="hidden" name="customer_name" value="<?= h($ld['customer_name']) ?>">
+                                                        <button type="submit" class="btn btn-sm btn-success rounded-pill px-3 py-1.5 fw-bold shadow-xs">
+                                                            <i class="fa-solid fa-phone-check me-1"></i> Đã liên hệ
+                                                        </button>
+                                                    </form>
+                                                    <!-- Nút Xóa lead -->
+                                                    <form method="POST" action="index.php?route=tenants" class="m-0" onsubmit="return confirm('Bạn có chắc chắn muốn xóa yêu cầu này?');">
+                                                        <input type="hidden" name="csrf_token" value="<?= h($csrf) ?>">
+                                                        <input type="hidden" name="action" value="delete_lead">
+                                                        <input type="hidden" name="lead_id" value="<?= (int)$ld['id'] ?>">
+                                                        <button type="submit" class="btn-icon-circle btn-icon-del" title="Xóa yêu cầu"><i class="fa-solid fa-trash-can"></i></button>
+                                                    </form>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    <?php endforeach; ?>
+                                <?php else: ?>
+                                    <tr>
+                                        <td colspan="8" class="text-center py-4 text-muted fw-bold">
+                                            <i class="fa-solid fa-circle-check text-success me-1"></i> Không có yêu cầu nào đang chờ liên hệ.
+                                        </td>
+                                    </tr>
+                                <?php endif; ?>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- BẢNG 2: KHÁCH ĐÃ LIÊN HỆ (CONTACTED) -->
+                <div class="tab-pane fade" id="pane-contacted-leads" role="tabpanel">
+                    <div class="table-rounded-wrap table-responsive">
+                        <table class="table table-staymate align-middle mb-0">
+                            <thead>
+                                <tr>
+                                    <th style="width: 50px;">STT</th>
+                                    <th>HỌ VÀ TÊN KHÁCH</th>
+                                    <th>SỐ ĐIỆN THOẠI</th>
+                                    <th>PHÒNG QUAN TÂM</th>
+                                    <th>THỜI GIAN ĐÃ GỌI</th>
+                                    <th>TRẠNG THÁI</th>
+                                    <th class="text-end" style="width: 240px;">THAO TÁC</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <?php if (!empty($contactedLeads)): ?>
+                                    <?php foreach ($contactedLeads as $idx => $ld): ?>
+                                        <tr>
+                                            <td class="text-muted fw-bold"><?= $idx + 1 ?></td>
+                                            <td>
+                                                <div class="fw-bold text-dark fs-6"><?= h($ld['customer_name']) ?></div>
+                                                <small class="text-muted">Đăng ký: <?= date('d/m/Y', strtotime($ld['created_at'])) ?></small>
+                                            </td>
+                                            <td>
+                                                <span class="fw-bold text-dark"><?= h($ld['phone']) ?></span>
+                                            </td>
+                                            <td>
+                                                <span class="badge bg-light text-dark border px-2.5 py-1.5 fw-semibold">
+                                                    <?= h($ld['room_label'] ?: '—') ?>
+                                                </span>
+                                            </td>
+                                            <td>
+                                                <small class="text-success fw-bold">
+                                                    <i class="fa-solid fa-check me-1"></i>
+                                                    <?= !empty($ld['contacted_at']) ? date('H:i d/m/Y', strtotime($ld['contacted_at'])) : 'Đã tư vấn' ?>
+                                                </small>
+                                            </td>
+                                            <td>
+                                                <span class="badge rounded-pill px-3 py-2" style="background:#dcfce7;color:#15803d;font-weight:800;">
+                                                    <i class="fa-solid fa-circle-check me-1"></i> Đã liên hệ
+                                                </span>
+                                            </td>
+                                            <td class="text-end">
+                                                <div class="d-inline-flex gap-2">
+                                                    <!-- Nút tạo hồ sơ khách thuê nhanh -->
+                                                    <button type="button" class="btn btn-sm btn-teal-custom rounded-pill px-3 py-1.5 fw-bold"
+                                                            onclick="openAddTenantFromLead(<?= h(json_encode($ld['customer_name'])) ?>, <?= h(json_encode($ld['phone'])) ?>)">
+                                                        <i class="fa-solid fa-user-plus me-1"></i> Tạo khách thuê
+                                                    </button>
+                                                    <form method="POST" action="index.php?route=tenants" class="m-0" onsubmit="return confirm('Bạn có muốn xóa bản ghi này?');">
+                                                        <input type="hidden" name="csrf_token" value="<?= h($csrf) ?>">
+                                                        <input type="hidden" name="action" value="delete_lead">
+                                                        <input type="hidden" name="lead_id" value="<?= (int)$ld['id'] ?>">
+                                                        <button type="submit" class="btn-icon-circle btn-icon-del" title="Xóa"><i class="fa-solid fa-trash-can"></i></button>
+                                                    </form>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    <?php endforeach; ?>
+                                <?php else: ?>
+                                    <tr>
+                                        <td colspan="7" class="text-center py-4 text-muted fw-bold">
+                                            Chưa có khách nào trong danh sách đã liên hệ.
+                                        </td>
+                                    </tr>
+                                <?php endif; ?>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 
-    <!-- ================= MODAL THÊM KHÁCH THUÊ MỚI (CHUẨN FORM ẢNH) ================= -->
+    <!-- ================= MODAL THÊM KHÁCH THUÊ MỚI<!-- ================= MODAL THÊM KHÁCH THUÊ MỚI (CHUẨN FORM ẢNH) ================= -->
     <div class="modal fade modal-staymate" id="addTenantModal" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered modal-lg">
             <form method="POST" action="index.php?route=tenants" class="modal-content border-0 shadow-lg" style="border-radius: 20px;">
@@ -647,6 +849,18 @@ $adminName = $_SESSION['full_name'] ?? 'Quản trị viên Hệ thống';
         </div>
     </div>
     <script>
+    
+    function goToLeadsSection() {
+        const el = document.getElementById('sec_leads');
+        if (el) {
+            el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            const pendingTab = document.getElementById('tab-pending-btn');
+            if (pendingTab) {
+                bootstrap.Tab.getOrCreateInstance(pendingTab).show();
+            }
+        }
+    }
+
     function handleTenantRoomChange(selectEl, prefix) {
         const selectedOpt = selectEl.options[selectEl.selectedIndex];
         const maxOcc = parseInt(selectedOpt.getAttribute('data-max-occupants') || '1', 10);
@@ -676,5 +890,6 @@ $adminName = $_SESSION['full_name'] ?? 'Quản trị viên Hệ thống';
         }
     });
     </script>
+<?php require_once dirname(__DIR__) . '/components/toast.php'; ?>
 </body>
 </html>

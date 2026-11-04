@@ -19,6 +19,21 @@ if (session_status() === PHP_SESSION_NONE) {
 
 require_once __DIR__ . '/../app/Config/Database.php';
 $conn = Database::getConnection();
+    try {
+        $conn->exec("CREATE TABLE IF NOT EXISTS `tenant_contact_leads` (
+            `id` INT AUTO_INCREMENT PRIMARY KEY,
+            `customer_name` VARCHAR(100) NOT NULL,
+            `phone` VARCHAR(20) NOT NULL,
+            `room_label` VARCHAR(100) NULL,
+            `room_id` INT NULL,
+            `visit_time` VARCHAR(100) NULL,
+            `note` TEXT NULL,
+            `status` ENUM('pending', 'contacted') DEFAULT 'pending',
+            `created_at` DATETIME DEFAULT CURRENT_TIMESTAMP,
+            `contacted_at` DATETIME NULL
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
+    } catch (PDOException $e) {}
+
 
 // Danh mục 3 Tòa nhà chuẩn hệ thống StayMate
 $buildings = [
@@ -136,7 +151,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
         }
     }
-    // 2. Liên hệ nhanh (Chỉ cần Tên người liên hệ & Số điện thoại)
+    // 2. Liên hệ nhanh: Lưu vào bảng tenant_contact_leads và thông báo sang trang Khách thuê
     elseif ($action === 'quick_contact') {
         $contactName  = trim($_POST['contact_name'] ?? '');
         $contactPhone = trim($_POST['contact_phone'] ?? '');
@@ -144,11 +159,24 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $bldManager   = trim($_POST['bld_manager'] ?? 'Quản lý Tòa nhà');
         $bldPhone     = trim($_POST['bld_phone'] ?? '0901.234.567');
         $visitTime    = trim($_POST['visit_time'] ?? 'Sớm nhất trong ngày');
+        $contactNote  = trim($_POST['contact_note'] ?? '');
 
         if ($contactName === '' || $contactPhone === '') {
             $alertError = 'Vui lòng nhập Tên người liên hệ và Số điện thoại của bạn!';
         } else {
-            $alertSuccess = "📞 Đã gửi yêu cầu Liên hệ nhanh cho <strong>" . htmlspecialchars($roomLabel) . "</strong>! Quản lý phụ trách <strong>" . htmlspecialchars($bldManager) . " (" . htmlspecialchars($bldPhone) . ")</strong> sẽ gọi lại cho <strong>" . htmlspecialchars($contactName) . " (" . htmlspecialchars($contactPhone) . ")</strong> vào khung giờ: <em>" . htmlspecialchars($visitTime) . "</em>.";
+            try {
+                $stLead = $conn->prepare("INSERT INTO tenant_contact_leads (customer_name, phone, room_label, visit_time, note, status, created_at) VALUES (:cn, :ph, :rl, :vt, :nt, 'pending', NOW())");
+                $stLead->execute([
+                    ':cn' => $contactName,
+                    ':ph' => $contactPhone,
+                    ':rl' => $roomLabel,
+                    ':vt' => $visitTime,
+                    ':nt' => $contactNote,
+                ]);
+                $alertSuccess = "📞 Đã gửi thông tin liên hệ cho <strong>" . htmlspecialchars($roomLabel) . "</strong> thành công! Quản lý phụ trách <strong>" . htmlspecialchars($bldManager) . " (" . htmlspecialchars($bldPhone) . ")</strong> sẽ gọi lại cho <strong>" . htmlspecialchars($contactName) . " (" . htmlspecialchars($contactPhone) . ")</strong> để tư vấn và hẹn lịch xem phòng.";
+            } catch (PDOException $e) {
+                $alertError = 'Lỗi lưu yêu cầu liên hệ: ' . $e->getMessage();
+            }
         }
     }
     // 3. Đăng nhập từ menu
@@ -1147,16 +1175,15 @@ $guestUser = $_SESSION['guest_user'] ?? null;
                                     </div>
 
                                     <!-- Cụm nút Đặt phòng trước & Liên hệ nhanh -->
-                                    <div class="pt-3 mt-2 border-top d-flex gap-2">
+                                    <div class="pt-3 mt-2 border-top">
                                         <button type="button"
-                                                class="btn-book-now flex-grow-1"
-                                                onclick="openBookingModal('Phòng <?= htmlspecialchars($rm['room_number']) ?> - <?= htmlspecialchars($bInfo['name']) ?>', '<?= number_format($rm['price'], 0, ',', '.') ?>đ/tháng', '<?= htmlspecialchars($bInfo['manager']) ?>', '<?= htmlspecialchars($bInfo['phone_fmt']) ?>', '<?= htmlspecialchars($bInfo['phone']) ?>', 'register')">
-                                            <i class="fa-solid fa-calendar-check me-1"></i> Đặt phòng trước
-                                        </button>
-                                        <button type="button"
-                                                class="btn-quick-call"
+                                                class="w-100 py-2 px-3 fw-bold rounded-pill text-white shadow-sm d-flex align-items-center justify-content-center gap-2 border-0"
+                                                style="background: #308f86; font-size: 0.95rem; cursor: pointer; transition: 0.2s;"
+                                                onmouseover="this.style.background='#1f665f';"
+                                                onmouseout="this.style.background='#308f86';"
                                                 onclick="openBookingModal('Phòng <?= htmlspecialchars($rm['room_number']) ?> - <?= htmlspecialchars($bInfo['name']) ?>', '<?= number_format($rm['price'], 0, ',', '.') ?>đ/tháng', '<?= htmlspecialchars($bInfo['manager']) ?>', '<?= htmlspecialchars($bInfo['phone_fmt']) ?>', '<?= htmlspecialchars($bInfo['phone']) ?>', 'quick')">
-                                            <i class="fa-solid fa-phone-flip me-1"></i> Liên hệ nhanh
+                                            <i class="fa-solid fa-phone-volume"></i>
+                                            <span>Liên hệ xem phòng</span>
                                         </button>
                                     </div>
                                 </div>
@@ -1179,13 +1206,13 @@ $guestUser = $_SESSION['guest_user'] ?? null;
 
     </div>
 
-    <!-- ================= MODAL ĐẶT PHÒNG TRƯỚC (2 TAB: TẠO TK ĐĂNG NHẬP HOẶC LIÊN HỆ NHANH) ================= -->
+    <!-- ================= MODAL LIÊN HỆ XEM PHÒNG (CHỈ LIÊN HỆ NHANH THEO YÊU CẦU) ================= -->
     <div class="modal fade" id="bookingModal" tabindex="-1" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-dialog modal-dialog-centered" style="max-width: 560px;">
             <div class="modal-content rounded-5 border-0 shadow-lg overflow-hidden">
                 <div class="modal-header text-white px-4 py-3" style="background: linear-gradient(135deg, #1f665f, #308f86);">
                     <div>
-                        <h5 class="modal-title fw-bold mb-0"><i class="fa-solid fa-house-Lock me-2"></i>Đặt Phòng Trước &amp; Liên Hệ Xem Phòng</h5>
+                        <h5 class="modal-title fw-bold mb-0"><i class="fa-solid fa-phone-volume me-2"></i>Liên Hệ Xem Phòng &amp; Tư Vấn Nhanh</h5>
                         <div class="small opacity-90" id="bookingRoomTitle">Phòng P101 - Tòa A</div>
                     </div>
                     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
@@ -1198,122 +1225,62 @@ $guestUser = $_SESSION['guest_user'] ?? null;
                             <div class="small text-muted">Giá niêm yết: <strong class="text-danger" id="modalRoomPrice">3.000.000đ/tháng</strong></div>
                         </div>
                         <div class="text-end">
-                            <div class="small text-muted">Người liên hệ phụ trách tòa nhà:</div>
+                            <div class="small text-muted">Quản lý phụ trách:</div>
                             <div class="fw-bold text-dark">
                                 <i class="fa-solid fa-user-tie text-success me-1"></i>
-                                <span id="modalManagerName">Nguyễn Văn Quản</span> —
-                                <a href="tel:0901234567" id="modalManagerCallLink" class="text-danger text-decoration-none fw-black">0901.234.567</a>
+                                <span id="modalManagerName">Nguyễn Văn Quản</span>
                             </div>
+                            <a href="tel:0901234567" id="modalManagerCallLink" class="text-danger text-decoration-none fw-black">0901.234.567</a>
                         </div>
                     </div>
 
-                    <!-- 2 Tab lựa chọn theo đúng yêu cầu -->
-                    <ul class="nav nav-pills nav-fill bg-light p-1 rounded-pill mb-4" id="bookingTabs" role="tablist">
-                        <li class="nav-item" role="presentation">
-                            <button class="nav-link active rounded-pill fw-bold" id="tab-register-btn" data-bs-toggle="pill" data-bs-target="#pane-register" type="button" role="tab">
-                                <i class="fa-solid fa-user-plus me-1"></i> 1. Đặt phòng &amp; Tạo TK đăng nhập
-                            </button>
-                        </li>
-                        <li class="nav-item" role="presentation">
-                            <button class="nav-link rounded-pill fw-bold" id="tab-quick-btn" data-bs-toggle="pill" data-bs-target="#pane-quick" type="button" role="tab">
-                                <i class="fa-solid fa-bolt me-1 text-warning"></i> 2. Liên hệ nhanh (SĐT &amp; Tên)
-                            </button>
-                        </li>
-                    </ul>
-
-                    <div class="tab-content">
-                        <!-- TAB 1: ĐIỀN THÔNG TIN TẠO TÀI KHOẢN ĐĂNG NHẬP & ĐẶT PHÒNG -->
-                        <div class="tab-pane fade show active" id="pane-register" role="tabpanel">
-                            <form method="POST" action="index.php">
-                                <input type="hidden" name="form_action" value="register_booking">
-                                <input type="hidden" name="room_label" id="formRoomLabel1" value="">
-
-                                <div class="row g-3">
-                                    <div class="col-md-6">
-                                        <label class="form-label small fw-bold">Họ và tên khách thuê <span class="text-danger">*</span></label>
-                                        <input type="text" name="full_name" class="form-control rounded-3" placeholder="VD: Nguyễn Văn An" value="<?= htmlspecialchars($guestUser['full_name'] ?? '') ?>" required>
-                                    </div>
-                                    <div class="col-md-6">
-                                        <label class="form-label small fw-bold">Số điện thoại liên hệ <span class="text-danger">*</span></label>
-                                        <input type="tel" name="phone" class="form-control rounded-3" placeholder="VD: 0987654321" value="<?= htmlspecialchars($guestUser['phone'] ?? '') ?>" required>
-                                    </div>
-                                    <div class="col-md-6">
-                                        <label class="form-label small fw-bold">Tên đăng nhập (Tạo TK mới) <span class="text-danger">*</span></label>
-                                        <input type="text" name="username" class="form-control rounded-3" placeholder="VD: khach_an2026" required>
-                                    </div>
-                                    <div class="col-md-6">
-                                        <label class="form-label small fw-bold">Mật khẩu đăng nhập <span class="text-danger">*</span></label>
-                                        <input type="password" name="password" class="form-control rounded-3" placeholder="Nhập mật khẩu..." required>
-                                    </div>
-                                    <div class="col-md-6">
-                                        <label class="form-label small fw-bold">Email nhận hợp đồng điện tử</label>
-                                        <input type="email" name="email" class="form-control rounded-3" placeholder="VD: an.nguyen@gmail.com">
-                                    </div>
-                                    <div class="col-md-6">
-                                        <label class="form-label small fw-bold">Ngày dự kiến dọn vào ở</label>
-                                        <input type="date" name="move_in_date" class="form-control rounded-3" value="<?= date('Y-m-d', strtotime('+3 days')) ?>">
-                                    </div>
-                                </div>
-
-                                <div class="mt-4 d-flex justify-content-end gap-2">
-                                    <button type="button" class="btn btn-light rounded-pill px-4 fw-bold" data-bs-dismiss="modal">Đóng</button>
-                                    <button type="submit" class="btn rounded-pill px-4 fw-bold text-white" style="background: var(--teal-main);">
-                                        <i class="fa-solid fa-check-circle me-1"></i> Tạo Tài Khoản &amp; Đặt Phòng Này
-                                    </button>
-                                </div>
-                            </form>
+                    <!-- Hotline gọi trực tiếp -->
+                    <div class="p-3 rounded-4 bg-warning-subtle border border-warning mb-3 d-flex justify-content-between align-items-center flex-wrap gap-2">
+                        <div>
+                            <div class="small fw-bold text-dark"><i class="fa-solid fa-headset text-danger me-1"></i> Gọi hotline quản lý:</div>
+                            <div class="text-danger fw-black fs-5" id="quickPhoneDisplay">0901.234.567</div>
                         </div>
-
-                        <!-- TAB 2: LIÊN HỆ NHANH (CÓ SỐ ĐT & TÊN NGƯỜI LIÊN HỆ) -->
-                        <div class="tab-pane fade" id="pane-quick" role="tabpanel">
-                            <div class="p-3 rounded-4 bg-warning-subtle border border-warning mb-3">
-                                <div class="fw-bold text-dark mb-1">
-                                    <i class="fa-solid fa-headset text-danger me-1"></i> Thông tin Người liên hệ trực tiếp tại Tòa nhà:
-                                </div>
-                                <div class="d-flex flex-wrap justify-content-between align-items-center gap-2">
-                                    <div>
-                                        <div>Người liên hệ: <strong id="quickManagerDisplay">Nguyễn Văn Quản (Quản lý Tòa nhà)</strong></div>
-                                        <div>Số điện thoại / Zalo: <strong class="text-danger fs-5" id="quickPhoneDisplay">0901.234.567</strong></div>
-                                    </div>
-                                    <a href="tel:0901234567" id="quickDirectCallBtn" class="btn btn-danger rounded-pill fw-bold px-4">
-                                        <i class="fa-solid fa-phone-volume me-1"></i> Gọi Trực Tiếp Ngay
-                                    </a>
-                                </div>
-                            </div>
-
-                            <form method="POST" action="index.php">
-                                <input type="hidden" name="form_action" value="quick_contact">
-                                <input type="hidden" name="room_label" id="formRoomLabel2" value="">
-                                <input type="hidden" name="bld_manager" id="formBldManager" value="">
-                                <input type="hidden" name="bld_phone" id="formBldPhone" value="">
-
-                                <div class="fw-bold text-secondary small text-uppercase mb-2">
-                                    Hoặc để lại Tên &amp; Số điện thoại của bạn để Quản lý gọi lại ngay:
-                                </div>
-                                <div class="row g-3">
-                                    <div class="col-md-6">
-                                        <label class="form-label small fw-bold">Tên người liên hệ (Tên của bạn) <span class="text-danger">*</span></label>
-                                        <input type="text" name="contact_name" class="form-control rounded-3" placeholder="Nhập họ tên của bạn..." required>
-                                    </div>
-                                    <div class="col-md-6">
-                                        <label class="form-label small fw-bold">Số điện thoại của bạn <span class="text-danger">*</span></label>
-                                        <input type="tel" name="contact_phone" class="form-control rounded-3" placeholder="Nhập SĐT để quản lý gọi lại..." required>
-                                    </div>
-                                    <div class="col-12">
-                                        <label class="form-label small fw-bold">Khung giờ bạn muốn qua xem phòng</label>
-                                        <input type="text" name="visit_time" class="form-control rounded-3" placeholder="VD: 18h30 tối nay hoặc Sáng mai 9h00" value="Gọi tư vấn ngay trong 5 phút">
-                                    </div>
-                                </div>
-
-                                <div class="mt-4 d-flex justify-content-end gap-2">
-                                    <button type="button" class="btn btn-light rounded-pill px-4 fw-bold" data-bs-dismiss="modal">Đóng</button>
-                                    <button type="submit" class="btn btn-warning rounded-pill px-4 fw-bold text-dark">
-                                        <i class="fa-solid fa-paper-plane me-1"></i> Gửi Yêu Cầu Liên Hệ Nhanh
-                                    </button>
-                                </div>
-                            </form>
-                        </div>
+                        <a href="tel:0901234567" id="quickDirectCallBtn" class="btn btn-danger rounded-pill fw-bold px-3 py-2">
+                            <i class="fa-solid fa-phone me-1"></i> Gọi Trực Tiếp
+                        </a>
                     </div>
+
+                    <!-- Form gửi thông tin liên hệ nhanh -->
+                    <form method="POST" action="index.php">
+                        <input type="hidden" name="form_action" value="quick_contact">
+                        <input type="hidden" name="room_label" id="formRoomLabel2" value="">
+                        <input type="hidden" name="bld_manager" id="formBldManager" value="">
+                        <input type="hidden" name="bld_phone" id="formBldPhone" value="">
+
+                        <div class="fw-bold text-dark small text-uppercase mb-2">
+                            <i class="fa-solid fa-paper-plane text-teal-main me-1"></i> Điền thông tin để Quản lý gọi lại và hẹn lịch xem:
+                        </div>
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label class="form-label small fw-bold">Tên người liên hệ (Tên bạn) <span class="text-danger">*</span></label>
+                                <input type="text" name="contact_name" class="form-control rounded-3 py-2" placeholder="Nhập họ và tên..." required>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label small fw-bold">Số điện thoại liên hệ <span class="text-danger">*</span></label>
+                                <input type="tel" name="contact_phone" class="form-control rounded-3 py-2" placeholder="Nhập SĐT của bạn..." required>
+                            </div>
+                            <div class="col-12">
+                                <label class="form-label small fw-bold">Khung giờ bạn tiện đến xem phòng</label>
+                                <input type="text" name="visit_time" class="form-control rounded-3 py-2" placeholder="VD: 18h30 tối nay hoặc Sáng mai 9h00" value="Gọi tư vấn ngay trong ngày">
+                            </div>
+                            <div class="col-12">
+                                <label class="form-label small fw-bold">Ghi chú thêm (nếu có)</label>
+                                <textarea name="contact_note" rows="2" class="form-control rounded-3" placeholder="VD: Dự kiến dọn vào đầu tháng, cần xem phòng thực tế..."></textarea>
+                            </div>
+                        </div>
+
+                        <div class="mt-4 d-flex justify-content-end gap-2">
+                            <button type="button" class="btn btn-light rounded-pill px-4 fw-bold" data-bs-dismiss="modal">Đóng</button>
+                            <button type="submit" class="btn rounded-pill px-4 fw-bold text-white shadow-sm" style="background:#308f86;border:none;">
+                                <i class="fa-solid fa-paper-plane me-1"></i> Gửi Yêu Cầu Liên Hệ
+                            </button>
+                        </div>
+                    </form>
                 </div>
             </div>
         </div>
@@ -1508,30 +1475,44 @@ $guestUser = $_SESSION['guest_user'] ?? null;
         }
 
         // Mở Modal Đặt phòng trước hoặc Liên hệ nhanh
-        function openBookingModal(roomTitle, priceText, managerName, phoneFmt, phoneRaw, mode) {
-            document.getElementById('bookingRoomTitle').textContent = roomTitle;
-            document.getElementById('modalRoomSummary').textContent = roomTitle;
-            document.getElementById('modalRoomPrice').textContent = priceText;
-            document.getElementById('modalManagerName').textContent = managerName;
-            document.getElementById('modalManagerCallLink').textContent = phoneFmt;
-            document.getElementById('modalManagerCallLink').href = 'tel:' + phoneRaw;
+        function openBookingModal(roomTitle, priceText, managerName, phoneFmt, phoneRaw) {
+            const elTitle = document.getElementById('bookingRoomTitle');
+            if (elTitle) elTitle.textContent = roomTitle;
 
-            document.getElementById('formRoomLabel1').value = roomTitle;
-            document.getElementById('formRoomLabel2').value = roomTitle;
-            document.getElementById('formBldManager').value = managerName;
-            document.getElementById('formBldPhone').value = phoneFmt;
+            const elSummary = document.getElementById('modalRoomSummary');
+            if (elSummary) elSummary.textContent = roomTitle;
 
-            document.getElementById('quickManagerDisplay').textContent = managerName + ' (Quản lý phụ trách)';
-            document.getElementById('quickPhoneDisplay').textContent = phoneFmt;
-            document.getElementById('quickDirectCallBtn').href = 'tel:' + phoneRaw;
+            const elPrice = document.getElementById('modalRoomPrice');
+            if (elPrice) elPrice.textContent = priceText;
 
-            const modal = new bootstrap.Modal(document.getElementById('bookingModal'));
-            modal.show();
+            const elMgr = document.getElementById('modalManagerName');
+            if (elMgr) elMgr.textContent = managerName;
 
-            if (mode === 'quick') {
-                bootstrap.Tab.getOrCreateInstance(document.getElementById('tab-quick-btn')).show();
-            } else {
-                bootstrap.Tab.getOrCreateInstance(document.getElementById('tab-register-btn')).show();
+            const elCallLink = document.getElementById('modalManagerCallLink');
+            if (elCallLink) {
+                elCallLink.textContent = phoneFmt;
+                elCallLink.href = 'tel:' + phoneRaw;
+            }
+
+            const elRoomLabel2 = document.getElementById('formRoomLabel2');
+            if (elRoomLabel2) elRoomLabel2.value = roomTitle;
+
+            const elBldMgr = document.getElementById('formBldManager');
+            if (elBldMgr) elBldMgr.value = managerName;
+
+            const elBldPhone = document.getElementById('formBldPhone');
+            if (elBldPhone) elBldPhone.value = phoneFmt;
+
+            const elQuickPhone = document.getElementById('quickPhoneDisplay');
+            if (elQuickPhone) elQuickPhone.textContent = phoneFmt;
+
+            const elDirectCall = document.getElementById('quickDirectCallBtn');
+            if (elDirectCall) elDirectCall.href = 'tel:' + phoneRaw;
+
+            const modalEl = document.getElementById('bookingModal');
+            if (modalEl) {
+                const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
+                modal.show();
             }
         }
 

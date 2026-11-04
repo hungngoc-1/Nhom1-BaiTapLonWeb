@@ -27,6 +27,8 @@ if ($route === null || $route === '') {
 // ==========================================
 if ($route === 'auth/logout') {
     session_destroy(); // Xóa phiên đăng nhập
+    session_start();
+    $_SESSION['flash_success'] = "Đăng xuất tài khoản thành công! Hẹn gặp lại bạn.";
     header("Location: index.php?route=auth/login"); // Đẩy về trang đăng nhập
     exit;
 }

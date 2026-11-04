@@ -161,5 +161,6 @@ $stColor = $isPaid ? '#15803d' : ($inv['is_overdue'] ? '#b91c1c' : '#b45309');
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<?php require_once dirname(__DIR__) . '/components/toast.php'; ?>
 </body>
 </html>
