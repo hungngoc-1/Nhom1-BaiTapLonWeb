@@ -9,7 +9,7 @@ CREATE TABLE `users` (
   `full_name` VARCHAR(100) NOT NULL,
   `phone` VARCHAR(20) NOT NULL,
   `email` VARCHAR(100) NOT NULL UNIQUE,
-  `role` ENUM('admin', 'landlord', 'tenant') NOT NULL,
+  `role` VARCHAR(30) NOT NULL DEFAULT 'tenant',
   `preferred_room_id` INT NULL,
   `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=InnoDB;
@@ -150,3 +150,48 @@ CREATE TABLE `invoice_details` (
   FOREIGN KEY (`invoice_id`) REFERENCES `invoices`(`id`) ON DELETE CASCADE,
   FOREIGN KEY (`service_id`) REFERENCES `services`(`id`) ON DELETE SET NULL
 ) ENGINE=InnoDB;
+
+
+CREATE TABLE IF NOT EXISTS `third_party_expenses` (
+  `id` INT AUTO_INCREMENT PRIMARY KEY,
+  `month_year` VARCHAR(7) NOT NULL,
+  `building_id` INT NULL DEFAULT NULL,
+  `expense_type` VARCHAR(30) NOT NULL,
+  `title` VARCHAR(150) NOT NULL,
+  `provider_name` VARCHAR(150) NOT NULL,
+  `quantity` DECIMAL(10,2) DEFAULT 0,
+  `unit` VARCHAR(30) DEFAULT '',
+  `unit_price` DECIMAL(10,2) DEFAULT 0,
+  `amount` DECIMAL(10,2) NOT NULL,
+  `customer_amount` DECIMAL(10,2) DEFAULT 0,
+  `status` ENUM('paid', 'pending') DEFAULT 'paid',
+  `paid_at` DATE NULL,
+  `notes` VARCHAR(255) NULL,
+  `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  INDEX (`month_year`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS `activity_logs` (
+  `id` INT AUTO_INCREMENT PRIMARY KEY,
+  `user_name` VARCHAR(100) NOT NULL,
+  `role` VARCHAR(50) NOT NULL,
+  `building_id` VARCHAR(10) NULL DEFAULT 'all',
+  `action_type` VARCHAR(50) NOT NULL DEFAULT 'info',
+  `title` VARCHAR(255) NOT NULL,
+  `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  INDEX (`building_id`),
+  INDEX (`created_at`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS `tenant_contact_leads` (
+  `id` INT AUTO_INCREMENT PRIMARY KEY,
+  `customer_name` VARCHAR(100) NOT NULL,
+  `phone` VARCHAR(20) NOT NULL,
+  `room_label` VARCHAR(100) NULL,
+  `room_id` INT NULL,
+  `visit_time` VARCHAR(100) NULL,
+  `note` TEXT NULL,
+  `status` VARCHAR(20) DEFAULT 'pending',
+  `created_at` DATETIME DEFAULT CURRENT_TIMESTAMP,
+  `contacted_at` DATETIME NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;

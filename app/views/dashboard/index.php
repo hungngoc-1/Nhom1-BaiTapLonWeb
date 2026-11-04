@@ -463,6 +463,9 @@ if (!empty($filterBuilding) && $filterBuilding !== 'all' && isset($buildings[$fi
                 <button type="button" class="btn btn-outline-teal-custom" data-bs-toggle="modal" data-bs-target="#manageAccountsModal" style="border: 2px solid var(--teal-main); color: var(--teal-main); font-weight: 800; border-radius: 50px; padding: 10px 22px; background: #ffffff; display: inline-flex; align-items: center; transition: 0.2s;">
                     <i class="fa-solid fa-users-gear me-2"></i> Quản lý Tài khoản
                 </button>
+                <a href="index.php?route=reports_csv" class="btn btn-outline-teal-custom" style="border: 2px solid var(--teal-main); color: var(--teal-main); font-weight: 800; border-radius: 50px; padding: 10px 22px; background: #ffffff; display: inline-flex; align-items: center; text-decoration: none; transition: 0.2s;">
+                    <i class="fa-solid fa-file-csv me-2"></i> Báo cáo Doanh thu & Công nợ (CSV)
+                </a>
                 <button type="button" class="btn btn-teal-custom" data-bs-toggle="modal" data-bs-target="#addBuildingModal">
                     <i class="fa-solid fa-plus me-1"></i> Thêm Tòa nhà
                 </button>

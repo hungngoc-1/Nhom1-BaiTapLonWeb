@@ -106,7 +106,7 @@ if ($isLoggedIn && $currentUserRole === 'tenant') {
 // PHÂN QUYỀN QUẢN LÝ (role === 'manager' hoặc 'landlord'):
 // Quản lý được vào trang Tòa nhà (dashboard) và các trang nghiệp vụ, nhưng TUYỆT ĐỐI KHÔNG ĐƯỢC vào trang Tài khoản (accounts, users)
 if ($isLoggedIn && in_array($currentUserRole, ['manager', 'landlord'], true)) {
-    if (in_array($route, ['accounts', 'users'], true)) {
+    if (in_array($route, ['accounts', 'users', 'reports_csv', 'reports/csv'], true)) {
         $_SESSION['flash_error'] = "Tài khoản Quản lý không có quyền truy cập trang Quản lý Tài khoản!";
         header("Location: index.php?route=overview");
         exit;
@@ -123,6 +123,7 @@ require_once __DIR__ . '/app/Controllers/InvoiceController.php';
 require_once __DIR__ . '/app/Controllers/AccountController.php';
 require_once __DIR__ . '/app/Controllers/TenantPortalController.php';
 require_once __DIR__ . '/app/Controllers/ReportApiController.php';
+require_once __DIR__ . '/app/Controllers/ReportCsvController.php';
 
 // ==========================================
 // 3. BỘ ĐIỀU HƯỚNG CÁC TRANG (ROUTER)
@@ -326,8 +327,10 @@ switch ($route) {
         break;
 
     case 'reports':
-        header("Location: index.php?route=overview");
-        exit;
+    case 'reports_csv':
+    case 'reports/csv':
+        (new ReportCsvController())->index();
+        break;
 
     // ==============================================================================
     // PHÂN HỆ API BÁO CÁO DOANH THU, CÔNG NỢ, ĐIỆN NƯỚC (NGƯỜI 5 — ĐỖ MINH NGUYỆT)
