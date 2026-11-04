@@ -37,6 +37,55 @@ class TenantPortalModel {
     }
 
     /**
+     * Xác định tên tòa nhà theo mã phòng nếu chưa liên kết bảng buildings
+     */
+    public static function determineBuildingName(string $roomNumber): string {
+        $rn = strtoupper(trim($roomNumber));
+        if (str_starts_with($rn, 'A') || str_starts_with($rn, 'P1')) {
+            return 'Tòa A - StayMate Sunrise';
+        } elseif (str_starts_with($rn, 'B') || str_starts_with($rn, 'P2')) {
+            return 'Tòa B - StayMate Emerald';
+        } elseif (str_starts_with($rn, 'C') || str_starts_with($rn, 'P3')) {
+            return 'Tòa C - StayMate Horizon';
+        }
+        return 'Khu Căn Hộ StayMate';
+    }
+
+    /**
+     * Nhận diện Loại phòng thông minh dựa trên mô tả, giá và mã phòng
+     */
+    public static function determineRoomType(?string $desc, float $price = 0, string $roomNumber = ''): string {
+        if (!empty($desc)) {
+            if (preg_match('/Loại:\s*([^|\(\n\r]+)/iu', $desc, $m)) {
+                return trim($m[1]);
+            }
+            if (stripos($desc, 'studio') !== false) {
+                return 'Căn hộ Studio Full nội thất';
+            }
+            if (stripos($desc, 'gác lửng') !== false || stripos($desc, 'duplex') !== false) {
+                return 'Phòng Duplex có gác lửng';
+            }
+            if (stripos($desc, 'ban công') !== false) {
+                return 'Phòng Ban công thoáng mát';
+            }
+            if (stripos($desc, '1pn') !== false || stripos($desc, '1 phòng ngủ') !== false) {
+                return 'Căn hộ 1 Phòng ngủ (1PN)';
+            }
+            if (stripos($desc, 'khép kín') !== false) {
+                return 'Phòng Tiêu chuẩn Khép kín';
+            }
+        }
+        if ($price >= 4500000) {
+            return 'Căn hộ Studio Cao cấp';
+        } elseif ($price >= 3500000) {
+            return 'Phòng Cao cấp (VIP)';
+        } elseif ($price >= 3000000) {
+            return 'Phòng Tiêu chuẩn Ban công';
+        }
+        return 'Phòng Tiêu chuẩn (Standard)';
+    }
+
+    /**
      * Lấy thông tin cá nhân và hợp đồng / phòng đang thuê của khách
      */
     public function getTenantProfile(int $tenantId): ?array {
@@ -100,18 +149,15 @@ class TenantPortalModel {
 
         // Tự động gán tòa nhà theo mã phòng nếu không có bảng buildings
         if (empty($row['building_name'])) {
-            $rn = $row['room_number'] ?? '';
+            $row['building_name'] = self::determineBuildingName($row['room_number'] ?? '');
+            $rn = strtoupper(trim($row['room_number'] ?? ''));
             if (str_starts_with($rn, 'A') || str_starts_with($rn, 'P1')) {
-                $row['building_name'] = 'Tòa A - StayMate Sunrise';
-                $row['building_address'] = 'Số 128 Cầu Giấy, Hà Nội';
+                $row['building_address'] = 'Số 128 Cầu Giấy, Cầu Giấy, Hà Nội';
             } elseif (str_starts_with($rn, 'B') || str_starts_with($rn, 'P2')) {
-                $row['building_name'] = 'Tòa B - StayMate Emerald';
-                $row['building_address'] = 'Số 45 Nguyễn Chí Thanh, Hà Nội';
+                $row['building_address'] = 'Số 45 Nguyễn Chí Thanh, Ba Đình, Hà Nội';
             } elseif (str_starts_with($rn, 'C') || str_starts_with($rn, 'P3')) {
-                $row['building_name'] = 'Tòa C - StayMate Horizon';
-                $row['building_address'] = 'Số 88 Nguyễn Trãi, Hà Nội';
+                $row['building_address'] = 'Số 88 Nguyễn Trãi, Thanh Xuân, Hà Nội';
             } else {
-                $row['building_name'] = 'Khu Căn Hộ StayMate';
                 $row['building_address'] = 'Hà Nội';
             }
         }
@@ -121,6 +167,13 @@ class TenantPortalModel {
             $row['manager_phone'] = '0988 888 999';
         }
 
+        // Loại phòng
+        $row['room_type'] = self::determineRoomType(
+            $row['room_description'] ?? '',
+            (float)($row['room_price'] ?? 0),
+            $row['room_number'] ?? ''
+        );
+
         return $row;
     }
 
@@ -129,11 +182,13 @@ class TenantPortalModel {
      */
     public function getTenantInvoices(int $tenantId): array {
         $sql = "
-            SELECT i.*, r.room_number, r.price AS room_price,
+            SELECT i.*, r.room_number, r.price AS room_price, r.description AS room_description,
                    c.contract_code,
+                   b.name AS building_name, b.address AS building_address,
                    ur.electric_old, ur.electric_new, ur.water_old, ur.water_new
             FROM invoices i
             JOIN rooms r ON r.id = i.room_id
+            LEFT JOIN buildings b ON b.id = r.building_id
             LEFT JOIN contracts c ON c.id = i.contract_id
             LEFT JOIN utilities_readings ur ON ur.room_id = i.room_id AND ur.month_year = i.month_year
             WHERE (c.tenant_id = :t1 OR i.contract_id IN (SELECT id FROM contracts WHERE tenant_id = :t2) OR i.room_id IN (SELECT room_id FROM contracts WHERE tenant_id = :t3))
@@ -146,6 +201,11 @@ class TenantPortalModel {
         $out = [];
         foreach ($rows as $r) {
             $r['code'] = 'HD' . str_pad((string)$r['id'], 4, '0', STR_PAD_LEFT);
+            $r['room_type'] = self::determineRoomType($r['room_description'] ?? '', (float)($r['room_price'] ?? 0), $r['room_number'] ?? '');
+            if (empty($r['building_name'])) {
+                $r['building_name'] = self::determineBuildingName($r['room_number'] ?? '');
+            }
+
             // Tính hạn thanh toán (ngày 10 của tháng kế tiếp)
             $parts = explode('-', $r['month_year']);
             if (count($parts) === 2 && is_numeric($parts[0]) && is_numeric($parts[1])) {
@@ -176,12 +236,14 @@ class TenantPortalModel {
      */
     public function getInvoiceDetail(int $invoiceId, int $tenantId): ?array {
         $sql = "
-            SELECT i.*, r.room_number, r.price AS room_price,
+            SELECT i.*, r.room_number, r.price AS room_price, r.description AS room_description,
                    c.contract_code, c.tenant_id,
                    u.full_name AS tenant_name, u.phone AS tenant_phone,
+                   b.name AS building_name, b.address AS building_address,
                    ur.electric_old, ur.electric_new, ur.water_old, ur.water_new
             FROM invoices i
             JOIN rooms r ON r.id = i.room_id
+            LEFT JOIN buildings b ON b.id = r.building_id
             LEFT JOIN contracts c ON c.id = i.contract_id
             LEFT JOIN users u ON u.id = c.tenant_id
             LEFT JOIN utilities_readings ur ON ur.room_id = i.room_id AND ur.month_year = i.month_year
@@ -195,6 +257,36 @@ class TenantPortalModel {
         if (!$inv) return null;
 
         $inv['code'] = 'HD' . str_pad((string)$inv['id'], 4, '0', STR_PAD_LEFT);
+        $inv['room_type'] = self::determineRoomType($inv['room_description'] ?? '', (float)($inv['room_price'] ?? 0), $inv['room_number'] ?? '');
+        if (empty($inv['building_name'])) {
+            $inv['building_name'] = self::determineBuildingName($inv['room_number'] ?? '');
+        }
+        if (empty($inv['building_address'])) {
+            $rn = strtoupper(trim($inv['room_number'] ?? ''));
+            if (str_starts_with($rn, 'A') || str_starts_with($rn, 'P1')) {
+                $inv['building_address'] = 'Số 128 Cầu Giấy, Cầu Giấy, Hà Nội';
+            } elseif (str_starts_with($rn, 'B') || str_starts_with($rn, 'P2')) {
+                $inv['building_address'] = 'Số 45 Nguyễn Chí Thanh, Ba Đình, Hà Nội';
+            } elseif (str_starts_with($rn, 'C') || str_starts_with($rn, 'P3')) {
+                $inv['building_address'] = 'Số 88 Nguyễn Trãi, Thanh Xuân, Hà Nội';
+            } else {
+                $inv['building_address'] = 'Hà Nội';
+            }
+        }
+
+        // Hạn thanh toán
+        $parts = explode('-', $inv['month_year']);
+        if (count($parts) === 2 && is_numeric($parts[0]) && is_numeric($parts[1])) {
+            $m = (int)$parts[0];
+            $y = (int)$parts[1];
+            $nextM = $m === 12 ? 1 : $m + 1;
+            $nextY = $m === 12 ? $y + 1 : $y;
+            $inv['due_date'] = sprintf('10/%02d/%04d', $nextM, $nextY);
+            $inv['due_date_raw'] = sprintf('%04d-%02d-10', $nextY, $nextM);
+        } else {
+            $inv['due_date'] = '10/' . date('m/Y');
+            $inv['due_date_raw'] = date('Y-m-10');
+        }
 
         // Lấy danh sách invoice_details
         $dStmt = $this->db->prepare("
@@ -230,9 +322,11 @@ class TenantPortalModel {
             SELECT c.*,
                    r.room_number, r.price AS room_price, r.description AS room_description,
                    u.full_name AS tenant_name, u.phone AS tenant_phone, u.email AS tenant_email,
+                   b.name AS building_name, b.address AS building_address,
                    DATEDIFF(c.end_date, CURDATE()) AS days_left
             FROM contracts c
             LEFT JOIN rooms r ON r.id = c.room_id
+            LEFT JOIN buildings b ON b.id = r.building_id
             LEFT JOIN users u ON u.id = c.tenant_id
             WHERE c.tenant_id = :tenant_id";
 
@@ -257,6 +351,14 @@ class TenantPortalModel {
         if (empty($contract['monthly_rent']) || (float)$contract['monthly_rent'] <= 0) {
             $contract['monthly_rent'] = $contract['room_price'] ?? $contract['deposit_amount'];
         }
+        if (empty($contract['building_name'])) {
+            $contract['building_name'] = self::determineBuildingName($contract['room_number'] ?? '');
+        }
+        $contract['room_type'] = self::determineRoomType(
+            $contract['room_description'] ?? '',
+            (float)($contract['monthly_rent'] ?? 0),
+            $contract['room_number'] ?? ''
+        );
 
         return $contract;
     }

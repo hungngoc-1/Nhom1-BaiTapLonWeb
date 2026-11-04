@@ -24,7 +24,7 @@ try {
     }
 
     $db = new PDO('mysql:host=localhost;dbname=quan_ly_nha_tro;charset=utf8mb4', 'root', '');
-    foreach (['users', 'rooms', 'services', 'contracts', 'utilities_readings', 'invoices', 'invoice_details'] as $t) {
+    foreach (['buildings', 'users', 'rooms', 'services', 'room_services', 'contracts', 'utilities_readings', 'invoices', 'invoice_details', 'tenant_requests', 'third_party_expenses'] as $t) {
         echo str_pad($t, 20) . ': ' . $db->query("SELECT COUNT(*) FROM `$t`")->fetchColumn() . " dòng\n";
     }
     echo "\nHoàn tất! Dữ liệu đã được thay bằng seed.sql.\n";
