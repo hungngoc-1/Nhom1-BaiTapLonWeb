@@ -9,16 +9,25 @@ CREATE TABLE `users` (
   `full_name` VARCHAR(100) NOT NULL,
   `phone` VARCHAR(20) NOT NULL,
   `email` VARCHAR(100) NOT NULL UNIQUE,
-  `role` ENUM('admin', 'landlord', 'tenant') NOT NULL,
+  `role` ENUM('admin', 'landlord', 'tenant', 'manager') NOT NULL DEFAULT 'tenant',
   `preferred_room_id` INT NULL,
+  `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB;
+
+CREATE TABLE `buildings` (
+  `id` INT AUTO_INCREMENT PRIMARY KEY,
+  `name` VARCHAR(100) NOT NULL,
+  `address` VARCHAR(255) NOT NULL,
+  `manager_id` INT NULL,
   `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=InnoDB;
 
 CREATE TABLE `rooms` (
   `id` INT AUTO_INCREMENT PRIMARY KEY,
+  `building_id` INT NULL,
   `room_number` VARCHAR(20) NOT NULL UNIQUE,
   `price` DECIMAL(10,2) NOT NULL,
-  `status` ENUM('available', 'rented') DEFAULT 'available',
+  `status` ENUM('available', 'rented', 'maintenance') DEFAULT 'available',
   `description` TEXT,
   `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=InnoDB;
@@ -28,6 +37,7 @@ CREATE TABLE `services` (
   `service_name` VARCHAR(100) NOT NULL,
   `unit_price` DECIMAL(10,2) NOT NULL,
   `unit` VARCHAR(50) NOT NULL,
+  `is_active` TINYINT(1) DEFAULT 1,
   `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=InnoDB;
 
@@ -84,8 +94,15 @@ CREATE TABLE `invoices` (
   `room_id` INT NOT NULL,
   `contract_id` INT NOT NULL,
   `month_year` VARCHAR(7) NOT NULL,
+  `room_price` DECIMAL(10,2) DEFAULT 0,
+  `electric_amount` DECIMAL(10,2) DEFAULT 0,
+  `water_amount` DECIMAL(10,2) DEFAULT 0,
+  `service_fee` DECIMAL(10,2) DEFAULT 0,
   `total_amount` DECIMAL(10,2) NOT NULL,
   `status` ENUM('unpaid', 'paid') DEFAULT 'unpaid',
+  `paid_at` DATETIME NULL,
+  `payment_method` VARCHAR(20) NULL,
+  `payment_note` VARCHAR(255) NULL,
   `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   UNIQUE KEY `unique_invoice_month` (`room_id`, `month_year`),
   FOREIGN KEY (`room_id`) REFERENCES `rooms`(`id`),

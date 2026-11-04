@@ -29,8 +29,8 @@ class ReportModel {
                     'name'        => 'Tòa A - StayMate Sunrise',
                     'address'     => 'Số 128 Cầu Giấy, Quận Cầu Giấy, TP. Hà Nội',
                     'manager'     => 'Quản lý Tòa A (Nguyễn Văn Quản)',
-                    'manager_acc' => 'nhanvien',
-                    'room_prefix' => 'P1',
+                    'manager_acc' => 'quanly_a',
+                    'room_prefix' => 'A',
                     'theme'       => 'teal'
                 ],
                 'B' => [
@@ -40,7 +40,7 @@ class ReportModel {
                     'address'     => 'Số 45 Nguyễn Chí Thanh, Quận Đống Đa, TP. Hà Nội',
                     'manager'     => 'Quản lý Tòa B (Trần Thị Bích)',
                     'manager_acc' => 'quanly_b',
-                    'room_prefix' => 'P2',
+                    'room_prefix' => 'B',
                     'theme'       => 'blue'
                 ],
                 'C' => [
@@ -50,7 +50,7 @@ class ReportModel {
                     'address'     => 'Số 88 Nguyễn Trãi, Quận Thanh Xuân, TP. Hà Nội',
                     'manager'     => 'Quản lý Tòa C (Lê Hoàng Nam)',
                     'manager_acc' => 'quanly_c',
-                    'room_prefix' => 'P3',
+                    'room_prefix' => 'C',
                     'theme'       => 'yellow'
                 ]
             ];

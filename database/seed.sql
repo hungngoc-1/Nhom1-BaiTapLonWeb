@@ -1,4 +1,4 @@
-﻿USE `quan_ly_nha_tro`;
+USE `quan_ly_nha_tro`;
 
 SET FOREIGN_KEY_CHECKS = 0;
 TRUNCATE TABLE `users`;
@@ -125,7 +125,7 @@ INSERT INTO `invoices` (`id`, `room_id`, `contract_id`, `month_year`, `total_amo
 (17, 19, 17, '10-2026', 3115000, 'paid'),
 (18, 20, 18, '10-2026', 3350000, 'paid'),
 (19, 21, 19, '10-2026', 3280000, 'unpaid'), -- Nợ đọng
-(20, 22, 20, '2026-10', 2780000, 'paid');
+(20, 22, 20, '10-2026', 2780000, 'paid');
 
 -- 8. CHI TIẾT HÓA ĐƠN (Sinh ra chi tiết Điện, Nước, Dịch vụ cho toàn bộ 20 hóa đơn)
 -- Dùng INSERT IGNORE hoặc INSERT nhiều dòng. Dưới đây là dữ liệu chi tiết minh họa cho 5 hóa đơn đầu tiên (đại diện)
