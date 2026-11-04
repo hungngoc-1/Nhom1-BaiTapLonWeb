@@ -30,6 +30,24 @@ class InvoiceModel {
             if ($alter) {
                 $this->db->exec("ALTER TABLE `invoices` " . implode(', ', $alter));
             }
+            $this->db->exec("
+                CREATE TABLE IF NOT EXISTS `third_party_expenses` (
+                    `id` INT AUTO_INCREMENT PRIMARY KEY,
+                    `month_year` VARCHAR(7) NOT NULL,
+                    `expense_type` VARCHAR(30) NOT NULL,
+                    `title` VARCHAR(150) NOT NULL,
+                    `provider_name` VARCHAR(150) NOT NULL,
+                    `quantity` DECIMAL(10,2) DEFAULT 0,
+                    `unit` VARCHAR(30) DEFAULT '',
+                    `unit_price` DECIMAL(10,2) DEFAULT 0,
+                    `amount` DECIMAL(10,2) NOT NULL,
+                    `customer_amount` DECIMAL(10,2) DEFAULT 0,
+                    `status` ENUM('paid', 'pending') DEFAULT 'paid',
+                    `paid_at` DATE NULL,
+                    `notes` VARCHAR(255) NULL,
+                    `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                ) ENGINE=InnoDB;
+            ");
         } catch (PDOException $e) {
             // bỏ qua nếu bảng chưa tồn tại
         }
@@ -68,7 +86,8 @@ class InvoiceModel {
         $sql = "
             SELECT i.*, r.room_number, r.price AS room_price,
                    u.full_name AS tenant_name, u.phone AS tenant_phone,
-                   ur.electric_old, ur.electric_new, ur.water_old, ur.water_new
+                   ur.electric_old, ur.electric_new, ur.water_old, ur.water_new,
+                   c.id AS contract_id_val, c.deposit_amount, c.deposit_paid_percent, c.deposit_status
             FROM invoices i
             JOIN rooms r ON r.id = i.room_id
             LEFT JOIN contracts c ON c.id = i.contract_id
@@ -76,6 +95,13 @@ class InvoiceModel {
             LEFT JOIN utilities_readings ur ON ur.room_id = i.room_id AND ur.month_year = i.month_year
             WHERE 1=1";
         $p = [];
+        require_once __DIR__ . '/ReportModel.php';
+        $mgr = ReportModel::getManagerBuildingInfo();
+        if ($mgr) {
+            $sql .= " AND (r.building_id = ? OR r.room_number LIKE ?)";
+            $p[] = $mgr['id'];
+            $p[] = $mgr['prefix'] . '%';
+        }
         if (!empty($f['period']) && $f['period'] !== 'all') { $sql .= " AND i.month_year = ?"; $p[] = $f['period']; }
         if (!empty($f['room_id'])) { $sql .= " AND i.room_id = ?"; $p[] = (int)$f['room_id']; }
         if (($f['status'] ?? '') === 'paid') { $sql .= " AND i.status = 'paid'"; }
@@ -98,6 +124,31 @@ class InvoiceModel {
             $row['due_date'] = self::dueDate($row['month_year']);
             $row['is_overdue'] = $row['status'] === 'unpaid' && $row['due_date'] < date('Y-m-d');
             $row['breakdown'] = $this->breakdown($row, $rates, $detailMap[$row['id']] ?? []);
+            
+            // Xử lý Cột Cọc & Trạng thái cọc (Đã cọc 50%, Hoàn thành cọc, Hoàn cọc)
+            $depAmount = (float)($row['deposit_amount'] ?? 0);
+            $depPercent = (int)($row['deposit_paid_percent'] ?? 100);
+            $depStatus = (string)($row['deposit_status'] ?? 'held');
+
+            if ($depStatus === 'refunded') {
+                $row['deposit_label'] = 'Hoàn cọc';
+                $row['deposit_badge_class'] = 'bg-secondary-subtle text-secondary border border-secondary';
+                $row['deposit_icon'] = 'fa-solid fa-arrow-rotate-left';
+                $row['deposit_sub'] = 'Đã hoàn trả ' . number_format($depAmount, 0, ',', '.') . ' đ';
+                $row['deposit_key'] = 'refunded';
+            } elseif ($depPercent == 50 || ($depPercent > 0 && $depPercent < 100)) {
+                $row['deposit_label'] = 'Đã cọc 50%';
+                $row['deposit_badge_class'] = 'bg-warning-subtle text-warning-emphasis border border-warning';
+                $row['deposit_icon'] = 'fa-solid fa-clock-rotate-left';
+                $row['deposit_sub'] = number_format($depAmount * 0.5, 0, ',', '.') . ' / ' . number_format($depAmount, 0, ',', '.') . ' đ';
+                $row['deposit_key'] = 'partial_50';
+            } else {
+                $row['deposit_label'] = 'Hoàn thành cọc';
+                $row['deposit_badge_class'] = 'bg-success-subtle text-success border border-success-subtle';
+                $row['deposit_icon'] = 'fa-solid fa-circle-check';
+                $row['deposit_sub'] = number_format($depAmount, 0, ',', '.') . ' đ';
+                $row['deposit_key'] = 'completed';
+            }
             if (($f['status'] ?? '') === 'overdue' && !$row['is_overdue']) continue;
             if (($f['status'] ?? '') === 'unpaid' && $row['is_overdue']) continue;
             $out[] = $row;
@@ -202,6 +253,13 @@ class InvoiceModel {
             LEFT JOIN invoices i ON i.room_id = ur.room_id AND i.month_year = ur.month_year
             WHERE i.id IS NULL";
         $p = [];
+        require_once __DIR__ . '/ReportModel.php';
+        $mgr = ReportModel::getManagerBuildingInfo();
+        if ($mgr) {
+            $sql .= " AND (r.building_id = ? OR r.room_number LIKE ?)";
+            $p[] = $mgr['id'];
+            $p[] = $mgr['prefix'] . '%';
+        }
         if ($period && $period !== 'all') { $sql .= " AND ur.month_year = ?"; $p[] = $period; }
         $sql .= " ORDER BY SUBSTRING(ur.month_year, 4, 4) DESC, SUBSTRING(ur.month_year, 1, 2) DESC, r.room_number";
         $st = $this->db->prepare($sql);
@@ -297,4 +355,240 @@ class InvoiceModel {
         if (!preg_match('/^(\d{2})-(\d{4})$/', $period, $m)) return date('Y-m-d');
         return date('Y-m-d', strtotime("{$m[2]}-{$m[1]}-01 +1 month +9 days"));
     }
+
+    // ===================== CẬP NHẬT TRẠNG THÁI CỌC =====================
+    public function updateDeposit(int $contractId, string $stateKey, float $amount): array {
+        if ($contractId <= 0) {
+            return ['ok' => false, 'msg' => 'Không tìm thấy hợp đồng của phòng này để cập nhật cọc.'];
+        }
+        $status = 'held';
+        $percent = 100;
+        if ($stateKey === 'partial_50') {
+            $percent = 50;
+            $status = 'held';
+        } elseif ($stateKey === 'refunded') {
+            $percent = 100;
+            $status = 'refunded';
+        } else {
+            $percent = 100;
+            $status = 'held';
+        }
+
+        $st = $this->db->prepare("UPDATE contracts SET deposit_paid_percent = ?, deposit_status = ?, deposit_amount = ? WHERE id = ?");
+        $st->execute([$percent, $status, $amount, $contractId]);
+        return ['ok' => true, 'msg' => 'Đã cập nhật trạng thái cọc thành công!'];
+    }
+
+    // ===================== KHOẢN CHI CHO BÊN THỨ 3 (ĐIỆN, NƯỚC, DỊCH VỤ) =====================
+    public function getThirdPartyFinance(?string $period = null): array {
+        $where = "WHERE 1=1";
+        $p = [];
+        if ($period && $period !== 'all') {
+            $where .= " AND month_year = ?";
+            $p[] = $period;
+        }
+
+        // Lấy sản lượng điện nước tiêu thụ thực tế
+        $stU = $this->db->prepare("
+            SELECT 
+                SUM(GREATEST(0, electric_new - electric_old)) as total_elec,
+                SUM(GREATEST(0, water_new - water_old)) as total_water
+            FROM utilities_readings
+            $where
+        ");
+        $stU->execute($p);
+        $uData = $stU->fetch() ?: ['total_elec' => 0, 'total_water' => 0];
+
+        $totalElec = (float)($uData['total_elec'] ?? 0);
+        $totalWater = (float)($uData['total_water'] ?? 0);
+
+        // Số tòa nhà & phòng
+        $buildingCount = (int)$this->db->query("SELECT COUNT(*) FROM buildings")->fetchColumn() ?: 3;
+        $roomCount = (int)$this->db->query("SELECT COUNT(*) FROM rooms WHERE status = 'rented'")->fetchColumn() ?: 20;
+
+        // Đơn giá bán cho khách
+        $rates = $this->getRates();
+        $elecCustomerPrice = $rates['elec'];   // 3500
+        $waterCustomerPrice = $rates['water']; // 20000
+
+        // Đơn giá mua vào từ bên thứ 3 (EVN, Cấp nước)
+        $elecCostRate = 2500.0;    // Giá mua điện EVN
+        $waterCostRate = 14000.0;  // Giá mua nước sạch
+        $internetCostRate = 350000.0; // Gói cước mạng FPT/Viettel 1 tòa
+        $garbageCostRate = 200000.0;  // Phí thu gom rác 1 tòa
+        $maintCostRate = 500000.0;    // Bảo trì thang máy
+
+        // Kiểm tra trong bảng third_party_expenses
+        $items = [];
+        $hasCustom = false;
+        try {
+            $stExp = $this->db->prepare("SELECT * FROM third_party_expenses $where ORDER BY id ASC");
+            $stExp->execute($p);
+            $customRows = $stExp->fetchAll();
+            if ($customRows) {
+                $hasCustom = true;
+                foreach ($customRows as $cr) {
+                    $items[] = [
+                        'id' => (int)$cr['id'],
+                        'type' => $cr['expense_type'],
+                        'title' => $cr['title'],
+                        'provider' => $cr['provider_name'],
+                        'qty' => (float)$cr['quantity'],
+                        'unit' => $cr['unit'],
+                        'cost_price' => (float)$cr['unit_price'],
+                        'cost_amount' => (float)$cr['amount'],
+                        'customer_amount' => (float)$cr['customer_amount'],
+                        'profit' => (float)$cr['customer_amount'] - (float)$cr['amount'],
+                        'status' => $cr['status'],
+                        'paid_at' => $cr['paid_at'],
+                        'notes' => $cr['notes'] ?? '',
+                    ];
+                }
+            }
+        } catch (Exception $e) {}
+
+        if (!$hasCustom) {
+            $elecCost = $totalElec * $elecCostRate;
+            $elecRevenue = $totalElec * $elecCustomerPrice;
+
+            $waterCost = $totalWater * $waterCostRate;
+            $waterRevenue = $totalWater * $waterCustomerPrice;
+
+            $netCost = $buildingCount * $internetCostRate;
+            $netRevenue = $roomCount * 100000;
+
+            $garbCost = $buildingCount * $garbageCostRate;
+            $garbRevenue = $roomCount * 30000;
+
+            $items = [
+                [
+                    'id' => 1,
+                    'type' => 'electric',
+                    'title' => 'Tiền Điện Lực Trả Cho EVN',
+                    'provider' => 'Tổng Công ty Điện lực Việt Nam (EVN)',
+                    'qty' => $totalElec,
+                    'unit' => 'kWh',
+                    'cost_price' => $elecCostRate,
+                    'cost_amount' => $elecCost,
+                    'customer_price' => $elecCustomerPrice,
+                    'customer_amount' => $elecRevenue,
+                    'profit' => $elecRevenue - $elecCost,
+                    'status' => 'paid',
+                    'paid_at' => date('Y-m-15'),
+                    'notes' => 'Thanh toán tự động hóa đơn điện EVN qua ngân hàng',
+                ],
+                [
+                    'id' => 2,
+                    'type' => 'water',
+                    'title' => 'Tiền Nước Trả Công Ty Cấp Nước Sạch',
+                    'provider' => 'Công ty Cổ phần Cấp Nước Sạch Hà Nội',
+                    'qty' => $totalWater,
+                    'unit' => 'm³',
+                    'cost_price' => $waterCostRate,
+                    'cost_amount' => $waterCost,
+                    'customer_price' => $waterCustomerPrice,
+                    'customer_amount' => $waterRevenue,
+                    'profit' => $waterRevenue - $waterCost,
+                    'status' => 'paid',
+                    'paid_at' => date('Y-m-16'),
+                    'notes' => 'Chuyển khoản thanh toán theo mã đồng hồ nước',
+                ],
+                [
+                    'id' => 3,
+                    'type' => 'internet',
+                    'title' => 'Cước Internet Cáp Quang Các Tòa',
+                    'provider' => 'Tập đoàn Viễn thông FPT / Viettel',
+                    'qty' => $buildingCount,
+                    'unit' => 'Đường truyền',
+                    'cost_price' => $internetCostRate,
+                    'cost_amount' => $netCost,
+                    'customer_price' => 100000,
+                    'customer_amount' => $netRevenue,
+                    'profit' => $netRevenue - $netCost,
+                    'status' => 'paid',
+                    'paid_at' => date('Y-m-10'),
+                    'notes' => '3 đường truyền cáp quang băng thông cao phục vụ toàn bộ nhà trọ',
+                ],
+                [
+                    'id' => 4,
+                    'type' => 'garbage',
+                    'title' => 'Phí Thu Gom Rác & Vệ Sinh Môi Trường',
+                    'provider' => 'Công ty Môi Trường Đô Thị URENCO',
+                    'qty' => $buildingCount,
+                    'unit' => 'Tòa nhà',
+                    'cost_price' => $garbageCostRate,
+                    'cost_amount' => $garbCost,
+                    'customer_price' => 30000,
+                    'customer_amount' => $garbRevenue,
+                    'profit' => $garbRevenue - $garbCost,
+                    'status' => 'paid',
+                    'paid_at' => date('Y-m-05'),
+                    'notes' => 'Hợp đồng thu gom rác định kỳ hàng ngày',
+                ],
+                [
+                    'id' => 5,
+                    'type' => 'maintenance',
+                    'title' => 'Bảo Trì Thang Máy & Hệ Thống Kỹ Thuật',
+                    'provider' => 'Công ty Cơ Điện & Thang Máy Thăng Long',
+                    'qty' => 1,
+                    'unit' => 'Gói tháng',
+                    'cost_price' => $maintCostRate,
+                    'cost_amount' => $maintCostRate,
+                    'customer_price' => 0,
+                    'customer_amount' => 0,
+                    'profit' => -$maintCostRate,
+                    'status' => 'paid',
+                    'paid_at' => date('Y-m-12'),
+                    'notes' => 'Bảo dưỡng định kỳ thang máy và kiểm định PCCC',
+                ],
+            ];
+        }
+
+        $totalCost = array_sum(array_column($items, 'cost_amount'));
+        $totalCustomerServices = array_sum(array_column($items, 'customer_amount'));
+        $serviceProfit = $totalCustomerServices - $totalCost;
+
+        return [
+            'items' => $items,
+            'total_cost' => $totalCost,
+            'total_elec_cost' => $items[0]['cost_amount'] ?? 0,
+            'total_water_cost' => $items[1]['cost_amount'] ?? 0,
+            'total_elec_revenue' => $items[0]['customer_amount'] ?? 0,
+            'total_water_revenue' => $items[1]['customer_amount'] ?? 0,
+            'elec_profit' => ($items[0]['customer_amount'] ?? 0) - ($items[0]['cost_amount'] ?? 0),
+            'water_profit' => ($items[1]['customer_amount'] ?? 0) - ($items[1]['cost_amount'] ?? 0),
+            'service_profit' => $serviceProfit,
+            'elec_rate_cost' => $elecCostRate,
+            'water_rate_cost' => $waterCostRate,
+        ];
+    }
+
+    public function addThirdPartyExpense(array $post): array {
+        $period = trim($post['month_year'] ?? date('m-Y'));
+        $type = trim($post['expense_type'] ?? 'other');
+        $title = trim($post['title'] ?? 'Chi phí vận hành');
+        $provider = trim($post['provider_name'] ?? 'Bên thứ 3');
+        $qty = (float)($post['quantity'] ?? 1);
+        $unit = trim($post['unit'] ?? 'Lần');
+        $unitPrice = (float)($post['unit_price'] ?? 0);
+        $amount = (float)($post['amount'] ?? ($qty * $unitPrice));
+        $customerAmount = (float)($post['customer_amount'] ?? 0);
+        $status = in_array($post['status'] ?? '', ['paid', 'pending'], true) ? $post['status'] : 'paid';
+        $paidAt = !empty($post['paid_at']) ? $post['paid_at'] : date('Y-m-d');
+        $notes = trim($post['notes'] ?? '');
+
+        if ($amount <= 0 && $qty > 0 && $unitPrice > 0) {
+            $amount = $qty * $unitPrice;
+        }
+
+        $st = $this->db->prepare("
+            INSERT INTO third_party_expenses 
+            (month_year, expense_type, title, provider_name, quantity, unit, unit_price, amount, customer_amount, status, paid_at, notes)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        ");
+        $st->execute([$period, $type, $title, $provider, $qty, $unit, $unitPrice, $amount, $customerAmount, $status, $paidAt, $notes]);
+
+        return ['ok' => true, 'msg' => 'Đã ghi nhận khoản chi cho bên thứ 3 (' . $title . ') thành công!'];
+    }
+
 }

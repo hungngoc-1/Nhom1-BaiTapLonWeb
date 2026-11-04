@@ -177,6 +177,13 @@ class ContractModel {
                 WHERE 1=1";
 
         $params = [];
+        require_once __DIR__ . '/ReportModel.php';
+        $mgr = ReportModel::getManagerBuildingInfo();
+        if ($mgr) {
+            $sql .= " AND (r.building_id = :mgrBId OR r.room_number LIKE :mgrPfx)";
+            $params[':mgrBId'] = $mgr['id'];
+            $params[':mgrPfx'] = $mgr['prefix'] . '%';
+        }
         if ($keyword !== '') {
             $sql .= " AND (c.contract_code LIKE :kw1 OR r.room_number LIKE :kw2 OR u.full_name LIKE :kw3 OR u.phone LIKE :kw4)";
             $params[':kw1'] = $params[':kw2'] = $params[':kw3'] = $params[':kw4'] = "%$keyword%";
@@ -277,6 +284,13 @@ class ContractModel {
     }
 
     public function getRooms() {
+                require_once __DIR__ . '/ReportModel.php';
+        $mgr = ReportModel::getManagerBuildingInfo();
+        if ($mgr) {
+            $st = $this->conn->prepare("SELECT id, room_number, price, status, description FROM rooms WHERE building_id = :bId OR room_number LIKE :pfx ORDER BY room_number");
+            $st->execute([':bId' => $mgr['id'], ':pfx' => $mgr['prefix'] . '%']);
+            return $st->fetchAll(PDO::FETCH_ASSOC);
+        }
         return $this->conn->query("SELECT id, room_number, price, status, description FROM rooms ORDER BY room_number")->fetchAll(PDO::FETCH_ASSOC);
     }
 

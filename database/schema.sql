@@ -9,16 +9,25 @@ CREATE TABLE `users` (
   `full_name` VARCHAR(100) NOT NULL,
   `phone` VARCHAR(20) NOT NULL,
   `email` VARCHAR(100) NOT NULL UNIQUE,
-  `role` ENUM('admin', 'landlord', 'tenant') NOT NULL,
+  `role` ENUM('admin', 'landlord', 'tenant', 'manager') NOT NULL,
   `preferred_room_id` INT NULL,
+  `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB;
+
+CREATE TABLE `buildings` (
+  `id` INT AUTO_INCREMENT PRIMARY KEY,
+  `name` VARCHAR(100) NOT NULL,
+  `address` VARCHAR(255) NOT NULL,
+  `manager_id` INT NULL,
   `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=InnoDB;
 
 CREATE TABLE `rooms` (
   `id` INT AUTO_INCREMENT PRIMARY KEY,
+  `building_id` INT NULL,
   `room_number` VARCHAR(20) NOT NULL UNIQUE,
   `price` DECIMAL(10,2) NOT NULL,
-  `status` ENUM('available', 'rented') DEFAULT 'available',
+  `status` ENUM('available', 'rented', 'maintenance') DEFAULT 'available',
   `description` TEXT,
   `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=InnoDB;
@@ -28,6 +37,7 @@ CREATE TABLE `services` (
   `service_name` VARCHAR(100) NOT NULL,
   `unit_price` DECIMAL(10,2) NOT NULL,
   `unit` VARCHAR(50) NOT NULL,
+  `is_active` TINYINT(1) DEFAULT 1,
   `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=InnoDB;
 
@@ -101,4 +111,21 @@ CREATE TABLE `invoice_details` (
   `subtotal` DECIMAL(10,2) NOT NULL,
   FOREIGN KEY (`invoice_id`) REFERENCES `invoices`(`id`) ON DELETE CASCADE,
   FOREIGN KEY (`service_id`) REFERENCES `services`(`id`) ON DELETE SET NULL
+) ENGINE=InnoDB;
+
+CREATE TABLE IF NOT EXISTS `third_party_expenses` (
+  `id` INT AUTO_INCREMENT PRIMARY KEY,
+  `month_year` VARCHAR(7) NOT NULL,
+  `expense_type` VARCHAR(30) NOT NULL,
+  `title` VARCHAR(150) NOT NULL,
+  `provider_name` VARCHAR(150) NOT NULL,
+  `quantity` DECIMAL(10,2) DEFAULT 0,
+  `unit` VARCHAR(30) DEFAULT '',
+  `unit_price` DECIMAL(10,2) DEFAULT 0,
+  `amount` DECIMAL(10,2) NOT NULL,
+  `customer_amount` DECIMAL(10,2) DEFAULT 0,
+  `status` ENUM('paid', 'pending') DEFAULT 'paid',
+  `paid_at` DATE NULL,
+  `notes` VARCHAR(255) NULL,
+  `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=InnoDB;

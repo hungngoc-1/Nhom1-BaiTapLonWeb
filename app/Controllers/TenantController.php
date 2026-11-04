@@ -134,6 +134,26 @@ class TenantController {
                 }
                 header("Location: index.php?route=tenants");
                 exit;
+            } elseif ($action === 'approve_request') {
+                $reqId = (int)($_POST['request_id'] ?? 0);
+                $note = trim($_POST['manager_note'] ?? 'Đã xác nhận và cập nhật thông tin.');
+                if ($reqId > 0 && $this->portalModel->approveRequest($reqId, $note)) {
+                    $_SESSION['tenant_flash_success'] = 'Đã phê duyệt yêu cầu và tự động cập nhật thông tin khách thuê!';
+                } else {
+                    $_SESSION['tenant_flash_error'] = 'Không thể phê duyệt yêu cầu.';
+                }
+                header("Location: index.php?route=tenants");
+                exit;
+            } elseif ($action === 'reject_request') {
+                $reqId = (int)($_POST['request_id'] ?? 0);
+                $note = trim($_POST['manager_note'] ?? 'Yêu cầu không được phê duyệt.');
+                if ($reqId > 0 && $this->portalModel->rejectRequest($reqId, $note)) {
+                    $_SESSION['tenant_flash_success'] = 'Đã từ chối yêu cầu điều chỉnh.';
+                } else {
+                    $_SESSION['tenant_flash_error'] = 'Không thể từ chối yêu cầu.';
+                }
+                header("Location: index.php?route=tenants");
+                exit;
             }
         }
 

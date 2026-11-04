@@ -37,8 +37,8 @@ $pendingInPeriod = array_values(array_filter($pendingView, fn($x) => $filters['p
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         :root { --teal-main: #308f86; --teal-hover: #25756d; --bg-page: #f8fafc; }
-        body {
-            background-color: var(--bg-page); font-family: 'Nunito', sans-serif; font-size: 0.9rem; color: #334155;
+        body { 
+            background-color: var(--bg-page); font-family: 'Nunito', sans-serif; font-size: 0.95rem; color: #334155;
             min-height: 100vh; display: flex; flex-direction: column;
             background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1440 320"><path fill="%23e6f4f1" fill-opacity="0.8" d="M0,160L48,170.7C96,181,192,203,288,197.3C384,192,480,160,576,149.3C672,139,768,149,864,170.7C960,192,1056,224,1152,213.3C1248,203,1344,149,1392,122.7L1440,96L1440,0L1392,0C1344,0,1248,0,1152,0C1056,0,960,0,864,0C768,0,672,0,576,0C480,0,384,0,288,0C192,0,96,0,48,0L0,0Z"></path></svg>');
             background-position: top center; background-repeat: no-repeat; background-size: 100% auto; background-attachment: fixed;
@@ -77,26 +77,31 @@ $pendingInPeriod = array_values(array_filter($pendingView, fn($x) => $filters['p
         .btn-back-content { background: #fff; border: 3px solid #fff; color: #334155; font-weight: 800; padding: 10px 26px; border-radius: 50px; transition: .2s; text-decoration: none; display: inline-flex; align-items: center; box-shadow: 0 8px 20px rgba(0,0,0,.08); }
         .btn-back-content:hover { border-color: var(--teal-main); color: var(--teal-main); transform: translateY(-3px); }
         .header-title-wrapper { position: relative; z-index: 2; display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 28px; flex-wrap: wrap; gap: 16px; }
-        .main-title { font-weight: 900; color: #0f172a; font-size: 1.95rem; letter-spacing: -.5px; display: inline-flex; align-items: center; flex-wrap: wrap; }
+        .main-title {  font-weight: 800; color: #0f172a; font-size: 1.45rem; letter-spacing: -0.3px; display: inline-flex; align-items: center; flex-wrap: wrap; }
         .bld-highlight { color: var(--teal-main); margin-left: 8px; position: relative; }
         .title-sparkle { position: absolute; background: #fde047; border-radius: 2px; }
         .ts-1 { width: 4px; height: 12px; top: -10px; right: -15px; transform: rotate(20deg); }
         .ts-2 { width: 12px; height: 4px; top: 15px; right: -25px; transform: rotate(15deg); }
         .bld-address-txt { font-size: .92rem; font-weight: 700; color: #64748b; margin-top: 6px; }
 
-        .overview-card { border-radius: 30px; padding: 24px; position: relative; overflow: hidden; box-shadow: 0 15px 35px rgba(0,0,0,.12); border: 4px solid #fff; height: 100%; transition: .3s; }
-        .overview-card:hover { transform: translateY(-7px); box-shadow: 0 25px 45px rgba(0,0,0,.17); }
-        .card-green { background: linear-gradient(135deg,#dcfce7,#bbf7d0); }
-        .card-blue { background: linear-gradient(135deg,#e0f2fe,#bae6fd); }
-        .card-yellow { background: linear-gradient(135deg,#fef9c3,#fef08a); }
-        .card-purple { background: linear-gradient(135deg,#f3e8ff,#e9d5ff); }
-        .overview-title { font-size: .8rem; font-weight: 900; margin-bottom: 8px; display: flex; align-items: center; gap: 8px; text-transform: uppercase; position: relative; z-index: 2; }
-        .overview-val { font-size: 2rem; font-weight: 900; line-height: 1.05; letter-spacing: -1px; position: relative; z-index: 2; }
-        .overview-icon-bg { position: absolute; right: 20px; top: 22px; width: 50px; height: 50px; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: #fff; font-size: 1.3rem; box-shadow: 0 8px 18px rgba(0,0,0,.15); z-index: 2; border: 3px solid #fff; }
-        .icon-green { background: linear-gradient(135deg,#16a34a,#4ade80); }
-        .icon-blue { background: linear-gradient(135deg,#0284c7,#38bdf8); }
-        .icon-yellow { background: linear-gradient(135deg,#f59e0b,#eab308); }
-        .icon-purple { background: linear-gradient(135deg,#9333ea,#a855f7); }
+                .overview-card {
+            border-radius: 18px;
+            padding: 18px 20px; position: relative; overflow: hidden;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.03);
+            border: 1px solid #e2e8f0;
+            background: #ffffff;
+            height: 100%; transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+        .overview-card:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(0,0,0,0.06); }
+        .overview-title {  font-size: 0.85rem; font-weight: 700; margin-bottom: 6px; display: flex; align-items: center; gap: 6px; text-transform: uppercase; color: #475569; position: relative; z-index: 2; }
+        .overview-val {  font-size: 1.55rem; font-weight: 800; line-height: 1.2; letter-spacing: -0.3px; position: relative; z-index: 2; color: #0f172a; }
+        .overview-icon-bg {
+            position: absolute; right: 18px; top: 18px;
+            width: 38px; height: 38px; border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            color: white; font-size: 1rem;
+            z-index: 2;
+        }
 
         .section-box { background: rgba(255,255,255,.96); border-radius: 30px; border: 4px solid #fff; padding: 24px 28px; box-shadow: 0 15px 40px rgba(0,0,0,.08); position: relative; z-index: 2; margin-bottom: 24px; }
         .btn-teal-custom { background: var(--teal-main); border-radius: 50px; font-weight: 800; color: #fff; padding: 10px 24px; border: 2px solid var(--teal-hover); box-shadow: 0 8px 20px rgba(48,143,134,.35); font-size: .9rem; transition: .2s; display: inline-flex; align-items: center; gap: 8px; text-decoration: none; cursor: pointer; }
@@ -121,13 +126,17 @@ $pendingInPeriod = array_values(array_filter($pendingView, fn($x) => $filters['p
         .table-staymate tbody td:last-child { background: #fff; }
         .table-staymate tbody tr:hover td:last-child { background: #f8fafc; }
         .table-staymate .tenant-name { white-space: normal; min-width: 110px; max-width: 150px; line-height: 1.25; }
-        .sub-note { font-size: .72rem; color: #64748b; font-weight: 700; }
+        .sub-note { font-size: 0.82rem; color: #64748b; font-weight: 700; }
 
-        .badge-room-pill { background: var(--teal-main); color: #fff; padding: 6px 12px; border-radius: 50px; font-weight: 900; font-size: .8rem; box-shadow: 0 4px 10px rgba(48,143,134,.25); display: inline-flex; }
-        .badge-period-pill { background: #f1f5f9; color: #334155; border: 2px solid #cbd5e1; padding: 5px 11px; border-radius: 50px; font-weight: 800; font-size: .78rem; display: inline-flex; gap: 6px; align-items: center; white-space: nowrap; }
-        .code-pill { font-weight: 900; color: var(--teal-main); background: #f0fdfa; border: 1.5px solid #99f6e4; border-radius: 12px; padding: 4px 10px; font-size: .8rem; text-decoration: none; }
+        .badge-room-pill {
+            font-size: 0.88rem; box-shadow: 0 4px 10px rgba(48,143,134,.25); display: inline-flex; }
+        .badge-period-pill {
+            font-size: 0.86rem; display: inline-flex; gap: 6px; align-items: center; white-space: nowrap; }
+        .code-pill {
+            font-size: 0.88rem; text-decoration: none; }
         .code-pill:hover { background: var(--teal-main); color: #fff; }
-        .st-pill { display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px; border-radius: 50px; font-weight: 800; font-size: .76rem; white-space: nowrap; border: 1.5px solid; }
+        .st-pill {
+            font-size: 0.85rem; white-space: nowrap; border: 1.5px solid; }
         .st-paid { background: #dcfce7; color: #15803d; border-color: #86efac; }
         .st-unpaid { background: #fef3c7; color: #b45309; border-color: #fde68a; }
         .st-overdue { background: #fee2e2; color: #b91c1c; border-color: #fecaca; }
@@ -171,7 +180,7 @@ $pendingInPeriod = array_values(array_filter($pendingView, fn($x) => $filters['p
                         <div class="avatar-circle">AS</div>
                         <div class="text-start d-none d-sm-block lh-sm">
                             <div class="fw-bold text-dark" style="font-size: 0.9rem;"><?= htmlspecialchars($_SESSION['full_name'] ?? 'Quản trị viên Hệ thống') ?> <i class="fa-solid fa-angle-down ms-1 text-muted fs-6"></i></div>
-                            <div class="text-muted text-capitalize" style="font-size: 0.75rem;"><?= htmlspecialchars($_SESSION['role'] ?? 'admin') ?></div>
+                            <div class="text-muted text-capitalize" style="font-size: 0.82rem;"><?= htmlspecialchars($_SESSION['role'] ?? 'admin') ?></div>
                         </div>
                     </div>
                     <ul class="dropdown-menu dropdown-menu-end shadow border-0 rounded-4 mt-2 p-2">
@@ -200,7 +209,9 @@ $pendingInPeriod = array_values(array_filter($pendingView, fn($x) => $filters['p
                 <li class="nav-item"><a class="nav-link" href="index.php?route=tenants"><i class="fa-solid fa-users"></i> Khách thuê</a></li>
                 <li class="nav-item"><a class="nav-link" href="index.php?route=contracts"><i class="fa-solid fa-file-signature"></i> Hợp đồng</a></li>
                 <li class="nav-item"><a class="nav-link" href="index.php?route=utilities"><i class="fa-solid fa-bolt"></i> Điện Nước</a></li>
+                <li class="nav-item"><a class="nav-link active" href="index.php?route=invoices"><i class="fa-solid fa-file-invoice-dollar"></i> Hóa đơn</a></li>
                 <li class="nav-item"><a class="nav-link" href="index.php?route=showcase" target="_blank"><i class="fa-regular fa-eye"></i> Xem phòng khách</a></li>
+                <li class="nav-item"><a class="nav-link" href="index.php?route=tenant/portal" target="_blank"><i class="fa-solid fa-user-shield text-teal-main"></i> Cổng khách thuê</a></li>
             </ul>
         </div>
     </div>
@@ -245,7 +256,7 @@ $pendingInPeriod = array_values(array_filter($pendingView, fn($x) => $filters['p
             </nav>
             <div class="main-title">
                 Hóa đơn &amp; Thu tiền -
-                <span class="bld-highlight"><?= h($periodLabel) ?><span class="title-sparkle ts-1"></span><span class="title-sparkle ts-2"></span></span>
+                <span class="bld-highlight"><?= h($periodLabel) ?></span>
             </div>
             <div class="bld-address-txt d-flex flex-wrap gap-2 mt-2">
                 <span class="rate-chip"><i class="fa-solid fa-bolt text-warning"></i> Điện: <?= money($rates['elec']) ?>/kWh</span>
@@ -280,44 +291,118 @@ $pendingInPeriod = array_values(array_filter($pendingView, fn($x) => $filters['p
         </div>
     <?php endif; ?>
 
-    <!-- 4 THẺ THỐNG KÊ -->
-    <div class="row g-4 mb-4 position-relative" style="z-index:2">
-        <div class="col-12 col-md-6 col-lg-3">
-            <div class="overview-card card-green">
-                <div class="overview-icon-bg icon-green"><i class="fa-solid fa-file-invoice-dollar"></i></div>
-                <div class="overview-title text-success"><i class="fa-solid fa-receipt fs-6"></i> TỔNG HÓA ĐƠN</div>
-                <div class="overview-val text-dark mt-2"><?= (int)$stats['count'] ?> <span class="fs-6 fw-bold text-muted">hóa đơn</span></div>
-                <div class="mt-3 text-success fw-bold" style="font-size:.82rem"><i class="fa-solid fa-coins me-1"></i> Tổng phải thu: <span class="text-dark"><?= money($stats['total']) ?></span></div>
+    <!-- ================= BẢNG CÂN ĐỐI TÀI CHÍNH THU - CHI & LỢI NHUẬN THỰC TẾ ================= -->
+    <div class="row g-3 mb-4 position-relative" style="z-index: 2;">
+        <div class="col-12 col-lg-4">
+            <div class="p-3 rounded-4 bg-white border shadow-sm h-100 d-flex flex-column justify-content-between" style="border-top: 3px solid #16a34a !important;">
+                <div>
+                    <div class="d-flex justify-content-between align-items-center mb-1">
+                        <span class="fw-bold text-success text-uppercase" style="font-size: 0.8125rem; letter-spacing: 0.3px;">
+                            <i class="fa-solid fa-arrow-down-left-and-arrow-up-right-to-center me-1"></i> TỔNG KHOẢN THU (KHÁCH THUÊ)
+                        </span>
+                        <span class="badge rounded-pill bg-success-subtle text-success fw-bold" style="font-size: 0.82rem;">Doanh thu</span>
+                    </div>
+                    <div class="fw-bold text-dark my-1" style="font-size: 1.55rem;">
+                        <?= money($stats['total']) ?>
+                    </div>
+                </div>
+                <div class="mt-2 pt-2 border-top border-light d-flex justify-content-between" style="font-size: 0.88rem;">
+                    <span class="text-success fw-bold"><i class="fa-solid fa-circle-check me-1"></i> Đã thu: <?= money($stats['paid']) ?></span>
+                    <span class="text-danger fw-bold"><i class="fa-solid fa-clock me-1"></i> Còn nợ: <?= money($stats['unpaid']) ?></span>
+                </div>
             </div>
         </div>
-        <div class="col-12 col-md-6 col-lg-3">
-            <div class="overview-card card-blue">
-                <div class="overview-icon-bg icon-blue"><i class="fa-solid fa-wallet"></i></div>
-                <div class="overview-title text-primary"><i class="fa-solid fa-hand-holding-dollar fs-6"></i> ĐÃ THU</div>
-                <div class="overview-val text-dark mt-2" style="font-size:1.7rem"><?= money($stats['paid']) ?></div>
-                <div class="progress mt-3" style="height:9px;background:rgba(255,255,255,.75);border-radius:10px"><div class="progress-bar bg-primary" style="width:<?= (int)$stats['rate'] ?>%;border-radius:10px"></div></div>
-                <div class="d-flex justify-content-between text-primary fw-bold mt-1" style="font-size:.8rem"><span><?= (int)$stats['paid_count'] ?> hóa đơn</span><span><?= (int)$stats['rate'] ?>% đã thu</span></div>
+
+        <div class="col-12 col-lg-4">
+            <div class="p-3 rounded-4 bg-white border shadow-sm h-100 d-flex flex-column justify-content-between" style="border-top: 3px solid #ef4444 !important;">
+                <div>
+                    <div class="d-flex justify-content-between align-items-center mb-1">
+                        <span class="fw-bold text-danger text-uppercase" style="font-size: 0.8125rem; letter-spacing: 0.3px;">
+                            <i class="fa-solid fa-money-bill-transfer me-1"></i> TỔNG CHI BÊN THỨ 3 (HÀNG THÁNG)
+                        </span>
+                        <span class="badge rounded-pill bg-danger-subtle text-danger fw-bold" style="font-size: 0.82rem;">Chi phí gốc</span>
+                    </div>
+                    <div class="fw-bold text-danger my-1" style="font-size: 1.55rem;">
+                        <?= money($thirdPartyFinance['total_cost']) ?>
+                    </div>
+                </div>
+                <div class="mt-2 pt-2 border-top border-light d-flex justify-content-between text-muted" style="font-size: 0.88rem;">
+                    <span><i class="fa-solid fa-bolt text-warning me-1"></i> Điện EVN: <?= money($thirdPartyFinance['total_elec_cost']) ?></span>
+                    <span><i class="fa-solid fa-droplet text-info me-1"></i> Nước: <?= money($thirdPartyFinance['total_water_cost']) ?></span>
+                </div>
             </div>
         </div>
-        <div class="col-12 col-md-6 col-lg-3">
-            <div class="overview-card card-yellow">
-                <div class="overview-icon-bg icon-yellow"><i class="fa-solid fa-hourglass-half"></i></div>
-                <div class="overview-title" style="color:#b45309"><i class="fa-regular fa-clock fs-6"></i> CÔNG NỢ CHƯA THU</div>
-                <div class="overview-val mt-2" style="font-size:1.7rem;color:#b45309"><?= money($stats['unpaid']) ?></div>
-                <div class="mt-3 fw-bold" style="font-size:.82rem;color:#b45309"><i class="fa-solid fa-file-circle-exclamation me-1"></i> Tồn đọng: <span class="text-danger"><?= (int)$stats['unpaid_count'] ?> hóa đơn</span></div>
-            </div>
-        </div>
-        <div class="col-12 col-md-6 col-lg-3">
-            <div class="overview-card card-purple">
-                <div class="overview-icon-bg icon-purple"><i class="fa-solid fa-triangle-exclamation"></i></div>
-                <div class="overview-title" style="color:#7e22ce"><i class="fa-solid fa-bell fs-6"></i> QUÁ HẠN THANH TOÁN</div>
-                <div class="overview-val mt-2" style="font-size:1.7rem;color:#7e22ce"><?= money($stats['overdue']) ?></div>
-                <div class="mt-3 fw-bold" style="font-size:.82rem;color:#7e22ce"><i class="fa-solid fa-calendar-xmark me-1"></i> <?= (int)$stats['overdue_count'] ?> hóa đơn (hạn: ngày 10 tháng sau)</div>
+
+        <div class="col-12 col-lg-4">
+            <div class="p-3 rounded-4 bg-white border shadow-sm h-100 d-flex flex-column justify-content-between" style="border-top: 3px solid #308f86 !important;">
+                <div>
+                    <div class="d-flex justify-content-between align-items-center mb-1">
+                        <span class="fw-bold text-teal-main text-uppercase" style="font-size: 0.8125rem; letter-spacing: 0.3px;">
+                            <i class="fa-solid fa-chart-line me-1"></i> LỢI NHUẬN THỰC TẾ (THU - CHI)
+                        </span>
+                        <span class="badge rounded-pill text-white fw-bold" style="background: var(--teal-main); font-size: 0.75rem;">Lãi ròng</span>
+                    </div>
+                    <div class="fw-bold text-teal-main my-1" style="font-size: 1.55rem;">
+                        <?= money($stats['total'] - $thirdPartyFinance['total_cost']) ?>
+                    </div>
+                </div>
+                <div class="mt-2 pt-2 border-top border-light d-flex justify-content-between" style="font-size: 0.88rem;">
+                    <span class="text-teal-main fw-bold"><i class="fa-solid fa-coins me-1"></i> Lãi DV Điện Nước: +<?= money($thirdPartyFinance['service_profit']) ?></span>
+                    <span class="text-muted fw-bold"><?= round((($stats['total'] - $thirdPartyFinance['total_cost']) / max(1, $stats['total'])) * 100) ?>% tỷ suất</span>
+                </div>
             </div>
         </div>
     </div>
 
-    <!-- BỘ LỌC + BẢNG -->
+    <!-- 4 THẺ THỐNG KÊ CHI TIẾT HÓA ĐƠN -->
+    <div class="row g-3 mb-4 position-relative" style="z-index:2">
+        <div class="col-12 col-md-6 col-lg-3">
+            <div class="overview-card" style="border-top: 3px solid #16a34a;">
+                <div class="overview-title text-success"><i class="fa-solid fa-receipt me-1"></i> TỔNG HÓA ĐƠN</div>
+                <div class="overview-val text-dark my-1"><?= (int)$stats['count'] ?> <span class="fs-6 fw-normal text-muted">hóa đơn</span></div>
+                <div class="mt-2 text-muted" style="font-size:.8125rem">Tổng phải thu: <strong class="text-dark"><?= money($stats['total']) ?></strong></div>
+            </div>
+        </div>
+        <div class="col-12 col-md-6 col-lg-3">
+            <div class="overview-card" style="border-top: 3px solid #0284c7;">
+                <div class="overview-title text-primary"><i class="fa-solid fa-hand-holding-dollar me-1"></i> ĐÃ THU</div>
+                <div class="overview-val text-dark my-1"><?= money($stats['paid']) ?></div>
+                <div class="d-flex justify-content-between text-muted mt-2" style="font-size:.8125rem"><span><?= (int)$stats['paid_count'] ?> hóa đơn</span><span class="text-primary fw-bold"><?= (int)$stats['rate'] ?>% đã thu</span></div>
+            </div>
+        </div>
+        <div class="col-12 col-md-6 col-lg-3">
+            <div class="overview-card" style="border-top: 3px solid #f59e0b;">
+                <div class="overview-title" style="color:#b45309"><i class="fa-regular fa-clock me-1"></i> CHƯA THU</div>
+                <div class="overview-val my-1" style="color:#b45309"><?= money($stats['unpaid']) ?></div>
+                <div class="mt-2 text-muted" style="font-size:.8125rem">Tồn đọng: <span class="text-danger fw-bold"><?= (int)$stats['unpaid_count'] ?> hóa đơn</span></div>
+            </div>
+        </div>
+        <div class="col-12 col-md-6 col-lg-3">
+            <div class="overview-card" style="border-top: 3px solid #ef4444;">
+                <div class="overview-title text-danger"><i class="fa-solid fa-triangle-exclamation me-1"></i> QUÁ HẠN</div>
+                <div class="overview-val my-1 text-danger"><?= money($stats['overdue']) ?></div>
+                <div class="mt-2 text-muted" style="font-size:.8125rem">Quá hạn: <span class="text-danger fw-bold"><?= (int)$stats['overdue_count'] ?> hóa đơn</span></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ================= TAB CHUYỂN ĐỔI: KHOẢN THU (HÓA ĐƠN) & KHOẢN CHI (BÊN THỨ 3) ================= -->
+    <ul class="nav nav-pills p-1 bg-white rounded-pill border shadow-sm mb-4 no-print position-relative z-2" id="mainInvoiceTabs" role="tablist">
+        <li class="nav-item">
+            <button class="nav-link active py-2 px-4 rounded-pill fw-bold" id="tab-revenue-btn" data-bs-toggle="pill" data-bs-target="#tab-revenue" type="button">
+                <i class="fa-solid fa-file-invoice-dollar me-2"></i> Khoản Thu &amp; Hóa Đơn Khách Thuê (<?= count($invoices) ?>)
+            </button>
+        </li>
+        <li class="nav-item">
+            <button class="nav-link py-2 px-4 rounded-pill fw-bold" id="tab-expense-btn" data-bs-toggle="pill" data-bs-target="#tab-expense" type="button">
+                <i class="fa-solid fa-money-bill-transfer me-2 text-danger"></i> Khoản Chi Cho Bên Thứ 3 Hàng Tháng (Điện, Nước, Dịch Vụ)
+            </button>
+        </li>
+    </ul>
+
+    <div class="tab-content position-relative z-2">
+        <!-- TAB 1: KHOẢN THU & HÓA ĐƠN KHÁCH THUÊ -->
+        <div class="tab-pane fade show active" id="tab-revenue" role="tabpanel">
     <div class="section-box">
         <form method="GET" action="index.php" class="row g-3 align-items-end mb-4 pb-3 border-bottom border-light no-print">
             <input type="hidden" name="route" value="invoices">
@@ -363,7 +448,7 @@ $pendingInPeriod = array_values(array_filter($pendingView, fn($x) => $filters['p
             <table class="table table-staymate align-middle">
                 <thead>
                     <tr>
-                        <th>MÃ HĐ</th><th>PHÒNG &amp; KHÁCH</th><th>KỲ</th><th class="text-end">TIỀN PHÒNG</th><th class="text-end">ĐIỆN</th><th class="text-end">NƯỚC</th><th class="text-end">DỊCH VỤ</th><th class="text-end">TỔNG CỘNG</th><th>HẠN TT</th><th>TRẠNG THÁI</th><th class="text-end no-print">THAO TÁC</th>
+                        <th>MÃ HĐ</th><th>PHÒNG &amp; KHÁCH</th><th>KỲ</th><th style="min-width:140px;">CỌC (TRẠNG THÁI)</th><th class="text-end">TIỀN PHÒNG</th><th class="text-end">ĐIỆN</th><th class="text-end">NƯỚC</th><th class="text-end">DỊCH VỤ</th><th class="text-end">TỔNG CỘNG</th><th>HẠN TT</th><th>TRẠNG THÁI</th><th class="text-end no-print">THAO TÁC</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -377,10 +462,28 @@ $pendingInPeriod = array_values(array_filter($pendingView, fn($x) => $filters['p
                         <td>
                             <div class="d-flex align-items-center gap-2">
                                 <span class="badge-room-pill"><?= h($inv['room_number']) ?></span>
-                                <div class="fw-bold tenant-name" style="font-size:.85rem"><?= h($inv['tenant_name'] ?? 'Khách thuê') ?></div>
+                                <div class="fw-bold tenant-name" style="font-size:0.92rem"><?= h($inv['tenant_name'] ?? 'Khách thuê') ?></div>
                             </div>
                         </td>
                         <td><span class="badge-period-pill"><i class="fa-regular fa-calendar text-teal-main"></i><?= h($inv['month_year']) ?></span></td>
+                        <td>
+                            <div class="d-flex flex-column gap-1">
+                                <div>
+                                    <span class="badge rounded-pill <?= $inv['deposit_badge_class'] ?> fw-bold px-2 py-1">
+                                        <i class="<?= $inv['deposit_icon'] ?> me-1"></i> <?= h($inv['deposit_label']) ?>
+                                    </span>
+                                </div>
+                                <div class="small fw-bold text-muted" style="font-size:0.82rem">
+                                    <?= h($inv['deposit_sub']) ?>
+                                </div>
+                                <?php if (!empty($inv['contract_id_val'])): ?>
+                                    <button type="button" class="btn btn-link btn-sm p-0 text-decoration-none text-teal-main fw-bold no-print" style="font-size:.72rem;text-align:left"
+                                            onclick="openDepositModal(<?= (int)$inv['contract_id_val'] ?>, <?= h(json_encode($inv['room_number'])) ?>, <?= h(json_encode($inv['tenant_name'] ?? '')) ?>, <?= (float)$inv['deposit_amount'] ?>, '<?= h($inv['deposit_key']) ?>')">
+                                        <i class="fa-solid fa-pen-to-square me-1"></i> Sửa cọc
+                                    </button>
+                                <?php endif; ?>
+                            </div>
+                        </td>
                         <td class="text-end"><?= money($b['room']) ?></td>
                         <td class="text-end"><?= money($b['elec']) ?><div class="sub-note"><?= $eUsed ?> kWh</div></td>
                         <td class="text-end"><?= money($b['water']) ?><div class="sub-note"><?= $wUsed ?> m³</div></td>
@@ -416,7 +519,7 @@ $pendingInPeriod = array_values(array_filter($pendingView, fn($x) => $filters['p
                         </td>
                     </tr>
                 <?php endforeach; else: ?>
-                    <tr><td colspan="11" class="text-center py-5 text-muted">
+                    <tr><td colspan="12" class="text-center py-5 text-muted">
                         <i class="fa-solid fa-folder-open fs-1 text-teal-main opacity-25 mb-3 d-block"></i>
                         <p class="fw-bold mb-2">Chưa có hóa đơn nào phù hợp bộ lọc.</p>
                         <button type="button" class="btn-teal-custom" data-bs-toggle="modal" data-bs-target="#createModal"><i class="fa-solid fa-plus"></i> Lập hóa đơn</button>
@@ -426,7 +529,7 @@ $pendingInPeriod = array_values(array_filter($pendingView, fn($x) => $filters['p
                 <?php if ($invoices): ?>
                 <tfoot>
                     <tr style="background:#f8fafc">
-                        <td colspan="7" class="text-end fw-black" style="font-weight:900">TỔNG CỘNG (<?= count($invoices) ?> hóa đơn):</td>
+                        <td colspan="8" class="text-end fw-black" style="font-weight:900">TỔNG CỘNG (<?= count($invoices) ?> hóa đơn):</td>
                         <td class="text-end" style="font-weight:900;color:var(--teal-main)"><?= money($stats['total']) ?></td>
                         <td colspan="3" class="small fw-bold">Đã thu <span class="text-success"><?= money($stats['paid']) ?></span> · Còn nợ <span class="text-danger"><?= money($stats['unpaid']) ?></span></td>
                     </tr>
@@ -435,6 +538,141 @@ $pendingInPeriod = array_values(array_filter($pendingView, fn($x) => $filters['p
             </table>
         </div>
     </div>
+    </div> <!-- END TAB 1 -->
+
+    <!-- TAB 2: KHOẢN CHI CHO BÊN THỨ 3 HÀNG THÁNG -->
+    <div class="tab-pane fade" id="tab-expense" role="tabpanel">
+        <div class="section-box">
+            <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-4 pb-3 border-bottom border-light">
+                <div>
+                    <h5 class="fw-black text-dark mb-1" style="font-weight:900">
+                        <i class="fa-solid fa-money-bill-transfer text-danger me-2"></i> Bảng Kê Khoản Chi Cho Bên Thứ 3 Hàng Tháng — <span class="text-teal-main"><?= $periodLabel ?></span>
+                    </h5>
+                    <div class="text-muted small fw-semibold">
+                        Các chi phí thanh toán cho Điện lực EVN, Công ty Cấp nước, Nhà mạng Internet, Phí rác &amp; Bảo trì cơ sở vật chất
+                    </div>
+                </div>
+                <div class="d-flex gap-2 no-print">
+                    <button type="button" class="btn-teal-custom" data-bs-toggle="modal" data-bs-target="#addExpenseModal">
+                        <i class="fa-solid fa-plus"></i> Ghi nhận khoản chi mới
+                    </button>
+                </div>
+            </div>
+
+            <!-- Thống kê nhanh khoản chi -->
+            <div class="row g-3 mb-4">
+                <div class="col-6 col-md-3">
+                    <div class="p-3 rounded-4 bg-light border">
+                        <div class="text-muted small fw-bold">Chi trả Điện lực (EVN)</div>
+                        <div class="fw-black text-warning-emphasis fs-5"><?= money($thirdPartyFinance['total_elec_cost']) ?></div>
+                        <div class="small text-muted">Lãi DV: <span class="text-success fw-bold">+<?= money($thirdPartyFinance['elec_profit']) ?></span></div>
+                    </div>
+                </div>
+                <div class="col-6 col-md-3">
+                    <div class="p-3 rounded-4 bg-light border">
+                        <div class="text-muted small fw-bold">Chi trả Nước sạch</div>
+                        <div class="fw-black text-info-emphasis fs-5"><?= money($thirdPartyFinance['total_water_cost']) ?></div>
+                        <div class="small text-muted">Lãi DV: <span class="text-success fw-bold">+<?= money($thirdPartyFinance['water_profit']) ?></span></div>
+                    </div>
+                </div>
+                <div class="col-6 col-md-3">
+                    <div class="p-3 rounded-4 bg-light border">
+                        <div class="text-muted small fw-bold">Chi Dịch vụ cố định (Mạng, Rác...)</div>
+                        <div class="fw-black text-dark fs-5"><?= money($thirdPartyFinance['total_cost'] - $thirdPartyFinance['total_elec_cost'] - $thirdPartyFinance['total_water_cost']) ?></div>
+                        <div class="small text-muted">3 tòa nhà vận hành</div>
+                    </div>
+                </div>
+                <div class="col-6 col-md-3">
+                    <div class="p-3 rounded-4 bg-light border border-teal-subtle">
+                        <div class="text-muted small fw-bold">Lợi nhuận chênh lệch DV</div>
+                        <div class="fw-black text-teal-main fs-5">+<?= money($thirdPartyFinance['service_profit']) ?></div>
+                        <div class="small text-success fw-bold"><i class="fa-solid fa-arrow-trend-up me-1"></i> Đóng góp vào quỹ lãi</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="table-rounded-wrap table-responsive">
+                <table class="table table-staymate align-middle mb-0">
+                    <thead>
+                        <tr>
+                            <th style="width:50px">STT</th>
+                            <th>KHOẢN CHI VẬN HÀNH</th>
+                            <th>BÊN THỨ 3 NHẬN TIỀN</th>
+                            <th class="text-center">SẢN LƯỢNG TIÊU THỤ</th>
+                            <th class="text-end">ĐƠN GIÁ BÊN THỨ 3</th>
+                            <th class="text-end">SỐ TIỀN CHI TRẢ</th>
+                            <th class="text-end">THU LẠI TỪ KHÁCH</th>
+                            <th class="text-end">CHÊNH LỆCH (LÃI/LỖ)</th>
+                            <th>TRẠNG THÁI</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <?php foreach ($thirdPartyFinance['items'] as $idx => $exp): 
+                            $profit = (float)$exp['profit'];
+                        ?>
+                            <tr>
+                                <td class="fw-bold text-muted"><?= $idx + 1 ?></td>
+                                <td>
+                                    <div class="fw-black text-dark"><?= h($exp['title']) ?></div>
+                                    <div class="text-muted small"><?= h($exp['notes']) ?></div>
+                                </td>
+                                <td>
+                                    <div class="fw-bold text-secondary small">
+                                        <i class="fa-solid fa-building-columns text-teal-main me-1"></i> <?= h($exp['provider']) ?>
+                                    </div>
+                                </td>
+                                <td class="text-center">
+                                    <span class="badge rounded-pill bg-light text-dark border fw-bold px-2 py-1">
+                                        <?= number_format($exp['qty'], 0, ',', '.') ?> <?= h($exp['unit']) ?>
+                                    </span>
+                                </td>
+                                <td class="text-end fw-bold text-muted"><?= money($exp['cost_price']) ?></td>
+                                <td class="text-end fw-black text-danger" style="font-size:.95rem;font-weight:900">
+                                    <?= money($exp['cost_amount']) ?>
+                                </td>
+                                <td class="text-end fw-bold text-dark">
+                                    <?= $exp['customer_amount'] > 0 ? money($exp['customer_amount']) : '—' ?>
+                                </td>
+                                <td class="text-end">
+                                    <?php if ($profit > 0): ?>
+                                        <span class="badge rounded-pill bg-success-subtle text-success border border-success-subtle fw-black px-2 py-1">
+                                            +<?= money($profit) ?> (Lãi DV)
+                                        </span>
+                                    <?php elseif ($profit < 0): ?>
+                                        <span class="badge rounded-pill bg-danger-subtle text-danger border border-danger-subtle fw-bold px-2 py-1">
+                                            <?= money($profit) ?> (Chi phí)
+                                        </span>
+                                    <?php else: ?>
+                                        <span class="badge rounded-pill bg-light text-muted border fw-bold px-2 py-1">
+                                            Hòa vốn (0 đ)
+                                        </span>
+                                    <?php endif; ?>
+                                </td>
+                                <td>
+                                    <span class="badge rounded-pill bg-success-subtle text-success border border-success-subtle fw-bold px-2 py-1">
+                                        <i class="fa-solid fa-circle-check me-1"></i> Đã thanh toán
+                                    </span>
+                                    <?php if (!empty($exp['paid_at'])): ?>
+                                        <div class="text-muted small" style="font-size:0.82rem"><?= date('d/m/Y', strtotime($exp['paid_at'])) ?></div>
+                                    <?php endif; ?>
+                                </td>
+                            </tr>
+                        <?php endforeach; ?>
+                    </tbody>
+                    <tfoot>
+                        <tr style="background:#f8fafc;font-weight:900">
+                            <td colspan="5" class="text-end">TỔNG CỘNG CHI BÊN THỨ 3:</td>
+                            <td class="text-end text-danger fs-6"><?= money($thirdPartyFinance['total_cost']) ?></td>
+                            <td class="text-end text-dark"><?= money(array_sum(array_column($thirdPartyFinance['items'], 'customer_amount'))) ?></td>
+                            <td class="text-end text-success fs-6">+<?= money($thirdPartyFinance['service_profit']) ?></td>
+                            <td class="small text-muted">Lãi ròng dịch vụ</td>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+        </div>
+    </div> <!-- END TAB 2 -->
+    </div> <!-- END TAB CONTENT -->
 </div>
 
 <!-- MODAL LẬP HÓA ĐƠN -->
@@ -474,7 +712,7 @@ $pendingInPeriod = array_values(array_filter($pendingView, fn($x) => $filters['p
                                     <td>
                                         <div class="d-flex align-items-center gap-2">
                                             <span class="badge-room-pill"><?= h($pv['room_number']) ?></span>
-                                            <span class="tenant-name fw-bold" style="font-size:.85rem"><?= h($pv['tenant_name'] ?? 'Chưa có hợp đồng') ?></span>
+                                            <span class="tenant-name fw-bold" style="font-size:0.92rem"><?= h($pv['tenant_name'] ?? 'Chưa có hợp đồng') ?></span>
                                         </div>
                                     </td>
                                     <td><span class="badge-period-pill"><?= h($pv['month_year']) ?></span></td>
@@ -557,6 +795,142 @@ $pendingInPeriod = array_values(array_filter($pendingView, fn($x) => $filters['p
     </div>
 </div>
 
+<!-- MODAL CẬP NHẬT TRẠNG THÁI CỌC -->
+<div class="modal fade modal-staymate" id="depositModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title text-teal-main mb-0" style="font-weight:900">
+                    <i class="fa-solid fa-shield-halved me-2"></i> Cập Nhật Trạng Thái Cọc Phòng
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body p-4">
+                <form method="POST" action="index.php?route=invoices/update-deposit">
+                    <input type="hidden" name="csrf_token" value="<?= h($csrf) ?>">
+                    <input type="hidden" name="contract_id" id="dep_contract_id">
+                    <input type="hidden" name="return_query" value="<?= h($returnQuery) ?>">
+
+                    <div class="p-3 rounded-4 mb-3" style="background:#f0fdfa;border:2px solid #99f6e4">
+                        <div class="small fw-bold text-muted">Phòng &amp; Khách thuê</div>
+                        <div class="fw-black text-teal-main fs-5" id="dep_room_info">—</div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-bold small text-uppercase text-muted">Trạng thái cọc <span class="text-danger">*</span></label>
+                        <div class="d-flex flex-column gap-2">
+                            <div class="form-check p-3 rounded-3 border">
+                                <input class="form-check-input ms-0 me-2" type="radio" name="deposit_state_key" id="dep_state_50" value="partial_50">
+                                <label class="form-check-label fw-bold text-warning-emphasis" for="dep_state_50">
+                                    <i class="fa-solid fa-clock-rotate-left me-1"></i> Đã cọc 50%
+                                    <div class="small fw-normal text-muted">Khách mới nộp 50% tiền cọc giữ phòng</div>
+                                </label>
+                            </div>
+                            <div class="form-check p-3 rounded-3 border">
+                                <input class="form-check-input ms-0 me-2" type="radio" name="deposit_state_key" id="dep_state_100" value="completed">
+                                <label class="form-check-label fw-bold text-success" for="dep_state_100">
+                                    <i class="fa-solid fa-circle-check me-1"></i> Hoàn thành cọc
+                                    <div class="small fw-normal text-muted">Khách đã nộp đầy đủ 100% tiền cọc hợp đồng</div>
+                                </label>
+                            </div>
+                            <div class="form-check p-3 rounded-3 border">
+                                <input class="form-check-input ms-0 me-2" type="radio" name="deposit_state_key" id="dep_state_ref" value="refunded">
+                                <label class="form-check-label fw-bold text-secondary" for="dep_state_ref">
+                                    <i class="fa-solid fa-arrow-rotate-left me-1"></i> Hoàn cọc
+                                    <div class="small fw-normal text-muted">Đã hoàn trả lại tiền cọc khi kết thúc hợp đồng</div>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-bold small text-uppercase text-muted">Số tiền cọc quy định (VNĐ)</label>
+                        <input type="number" name="deposit_amount" id="dep_amount" class="form-control filter-control fw-bold" required min="0" step="50000">
+                    </div>
+
+                    <div class="d-flex justify-content-end gap-2">
+                        <button type="button" class="btn-pill-white" data-bs-dismiss="modal">Hủy</button>
+                        <button type="submit" class="btn-teal-custom"><i class="fa-solid fa-check"></i> Lưu trạng thái cọc</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- MODAL GHI NHẬN KHOẢN CHI BÊN THỨ 3 -->
+<div class="modal fade modal-staymate" id="addExpenseModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title text-teal-main mb-0" style="font-weight:900">
+                    <i class="fa-solid fa-file-invoice-dollar me-2 text-danger"></i> Ghi Nhận Khoản Chi Cho Bên Thứ 3
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body p-4">
+                <form method="POST" action="index.php?route=invoices/add-expense">
+                    <input type="hidden" name="csrf_token" value="<?= h($csrf) ?>">
+                    <input type="hidden" name="return_query" value="<?= h($returnQuery) ?>">
+
+                    <div class="mb-3">
+                        <label class="form-label fw-bold small text-uppercase text-muted">Kỳ chi (MM-YYYY) <span class="text-danger">*</span></label>
+                        <input type="text" name="month_year" class="form-control filter-control fw-bold" value="<?= $filters['period'] === 'all' ? date('m-Y') : h($filters['period']) ?>" required>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-bold small text-uppercase text-muted">Loại khoản chi <span class="text-danger">*</span></label>
+                        <select name="expense_type" class="form-select filter-control fw-bold" required>
+                            <option value="electric">Tiền Điện Lực EVN</option>
+                            <option value="water">Tiền Nước Sạch</option>
+                            <option value="internet">Cước Internet Viễn Thông</option>
+                            <option value="garbage">Phí Thu Gom Rác &amp; Môi Trường</option>
+                            <option value="maintenance">Bảo Trì &amp; Kỹ Thuật Tòa Nhà</option>
+                            <option value="other">Khoản chi khác</option>
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-bold small text-uppercase text-muted">Tiêu đề khoản chi <span class="text-danger">*</span></label>
+                        <input type="text" name="title" class="form-control filter-control" placeholder="VD: Hóa đơn điện EVN tháng 10..." required>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-bold small text-uppercase text-muted">Bên thứ 3 nhận tiền <span class="text-danger">*</span></label>
+                        <input type="text" name="provider_name" class="form-control filter-control" placeholder="VD: Công ty Điện Lực Cầu Giấy..." required>
+                    </div>
+
+                    <div class="row g-2 mb-3">
+                        <div class="col-6">
+                            <label class="form-label fw-bold small text-uppercase text-muted">Số lượng</label>
+                            <input type="number" name="quantity" class="form-control filter-control" value="1" min="0" step="any">
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label fw-bold small text-uppercase text-muted">Đơn vị tính</label>
+                            <input type="text" name="unit" class="form-control filter-control" value="Gói" placeholder="kWh, m3, Gói...">
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-bold small text-uppercase text-muted">Số tiền chi trả cho bên thứ 3 (VNĐ) <span class="text-danger">*</span></label>
+                        <input type="number" name="amount" class="form-control filter-control fw-black text-danger fs-5" required min="0" step="1000">
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-bold small text-uppercase text-muted">Ghi chú thanh toán</label>
+                        <input type="text" name="notes" class="form-control filter-control" placeholder="Mã giao dịch, số tài khoản nhận...">
+                    </div>
+
+                    <div class="d-flex justify-content-end gap-2">
+                        <button type="button" class="btn-pill-white" data-bs-dismiss="modal">Hủy</button>
+                        <button type="submit" class="btn-teal-custom"><i class="fa-solid fa-check"></i> Lưu khoản chi</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
 <footer class="footer-custom container-fluid px-4 px-xl-5 d-flex flex-wrap justify-content-between align-items-center">
     <div><i class="fa-solid fa-building me-1" style="color:var(--teal-main)"></i> © 2026 StayMate - Quản lý Nhà trọ Chuyên nghiệp</div>
     <div class="d-flex gap-4">
@@ -565,7 +939,23 @@ $pendingInPeriod = array_values(array_filter($pendingView, fn($x) => $filters['p
     </div>
 </footer>
 
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js">
+    function openDepositModal(contractId, room, tenant, amount, stateKey) {
+        document.getElementById('dep_contract_id').value = contractId;
+        document.getElementById('dep_room_info').textContent = 'Phòng ' + room + (tenant ? ' · ' + tenant : '');
+        document.getElementById('dep_amount').value = Math.round(amount);
+
+        if (stateKey === 'partial_50') {
+            document.getElementById('dep_state_50').checked = true;
+        } else if (stateKey === 'refunded') {
+            document.getElementById('dep_state_ref').checked = true;
+        } else {
+            document.getElementById('dep_state_100').checked = true;
+        }
+
+        new bootstrap.Modal(document.getElementById('depositModal')).show();
+    }
+</script>
 <script>
     function openPayModal(id, code, room, tenant, amount) {
         document.getElementById('pay_id').value = id;

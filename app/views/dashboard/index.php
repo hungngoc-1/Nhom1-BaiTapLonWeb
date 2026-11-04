@@ -247,6 +247,11 @@ if (!empty($filterBuilding) && $filterBuilding !== 'all' && isset($buildings[$fi
                     </div>
                     <ul class="dropdown-menu dropdown-menu-end shadow border-0 rounded-4 mt-2 p-2">
                         <li>
+                            <a class="dropdown-item rounded-3 py-2 fw-bold text-teal-main" href="index.php?route=tenant/portal" target="_blank">
+                                <i class="fa-solid fa-user-shield me-2 text-teal-main"></i> Cổng khách thuê
+                            </a>
+                        </li>
+                        <li>
                             <button type="button" class="dropdown-item rounded-3 py-2 fw-bold" data-bs-toggle="modal" data-bs-target="#profileModal">
                                 <i class="fa-solid fa-id-card me-2 text-teal-main"></i> Thông tin tài khoản
                             </button>

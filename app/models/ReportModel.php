@@ -93,8 +93,46 @@ class ReportModel {
         ];
         return $id;
     }
+    /**
+     * Lấy thông tin tòa nhà được phân công của Quản lý đang đăng nhập
+     * Trả về null nếu là Admin (Toàn quyền, không bị giới hạn)
+     */
+    public static function getManagerBuildingInfo(): ?array {
+        if (session_status() === PHP_SESSION_NONE) session_start();
+        $role = $_SESSION['role'] ?? '';
+        if ($role !== 'manager' && $role !== 'landlord') {
+            return null; // Admin không bị giới hạn
+        }
+
+        $username = (string)($_SESSION['username'] ?? '');
+        $userId   = (int)($_SESSION['user_id'] ?? 0);
+
+        if ($username === 'quanly_a' || $userId === 2) {
+            return ['id' => 1, 'code' => 'A', 'prefix' => 'A', 'name' => 'Tòa A - StayMate Sunrise'];
+        } elseif ($username === 'quanly_b' || $userId === 3) {
+            return ['id' => 2, 'code' => 'B', 'prefix' => 'B', 'name' => 'Tòa B - StayMate Emerald'];
+        } elseif ($username === 'quanly_c' || $userId === 4) {
+            return ['id' => 3, 'code' => 'C', 'prefix' => 'C', 'name' => 'Tòa C - StayMate Horizon'];
+        }
+
+        try {
+            $db = Database::getConnection();
+            $stmt = $db->prepare("SELECT id, name FROM buildings WHERE manager_id = :uid LIMIT 1");
+            $stmt->execute([':uid' => $userId]);
+            $row = $stmt->fetch(PDO::FETCH_ASSOC);
+            if ($row) {
+                $bId = (int)$row['id'];
+                $code = $bId === 1 ? 'A' : ($bId === 2 ? 'B' : 'C');
+                return ['id' => $bId, 'code' => $code, 'prefix' => $code, 'name' => $row['name']];
+            }
+        } catch (Exception $e) {}
+
+        return ['id' => 1, 'code' => 'A', 'prefix' => 'A', 'name' => 'Tòa A - StayMate Sunrise'];
+    }
+
     private function initDefaultBuildings(): void {
-        if (empty($_SESSION['buildings_config'])) {
+        $needReset = empty($_SESSION['buildings_config']) || ($_SESSION['buildings_config']['A']['room_prefix'] ?? '') !== 'A' || ($_SESSION['buildings_config']['B']['room_prefix'] ?? '') !== 'B' || ($_SESSION['buildings_config']['C']['room_prefix'] ?? '') !== 'C';
+        if ($needReset) {
             $_SESSION['buildings_config'] = [
                 'A' => [
                     'id'          => 'A',
@@ -105,7 +143,7 @@ class ReportModel {
                     'manager_acc' => 'quanly_a',
                     'manager_phone' => '0912 345 678',
                     'manager_email' => 'quanly_a@nhatro.com',
-                    'room_prefix' => 'P1',
+                    'room_prefix' => 'A',
                     'room_types'  => ['Phòng Đơn Tiêu Chuẩn', 'Phòng Ban Công Thoáng Mát'],
                     'theme'       => 'teal'
                 ],
@@ -118,7 +156,7 @@ class ReportModel {
                     'manager_acc' => 'quanly_b',
                     'manager_phone' => '0987 654 321',
                     'manager_email' => 'quanly_b@nhatro.com',
-                    'room_prefix' => 'P2',
+                    'room_prefix' => 'B',
                     'room_types'  => ['Phòng Studio Full Nội Thất', 'Phòng Ban Công Thoáng Mát'],
                     'theme'       => 'blue'
                 ],
@@ -131,7 +169,7 @@ class ReportModel {
                     'manager_acc' => 'quanly_c',
                     'manager_phone' => '0934 567 890',
                     'manager_email' => 'quanly_c@nhatro.com',
-                    'room_prefix' => 'P3',
+                    'room_prefix' => 'C',
                     'room_types'  => ['Phòng Studio Full Nội Thất', 'Phòng Duplex Gác Lửng', 'Căn Hộ 1 Phòng Ngủ (1PN)'],
                     'theme'       => 'yellow'
                 ]

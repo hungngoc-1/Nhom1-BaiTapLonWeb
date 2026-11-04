@@ -58,6 +58,7 @@ class InvoiceController {
         $rates = $this->model->getRates();
         $rooms = Database::getConnection()->query("SELECT id, room_number FROM rooms ORDER BY room_number")->fetchAll();
         $methods = InvoiceModel::METHODS;
+        $thirdPartyFinance = $this->model->getThirdPartyFinance($filters['period']);
 
         $flash_success = $_SESSION['flash_success'] ?? '';
         $flash_error = $_SESSION['flash_error'] ?? '';
@@ -82,6 +83,23 @@ class InvoiceController {
     public function store(): void {
         $this->checkPost();
         $res = $this->model->createFromReading((int)($_POST['reading_id'] ?? 0));
+        $this->flash($res);
+        $this->back($this->returnUrl());
+    }
+
+    public function updateDeposit(): void {
+        $this->checkPost();
+        $contractId = (int)($_POST['contract_id'] ?? 0);
+        $stateKey = trim($_POST['deposit_state_key'] ?? 'completed');
+        $amount = (float)($_POST['deposit_amount'] ?? 0);
+        $res = $this->model->updateDeposit($contractId, $stateKey, $amount);
+        $this->flash($res);
+        $this->back($this->returnUrl());
+    }
+
+    public function addExpense(): void {
+        $this->checkPost();
+        $res = $this->model->addThirdPartyExpense($_POST);
         $this->flash($res);
         $this->back($this->returnUrl());
     }
@@ -116,12 +134,13 @@ class InvoiceController {
         header('Content-Disposition: attachment; filename="hoa_don_' . date('Ymd_His') . '.csv"');
         echo "\xEF\xBB\xBF";
         $out = fopen('php://output', 'w');
-        fputcsv($out, ['Ma HD', 'Phong', 'Khach thue', 'Ky', 'Tien phong', 'Tien dien', 'Tien nuoc', 'Dich vu khac', 'Tong cong', 'Han thanh toan', 'Trang thai', 'Ngay thu', 'Hinh thuc']);
+        fputcsv($out, ['Ma HD', 'Phong', 'Khach thue', 'Ky', 'Trang thai coc', 'Tien coc', 'Tien phong', 'Tien dien', 'Tien nuoc', 'Dich vu khac', 'Tong cong', 'Han thanh toan', 'Trang thai', 'Ngay thu', 'Hinh thuc']);
         foreach ($rows as $r) {
             $b = $r['breakdown'];
             $st = $r['status'] === 'paid' ? 'Da thu' : ($r['is_overdue'] ? 'Qua han' : 'Chua thu');
             fputcsv($out, [
                 $r['code'], $r['room_number'], $r['tenant_name'], $r['month_year'],
+                $r['deposit_label'] ?? '', round((float)($r['deposit_amount'] ?? 0)),
                 round($b['room']), round($b['elec']), round($b['water']), round($b['other']), round($r['total_amount']),
                 $r['due_date'], $st, $r['paid_at'] ?? '', InvoiceModel::METHODS[$r['payment_method'] ?? ''] ?? '',
             ]);
