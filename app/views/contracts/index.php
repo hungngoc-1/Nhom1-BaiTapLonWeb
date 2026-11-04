@@ -237,6 +237,55 @@ $sixMonthsEndDay = date('Y-m-d', strtotime('+6 months'));
             </div>
         <?php endif; ?>
 
+        <?php if (!empty($pendingVerifications)): ?>
+        <!-- BANNER YÊU CẦU XÁC MINH LÝ DO KHÔNG ĐÓNG TIỀN TỪ HÓA ĐƠN -->
+        <div class="alert alert-danger rounded-4 p-4 shadow-sm mb-4 border-2 border-danger position-relative z-2" style="background: #fff5f5;">
+            <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-2">
+                <h5 class="fw-black text-danger mb-0" style="font-weight:900">
+                    <i class="fa-solid fa-bell me-2"></i> YÊU CẦU XÁC MINH TỪ TRANG HÓA ĐƠN (<?= count($pendingVerifications) ?> PHÒNG)
+                </h5>
+                <span class="badge bg-danger rounded-pill px-3 py-2 fw-bold">Quá hạn 5 ngày chưa đóng tiền tháng đầu</span>
+            </div>
+            <p class="text-muted small fw-semibold mb-3">
+                Bên Hóa đơn gửi yêu cầu xác minh các phòng sau do khách chưa thanh toán tiền phòng tháng đầu từ ngày thứ 6 trở đi. Quản trị viên vui lòng xác minh xem khách không đóng tiền vì <strong>hết hạn hợp đồng &amp; không gia hạn</strong> hay là <strong>bỏ phòng trước hạn</strong> để hệ thống tự động xử lý tiền cọc:
+            </p>
+            <div class="table-responsive bg-white rounded-3 border shadow-sm">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="table-light small">
+                        <tr>
+                            <th>PHÒNG</th>
+                            <th>KHÁCH THUÊ</th>
+                            <th>MÃ HỢP ĐỒNG</th>
+                            <th class="text-end">TIỀN CỌC QUY ĐỊNH</th>
+                            <th class="text-end">TIỀN PHÒNG THÁNG ĐẦU</th>
+                            <th class="text-end">THAO TÁC XÁC MINH</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                    <?php foreach ($pendingVerifications as $pv): ?>
+                        <tr>
+                            <td><span class="badge-room">P.<?= h($pv['room_number']) ?></span></td>
+                            <td>
+                                <div class="fw-bold text-dark"><?= h($pv['tenant_name']) ?></div>
+                                <div class="small text-muted"><i class="fa-solid fa-phone me-1 text-teal-main"></i><?= h($pv['tenant_phone']) ?></div>
+                            </td>
+                            <td><span class="badge bg-light text-secondary border fw-bold"><?= h($pv['contract_code']) ?></span></td>
+                            <td class="text-end fw-black text-teal-main"><?= number_format((float)$pv['deposit_amount'], 0, ',', '.') ?> đ</td>
+                            <td class="text-end fw-black text-danger"><?= number_format((float)($pv['monthly_rent'] ?: $pv['room_price']), 0, ',', '.') ?> đ</td>
+                            <td class="text-end">
+                                <button type="button" class="btn btn-sm btn-danger rounded-pill px-3 py-2 fw-bold shadow-sm"
+                                        onclick="openVerificationModal(<?= (int)$pv['id'] ?>, <?= h(json_encode($pv['room_number'])) ?>, <?= h(json_encode($pv['tenant_name'])) ?>, <?= (float)$pv['deposit_amount'] ?>)">
+                                    <i class="fa-solid fa-clipboard-check me-1"></i> Xác nhận lý do
+                                </button>
+                            </td>
+                        </tr>
+                    <?php endforeach; ?>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        <?php endif; ?>
+
         <!-- HEADER TIÊU ĐỀ -->
         <div class="header-content-wrapper">
             <div class="d-flex flex-wrap justify-content-between align-items-center gap-3">
@@ -1174,7 +1223,74 @@ $sixMonthsEndDay = date('Y-m-d', strtotime('+6 months'));
             modal.show();
         }
     });
-    </script>
+    
+    <!-- MODAL XÁC NHẬN LÝ DO KHÔNG ĐÓNG TIỀN PHÒNG THÁNG ĐẦU -->
+    <div class="modal fade" id="verificationModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content border-0 shadow-lg rounded-4">
+                <div class="modal-header bg-light rounded-top-4">
+                    <h5 class="modal-title fw-bold text-danger">
+                        <i class="fa-solid fa-clipboard-check me-2"></i> Xác Nhận Xử Lý Hợp Đồng &amp; Tiền Cọc
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <form method="POST" action="index.php?route=contracts/resolve-verification">
+                    <input type="hidden" name="contract_id" id="verify_contract_id">
+                    <div class="modal-body p-4">
+                        <div class="p-3 rounded-4 mb-3" style="background:#fff5f5;border:2px solid #fecaca">
+                            <div class="small fw-bold text-muted">Phòng &amp; Khách thuê cần xác nhận</div>
+                            <div class="fw-black text-danger fs-5" id="verify_room_info">—</div>
+                            <div class="small fw-bold text-dark mt-1" id="verify_deposit_info">Tiền cọc: 0 đ</div>
+                        </div>
+
+                        <label class="form-label fw-bold small text-uppercase text-muted">
+                            Chọn nguyên nhân không đóng tiền phòng <span class="text-danger">*</span>
+                        </label>
+                        <div class="d-flex flex-column gap-3 mb-3">
+                            <div class="form-check p-3 rounded-3 border bg-light">
+                                <input class="form-check-input ms-0 me-2" type="radio" name="case_key" id="case_expired" value="expired_no_renew" checked required>
+                                <label class="form-check-label fw-bold text-success" for="case_expired">
+                                    <i class="fa-solid fa-circle-check me-1"></i> Khách đã hết thời gian thuê &amp; Không muốn gia hạn
+                                    <div class="small fw-normal text-muted mt-1">
+                                        &rarr; Trạng thái cọc sẽ tự động chuyển thành <strong>Đã hoàn cọc</strong>, kết thúc hợp đồng và gửi thông báo xác nhận sang trang Hóa đơn để đối soát.
+                                    </div>
+                                </label>
+                            </div>
+
+                            <div class="form-check p-3 rounded-3 border bg-light">
+                                <input class="form-check-input ms-0 me-2" type="radio" name="case_key" id="case_early" value="early_move_out" required>
+                                <label class="form-check-label fw-bold text-danger" for="case_early">
+                                    <i class="fa-solid fa-ban me-1"></i> Bỏ phòng / chuyển đi trước khi hết hợp đồng
+                                    <div class="small fw-normal text-muted mt-1">
+                                        &rarr; Khách <strong>KHÔNG ĐƯỢC HOÀN CỌC</strong> (Mất cọc/Tịch thu cọc theo điều khoản hợp đồng), hợp đồng thanh lý và giải phóng phòng.
+                                    </div>
+                                </label>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label fw-bold small text-uppercase text-muted">Ghi chú xác nhận</label>
+                            <input type="text" name="verification_note" class="form-control" placeholder="VD: Khách trả phòng ngày 05/11, đã bàn giao đủ chìa khóa...">
+                        </div>
+                    </div>
+                    <div class="modal-footer bg-light">
+                        <button type="button" class="btn btn-outline-secondary rounded-pill px-4" data-bs-dismiss="modal">Hủy</button>
+                        <button type="submit" class="btn btn-danger rounded-pill px-4 fw-bold">
+                            <i class="fa-solid fa-check me-1"></i> Xác nhận &amp; Cập nhật trạng thái
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    function openVerificationModal(contractId, room, tenant, deposit) {
+        document.getElementById('verify_contract_id').value = contractId;
+        document.getElementById('verify_room_info').textContent = 'Phòng ' + room + (tenant ? ' · ' + tenant : '');
+        document.getElementById('verify_deposit_info').textContent = 'Tiền cọc quy định: ' + Math.round(deposit).toLocaleString('vi-VN') + ' đ';
+        new bootstrap.Modal(document.getElementById('verificationModal')).show();
+    }
+</script>
 
     <!-- MODAL DOI MAT KHAU -->
     <div class="modal fade" id="changePasswordModal" tabindex="-1" aria-hidden="true">

@@ -250,12 +250,18 @@ class RoomModel {
             $amenities = trim($m[1]);
         }
 
+        // Hình ảnh phòng
+        $image = 'https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?auto=format&fit=crop&w=900&q=85';
+        if (preg_match('/Ảnh:\s*([^|\s]+)/iu', $desc, $m)) {
+            $image = trim($m[1]);
+        }
+
         // Ghi chú / mô tả còn lại
         $note = $desc;
         if (preg_match('/Ghi chú:\s*([^|]+)/iu', $desc, $m)) {
             $note = trim($m[1]);
         } else {
-            $clean = preg_replace('/(Tòa:[^|]*\|?|Loại:[^|]*\|?|Tầng\s*\d+\|?|Diện tích:[^|]*\|?|Tối đa:[^|]*\|?|Tiện nghi:[^|]*\|?|Dịch vụ:[^|]*\|?)/iu', '', $desc);
+            $clean = preg_replace('/(Tòa:[^|]*\|?|Loại:[^|]*\|?|Tầng\s*\d+\|?|Diện tích:[^|]*\|?|Tối đa:[^|]*\|?|Tiện nghi:[^|]*\|?|Dịch vụ:[^|]*\|?|Ảnh:[^|]*\|?)/iu', '', $desc);
             $clean = trim(trim((string)$clean), '|');
             if ($clean !== '') {
                 $note = trim($clean);
@@ -269,6 +275,7 @@ class RoomModel {
             'area'          => $area,
             'max_occupants' => $maxOccupants,
             'amenities'     => $amenities,
+            'image'         => $image,
             'note'          => $note,
         ];
     }
@@ -311,27 +318,29 @@ class RoomModel {
         return $res ?: null;
     }
 
-    public function createRoom(string $room_number, float $price, string $status, string $description): int {
-        $sql = "INSERT INTO rooms (room_number, price, status, description) VALUES (:room_number, :price, :status, :description)";
+    public function createRoom(string $room_number, float $price, string $status, string $description, ?int $building_id = null): int {
+        $sql = "INSERT INTO rooms (room_number, price, status, description, building_id) VALUES (:room_number, :price, :status, :description, :building_id)";
         $stmt = $this->conn->prepare($sql);
         $res = $stmt->execute([
             ':room_number'  => $room_number,
             ':price'        => $price,
             ':status'       => $status,
             ':description'  => $description,
+            ':building_id'  => $building_id ?: 1,
         ]);
         return $res ? (int)$this->conn->lastInsertId() : 0;
     }
 
-    public function updateRoom(int $id, string $room_number, float $price, string $status, string $description): bool {
-        $sql = "UPDATE rooms SET room_number = :room_number, price = :price, status = :status, description = :description WHERE id = :id";
+    public function updateRoom(int $id, string $room_number, float $price, string $status, string $description, ?int $building_id = null): bool {
+        $sql = "UPDATE rooms SET room_number = :room_number, price = :price, status = :status, description = :description, building_id = :building_id WHERE id = :id";
         $stmt = $this->conn->prepare($sql);
         return $stmt->execute([
-            ':room_number' => $room_number,
-            ':price'       => $price,
-            ':status'      => $status,
-            ':description' => $description,
-            ':id'          => $id,
+            ':room_number'  => $room_number,
+            ':price'        => $price,
+            ':status'       => $status,
+            ':description'  => $description,
+            ':building_id'  => $building_id ?: 1,
+            ':id'           => $id,
         ]);
     }
 

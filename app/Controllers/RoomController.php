@@ -35,10 +35,53 @@ class RoomController {
                 $building = trim($_POST['building'] ?? 'Tòa A - Smart Stay Sunrise');
                 $room_type = trim($_POST['room_type'] ?? 'Phòng Tiêu chuẩn (Standard) (2.600.000đ)');
                 $floor = trim($_POST['floor'] ?? '1');
-                $area = trim($_POST['area'] ?? '22.00');
+                
+                // Bỏ ô diện tích, tự động gán diện tích chuẩn theo loại phòng nếu không nhập
+                $area = trim($_POST['area'] ?? '');
+                if ($area === '') {
+                    if (stripos($room_type, 'Studio') !== false) {
+                        $area = '35.00';
+                    } elseif (stripos($room_type, 'VIP') !== false || stripos($room_type, 'Cao cấp') !== false) {
+                        $area = '28.00';
+                    } else {
+                        $area = '22.00';
+                    }
+                }
+
                 $max_occupants = trim($_POST['max_occupants'] ?? '2');
                 $amenities = trim($_POST['amenities'] ?? '');
                 $note = trim($_POST['note'] ?? $_POST['description'] ?? '');
+
+                // Xử lý upload ảnh hoặc chọn ảnh mẫu
+                $roomImage = '';
+                if (!empty($_FILES['room_image_file']['name']) && $_FILES['room_image_file']['error'] === UPLOAD_ERR_OK) {
+                    $uploadDir = __DIR__ . '/../../public/uploads/rooms/';
+                    if (!is_dir($uploadDir)) {
+                        @mkdir($uploadDir, 0777, true);
+                    }
+                    $fileTmp  = $_FILES['room_image_file']['tmp_name'];
+                    $fileExt  = strtolower(pathinfo($_FILES['room_image_file']['name'], PATHINFO_EXTENSION));
+                    $allowed  = ['jpg', 'jpeg', 'png', 'webp', 'gif'];
+                    if (in_array($fileExt, $allowed, true)) {
+                        $fileName = 'room_' . time() . '_' . mt_rand(1000, 9999) . '.' . $fileExt;
+                        $destPath = $uploadDir . $fileName;
+                        if (move_uploaded_file($fileTmp, $destPath)) {
+                            $roomImage = 'public/uploads/rooms/' . $fileName;
+                        }
+                    }
+                }
+                if ($roomImage === '') {
+                    $roomImage = trim($_POST['sample_image'] ?? '');
+                }
+                if ($roomImage === '') {
+                    if (stripos($room_type, 'Studio') !== false) {
+                        $roomImage = 'https://images.unsplash.com/photo-1536376072261-38c75010e6c9?auto=format&fit=crop&w=900&q=85';
+                    } elseif (stripos($room_type, 'VIP') !== false || stripos($room_type, 'Cao cấp') !== false) {
+                        $roomImage = 'https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?auto=format&fit=crop&w=900&q=85';
+                    } else {
+                        $roomImage = 'https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?auto=format&fit=crop&w=900&q=85';
+                    }
+                }
 
                 // Dịch vụ khác được thêm bằng nút (+)
                 $serviceNames  = $_POST['service_names'] ?? [];
@@ -65,6 +108,7 @@ class RoomController {
                 if ($area !== '') $descParts[] = "Diện tích: {$area} m²";
                 if ($max_occupants !== '') $descParts[] = "Tối đa: {$max_occupants} người";
                 if ($amenities !== '') $descParts[] = "Tiện nghi: {$amenities}";
+                if ($roomImage !== '') $descParts[] = "Ảnh: {$roomImage}";
                 if (!empty($servicesToSave)) {
                     $sTexts = array_map(function($s) {
                         return $s['service_name'] . ' (' . number_format($s['unit_price'], 0, ',', '.') . 'đ/' . $s['unit'] . ')';
@@ -81,7 +125,11 @@ class RoomController {
                     $_SESSION['room_flash_error'] = 'Giá thuê phòng phải là số lớn hơn 0!';
                 } else {
                     try {
-                        $newId = $this->model->createRoom($room_number, $price, $status, $description);
+                        $bId = 1;
+                        if (stripos($building, 'B') !== false) $bId = 2;
+                        elseif (stripos($building, 'C') !== false) $bId = 3;
+
+                        $newId = $this->model->createRoom($room_number, $price, $status, $description, $bId);
                         if ($newId > 0 && !empty($servicesToSave)) {
                             $this->model->saveRoomServices($newId, $servicesToSave);
                         }

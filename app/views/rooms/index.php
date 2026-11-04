@@ -138,6 +138,51 @@ $adminName = $_SESSION['full_name'] ?? 'Quản trị viên Hệ thống';
             margin-bottom: 24px;
         }
 
+                /* Sample image cards */
+        .sample-img-card {
+            transition: all 0.2s ease;
+            border: 2px solid #e2e8f0 !important;
+            cursor: pointer;
+            background: #ffffff;
+        }
+        .sample-img-card:hover {
+            border-color: #308f86 !important;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(48, 143, 134, 0.2);
+        }
+        .sample-img-card.active {
+            border-color: #308f86 !important;
+            box-shadow: 0 0 0 2px rgba(48, 143, 134, 0.4);
+        }
+        .sample-tag {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: rgba(15, 23, 42, 0.8);
+            color: #ffffff;
+            font-size: 0.62rem;
+            font-weight: 700;
+            text-align: center;
+            padding: 2px 0;
+            line-height: 1.1;
+        }
+        .sample-check {
+            display: none;
+            position: absolute;
+            top: 4px;
+            right: 4px;
+            color: #10b981;
+            background: #ffffff;
+            border-radius: 50%;
+            font-size: 0.85rem;
+            line-height: 1;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+        }
+        .sample-img-card.active .sample-check {
+            display: block;
+        }
+
         .btn-teal-custom {
             background: var(--teal-main);
             border-radius: 50px;
@@ -547,10 +592,13 @@ $adminName = $_SESSION['full_name'] ?? 'Quản trị viên Hệ thống';
                                         </div>
                                     </div>
 
-                                    <!-- Mô tả phòng từ CSDL -->
-                                    <div class="desc-box" title="<?= h($room['description'] ?? '') ?>">
+                                    <!-- Mô tả phòng từ CSDL (đã làm sạch không hiện link ảnh) -->
+                                    <?php
+                                        $cleanAdminDesc = !empty($d['note']) ? $d['note'] : (!empty($d['amenities']) ? $d['amenities'] : 'Phòng tiêu chuẩn đầy đủ tiện nghi cơ bản');
+                                    ?>
+                                    <div class="desc-box" title="<?= h($cleanAdminDesc) ?>">
                                         <i class="fa-solid fa-sparkles text-warning me-1"></i>
-                                        <?= h(!empty($room['description']) ? $room['description'] : 'Phòng tiêu chuẩn đầy đủ tiện nghi cơ bản') ?>
+                                        <?= h($cleanAdminDesc) ?>
                                     </div>
 
                                     <!-- Thông tin Khách thuê & Hợp đồng thực tế từ CSDL -->
@@ -679,10 +727,10 @@ $adminName = $_SESSION['full_name'] ?? 'Quản trị viên Hệ thống';
         </div>
     </div>
 
-    <!-- ================= MODAL THÊM PHÒNG TRỌ MỚI (ĐÚNG THIẾT KẾ ẢNH 2) ================= -->
+    <!-- ================= MODAL THÊM PHÒNG TRỌ MỚI (CÓ CHỌN ẢNH MẪU & UPLOAD ẢNH, BỎ DIỆN TÍCH) ================= -->
     <div class="modal fade" id="addRoomModal" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered modal-lg">
-            <form method="POST" action="index.php?route=rooms" class="modal-content border-0 shadow-lg" style="border-radius: 20px;">
+            <form method="POST" action="index.php?route=rooms" enctype="multipart/form-data" class="modal-content border-0 shadow-lg" style="border-radius: 20px;">
                 <div class="modal-header border-0 pb-0 px-4 pt-4">
                     <h5 class="modal-title fw-bold text-dark" style="font-size: 1.25rem;">Thêm Phòng trọ mới</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Đóng"></button>
@@ -698,6 +746,7 @@ $adminName = $_SESSION['full_name'] ?? 'Quản trị viên Hệ thống';
                             <select name="building" class="form-select rounded-3 py-2" required>
                                 <option value="Tòa A - Smart Stay Sunrise" selected>Tòa A - Smart Stay Sunrise</option>
                                 <option value="Tòa B - StayMate Central">Tòa B - StayMate Central</option>
+                                <option value="Tòa C - Eco Stay Park">Tòa C - Eco Stay Park</option>
                             </select>
                         </div>
                         <div class="col-md-6">
@@ -709,22 +758,16 @@ $adminName = $_SESSION['full_name'] ?? 'Quản trị viên Hệ thống';
                             </select>
                         </div>
 
-                        <!-- Mã phòng & Tầng -->
-                        <div class="col-md-6">
+                        <!-- Mã phòng, Tầng & Số người tối đa (Đã bỏ Diện tích theo yêu cầu) -->
+                        <div class="col-md-4">
                             <label class="form-label fw-bold small text-dark">Mã phòng <span class="text-danger">*</span></label>
                             <input type="text" name="room_number" class="form-control rounded-3 py-2" placeholder="VD: P104" required>
                         </div>
-                        <div class="col-md-6">
+                        <div class="col-md-4">
                             <label class="form-label fw-bold small text-dark">Tầng <span class="text-danger">*</span></label>
                             <input type="number" name="floor" class="form-control rounded-3 py-2" value="1" required>
                         </div>
-
-                        <!-- Diện tích & Số người tối đa -->
-                        <div class="col-md-6">
-                            <label class="form-label fw-bold small text-dark">Diện tích (m²) <span class="text-danger">*</span></label>
-                            <input type="number" step="0.1" name="area" class="form-control rounded-3 py-2" value="22" required>
-                        </div>
-                        <div class="col-md-6">
+                        <div class="col-md-4">
                             <label class="form-label fw-bold small text-dark">Số người tối đa <span class="text-danger">*</span></label>
                             <input type="number" name="max_occupants" class="form-control rounded-3 py-2" value="2" required>
                         </div>
@@ -748,10 +791,90 @@ $adminName = $_SESSION['full_name'] ?? 'Quản trị viên Hệ thống';
                             <input type="text" name="amenities" class="form-control rounded-3 py-2" value="Máy lạnh, Nước nóng, Wifi, Kệ bếp, WC riêng">
                         </div>
 
+                        <!-- ================= HÌNH ẢNH PHÒNG & TẠO ẢNH MẪU CÓ SẴN ================= -->
+                        <div class="col-12">
+                            <label class="form-label fw-bold small text-dark d-flex align-items-center justify-content-between mb-1">
+                                <span><i class="fa-solid fa-camera-retro me-1" style="color: #308f86;"></i> Hình ảnh phòng trọ</span>
+                                <span class="text-muted fw-normal" style="font-size: 0.78rem;">(Tải ảnh từ máy tính hoặc click chọn ảnh mẫu bên dưới)</span>
+                            </label>
+
+                            <!-- Tùy chọn 1: Upload ảnh từ máy tính -->
+                            <div class="input-group mb-2">
+                                <span class="input-group-text bg-white text-muted border-end-0"><i class="fa-solid fa-cloud-arrow-up"></i></span>
+                                <input type="file" name="room_image_file" id="addRoomImageFile" accept="image/*" class="form-control border-start-0" onchange="previewUploadImage(this, 'addRoomPreview', 'add_sample_image_input', 'addRoomPreviewLabel')">
+                                <button class="btn btn-outline-secondary" type="button" onclick="resetRoomImage('addRoomImageFile', 'addRoomPreview', 'add_sample_image_input', 'addRoomPreviewLabel')">
+                                    <i class="fa-solid fa-rotate-left"></i> Đặt lại
+                                </button>
+                            </div>
+
+                            <!-- Input lưu URL ảnh được chọn gửi lên server -->
+                            <input type="hidden" name="sample_image" id="add_sample_image_input" value="https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?auto=format&fit=crop&w=900&q=85">
+
+                            <!-- Tùy chọn 2: Bộ sưu tập ảnh mẫu chuẩn đẹp tạo sẵn -->
+                            <div class="mb-2">
+                                <div class="small fw-bold text-muted mb-1 d-flex align-items-center gap-1">
+                                    <i class="fa-solid fa-wand-magic-sparkles text-warning"></i> Ảnh mẫu phong cách StayMate (Click chọn ngay):
+                                </div>
+                                <div class="row g-2">
+                                    <div class="col-4 col-sm-2">
+                                        <div class="sample-img-card active position-relative rounded-3 overflow-hidden border" onclick="selectSampleImage(this, 'https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?auto=format&fit=crop&w=900&q=85', 'Phòng Tiêu Chuẩn Hiện Đại', 'addRoomPreview', 'add_sample_image_input', 'addRoomPreviewLabel', 'addRoomImageFile')">
+                                            <img src="https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?auto=format&fit=crop&w=300&q=80" class="w-100" style="height: 60px; object-fit: cover;" alt="Tiêu chuẩn">
+                                            <div class="sample-tag">Tiêu chuẩn</div>
+                                            <div class="sample-check"><i class="fa-solid fa-circle-check"></i></div>
+                                        </div>
+                                    </div>
+                                    <div class="col-4 col-sm-2">
+                                        <div class="sample-img-card position-relative rounded-3 overflow-hidden border" onclick="selectSampleImage(this, 'https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?auto=format&fit=crop&w=900&q=85', 'Phòng Gác Lửng Thoáng Mát', 'addRoomPreview', 'add_sample_image_input', 'addRoomPreviewLabel', 'addRoomImageFile')">
+                                            <img src="https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?auto=format&fit=crop&w=300&q=80" class="w-100" style="height: 60px; object-fit: cover;" alt="Gác lửng">
+                                            <div class="sample-tag">Gác lửng</div>
+                                            <div class="sample-check"><i class="fa-solid fa-circle-check"></i></div>
+                                        </div>
+                                    </div>
+                                    <div class="col-4 col-sm-2">
+                                        <div class="sample-img-card position-relative rounded-3 overflow-hidden border" onclick="selectSampleImage(this, 'https://images.unsplash.com/photo-1536376072261-38c75010e6c9?auto=format&fit=crop&w=900&q=85', 'Căn Hộ Studio Full Nội Thất', 'addRoomPreview', 'add_sample_image_input', 'addRoomPreviewLabel', 'addRoomImageFile')">
+                                            <img src="https://images.unsplash.com/photo-1536376072261-38c75010e6c9?auto=format&fit=crop&w=300&q=80" class="w-100" style="height: 60px; object-fit: cover;" alt="Studio VIP">
+                                            <div class="sample-tag">Studio VIP</div>
+                                            <div class="sample-check"><i class="fa-solid fa-circle-check"></i></div>
+                                        </div>
+                                    </div>
+                                    <div class="col-4 col-sm-2">
+                                        <div class="sample-img-card position-relative rounded-3 overflow-hidden border" onclick="selectSampleImage(this, 'https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?auto=format&fit=crop&w=900&q=85', 'Phòng Ban Công Đón Nắng', 'addRoomPreview', 'add_sample_image_input', 'addRoomPreviewLabel', 'addRoomImageFile')">
+                                            <img src="https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?auto=format&fit=crop&w=300&q=80" class="w-100" style="height: 60px; object-fit: cover;" alt="Ban công">
+                                            <div class="sample-tag">Ban công</div>
+                                            <div class="sample-check"><i class="fa-solid fa-circle-check"></i></div>
+                                        </div>
+                                    </div>
+                                    <div class="col-4 col-sm-2">
+                                        <div class="sample-img-card position-relative rounded-3 overflow-hidden border" onclick="selectSampleImage(this, 'https://images.unsplash.com/photo-1493809842364-78817add7ffb?auto=format&fit=crop&w=900&q=85', 'Căn Hộ Bắc Âu Cao Cấp', 'addRoomPreview', 'add_sample_image_input', 'addRoomPreviewLabel', 'addRoomImageFile')">
+                                            <img src="https://images.unsplash.com/photo-1493809842364-78817add7ffb?auto=format&fit=crop&w=300&q=80" class="w-100" style="height: 60px; object-fit: cover;" alt="Bắc Âu">
+                                            <div class="sample-tag">Bắc Âu</div>
+                                            <div class="sample-check"><i class="fa-solid fa-circle-check"></i></div>
+                                        </div>
+                                    </div>
+                                    <div class="col-4 col-sm-2">
+                                        <div class="sample-img-card position-relative rounded-3 overflow-hidden border" onclick="selectSampleImage(this, 'https://images.unsplash.com/photo-1598928506311-c55ded91a20c?auto=format&fit=crop&w=900&q=85', 'Phòng Tiết Kiệm Gọn Gàng', 'addRoomPreview', 'add_sample_image_input', 'addRoomPreviewLabel', 'addRoomImageFile')">
+                                            <img src="https://images.unsplash.com/photo-1598928506311-c55ded91a20c?auto=format&fit=crop&w=300&q=80" class="w-100" style="height: 60px; object-fit: cover;" alt="Tiết kiệm">
+                                            <div class="sample-tag">Tiết kiệm</div>
+                                            <div class="sample-check"><i class="fa-solid fa-circle-check"></i></div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Xem trước ảnh trực tiếp -->
+                            <div class="d-flex align-items-center gap-3 p-2 rounded-3 bg-light border">
+                                <img id="addRoomPreview" src="https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?auto=format&fit=crop&w=900&q=85" alt="Ảnh phòng" class="rounded-3 shadow-sm border" style="width: 100px; height: 68px; object-fit: cover;">
+                                <div>
+                                    <div class="fw-bold small text-dark" id="addRoomPreviewLabel">Đang chọn: Phòng Tiêu Chuẩn Hiện Đại</div>
+                                    <div class="text-muted" style="font-size: 0.76rem;">Ảnh này sẽ hiển thị trực tiếp cho khách xem phòng trên trang Xem phòng khách.</div>
+                                </div>
+                            </div>
+                        </div>
+
                         <!-- Ghi chú / Mô tả -->
                         <div class="col-12">
                             <label class="form-label fw-bold small text-dark">Ghi chú / Mô tả</label>
-                            <textarea name="description" class="form-control rounded-3 py-2" rows="3" placeholder=""></textarea>
+                            <textarea name="description" class="form-control rounded-3 py-2" rows="2" placeholder="VD: Phòng thoáng mát, gần cổng chính, an ninh tốt..."></textarea>
                         </div>
                     </div>
                 </div>
@@ -963,6 +1086,74 @@ $adminName = $_SESSION['full_name'] ?? 'Quản trị viên Hệ thống';
     </div>
 
     <script>
+        function selectSampleImage(el, url, label, previewId, inputId, labelId, fileInputId) {
+        var parent = el.closest('.row') || el.parentElement;
+        parent.querySelectorAll('.sample-img-card').forEach(function(c) {
+            c.classList.remove('active');
+        });
+        el.classList.add('active');
+        if (inputId && document.getElementById(inputId)) {
+            document.getElementById(inputId).value = url;
+        }
+        if (previewId && document.getElementById(previewId)) {
+            document.getElementById(previewId).src = url;
+        }
+        if (labelId && document.getElementById(labelId)) {
+            document.getElementById(labelId).textContent = 'Đang chọn ảnh mẫu: ' + label;
+        }
+        if (fileInputId && document.getElementById(fileInputId)) {
+            document.getElementById(fileInputId).value = '';
+        }
+    }
+
+    function previewUploadImage(input, previewId, inputId, labelId) {
+        if (input.files && input.files[0]) {
+            var reader = new FileReader();
+            reader.onload = function(e) {
+                if (previewId && document.getElementById(previewId)) {
+                    document.getElementById(previewId).src = e.target.result;
+                }
+                if (inputId && document.getElementById(inputId)) {
+                    document.getElementById(inputId).value = '';
+                }
+                if (labelId && document.getElementById(labelId)) {
+                    document.getElementById(labelId).textContent = 'Ảnh tải lên từ máy: ' + input.files[0].name;
+                }
+                var container = input.closest('.col-12');
+                if (container) {
+                    container.querySelectorAll('.sample-img-card').forEach(function(c) {
+                        c.classList.remove('active');
+                    });
+                }
+            };
+            reader.readAsDataURL(input.files[0]);
+        }
+    }
+
+    function resetRoomImage(fileInputId, previewId, inputId, labelId) {
+        var defaultUrl = 'https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?auto=format&fit=crop&w=900&q=85';
+        if (fileInputId && document.getElementById(fileInputId)) {
+            document.getElementById(fileInputId).value = '';
+        }
+        if (inputId && document.getElementById(inputId)) {
+            document.getElementById(inputId).value = defaultUrl;
+        }
+        if (previewId && document.getElementById(previewId)) {
+            document.getElementById(previewId).src = defaultUrl;
+        }
+        if (labelId && document.getElementById(labelId)) {
+            document.getElementById(labelId).textContent = 'Đang chọn: Phòng Tiêu Chuẩn Hiện Đại';
+        }
+        var container = document.getElementById('addRoomModal');
+        if (container) {
+            var cards = container.querySelectorAll('.sample-img-card');
+            cards.forEach(function(c, idx) {
+                if (idx === 0) c.classList.add('active');
+                else c.classList.remove('active');
+            });
+        }
+    }
+
     function addRoomServiceRow(roomId) {
         const container = document.getElementById('roomServicesContainer_' + roomId);
         if (!container) return;

@@ -49,6 +49,16 @@ class TenantController {
 
                 if ($fullName === '' || $phone === '') {
                     $_SESSION['tenant_flash_error'] = 'Vui lòng nhập đầy đủ Họ và tên và Số điện thoại khách thuê!';
+                } elseif (!preg_match('/^0[0-9]{9}$/', $phone)) {
+                    $_SESSION['tenant_flash_error'] = 'Số điện thoại không hợp lệ! Vui lòng nhập đúng 10 chữ số (bắt đầu bằng số 0).';
+                } elseif ($cccd !== '' && !preg_match('/^[0-9]{9,12}$/', $cccd)) {
+                    $_SESSION['tenant_flash_error'] = 'Số CCCD/CMND không hợp lệ! Phải là dãy gồm 9 đến 12 chữ số.';
+                } elseif ($email !== '' && !filter_var($email, FILTER_VALIDATE_EMAIL)) {
+                    $_SESSION['tenant_flash_error'] = 'Địa chỉ email không đúng định dạng (VD: ten@gmail.com)!';
+                } elseif ($emergencyContact !== '' && !preg_match('/^0[0-9]{9}$/', $emergencyContact)) {
+                    $_SESSION['tenant_flash_error'] = 'Số liên hệ khẩn cấp không hợp lệ! Phải đúng 10 chữ số (bắt đầu bằng 0).';
+                } elseif ($roommatePhone !== '' && !preg_match('/^0[0-9]{9}$/', $roommatePhone)) {
+                    $_SESSION['tenant_flash_error'] = 'Số điện thoại bạn cùng phòng không hợp lệ! Phải đúng 10 chữ số (bắt đầu bằng 0).';
                 } else {
                     try {
                         $newTenantId = $this->model->createTenantFull(
@@ -96,6 +106,16 @@ class TenantController {
 
                 if ($id <= 0 || $fullName === '' || $phone === '') {
                     $_SESSION['tenant_flash_error'] = 'Vui lòng nhập đầy đủ thông tin khách thuê!';
+                } elseif (!preg_match('/^0[0-9]{9}$/', $phone)) {
+                    $_SESSION['tenant_flash_error'] = 'Số điện thoại không hợp lệ! Vui lòng nhập đúng 10 chữ số (bắt đầu bằng số 0).';
+                } elseif ($cccd !== '' && !preg_match('/^[0-9]{9,12}$/', $cccd)) {
+                    $_SESSION['tenant_flash_error'] = 'Số CCCD/CMND không hợp lệ! Phải là dãy gồm 9 đến 12 chữ số.';
+                } elseif ($email !== '' && !filter_var($email, FILTER_VALIDATE_EMAIL)) {
+                    $_SESSION['tenant_flash_error'] = 'Địa chỉ email không đúng định dạng (VD: ten@gmail.com)!';
+                } elseif ($emergencyContact !== '' && !preg_match('/^0[0-9]{9}$/', $emergencyContact)) {
+                    $_SESSION['tenant_flash_error'] = 'Số liên hệ khẩn cấp không hợp lệ! Phải đúng 10 chữ số (bắt đầu bằng 0).';
+                } elseif ($roommatePhone !== '' && !preg_match('/^0[0-9]{9}$/', $roommatePhone)) {
+                    $_SESSION['tenant_flash_error'] = 'Số điện thoại bạn cùng phòng không hợp lệ! Phải đúng 10 chữ số (bắt đầu bằng 0).';
                 } else {
                     try {
                         $this->model->updateTenantFull(
@@ -114,11 +134,12 @@ class TenantController {
                             $roommatePhone ?: null
                         );
 
-                        if ($roomId > 0) {
-                            $this->model->assignRoomToTenant($id, $roomId, $roommateName, $roommatePhone);
+                        // Cập nhật thông tin bạn cùng phòng vào hợp đồng đang hoạt động
+                        if ($roommateName !== '') {
+                            $this->model->updateContractRoommate($id, $roommateName, $roommatePhone);
                         }
 
-                        $_SESSION['tenant_flash_success'] = "Đã cập nhật thông tin khách thuê '{$fullName}' thành công! (Tài khoản: {$phone}, Mật khẩu: 123)";
+                        $_SESSION['tenant_flash_success'] = "Đã cập nhật thông tin khách thuê '{$fullName}' thành công!";
                     } catch (PDOException $e) {
                         $_SESSION['tenant_flash_error'] = 'Không thể cập nhật: ' . $e->getMessage();
                     }

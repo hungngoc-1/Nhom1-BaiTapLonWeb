@@ -222,6 +222,11 @@ switch ($route) {
         $contractController->delete();
         break;
 
+    case 'contracts/resolve-verification':
+        $contractController = new ContractController();
+        $contractController->resolveVerification();
+        break;
+
     // --- CỔNG THÔNG TIN KHÁCH THUÊ (TENANT PORTAL) ---
     case 'tenant':
     case 'tenant/portal':
@@ -295,7 +300,24 @@ switch ($route) {
         break;
 
     case 'invoices/update-deposit':
+
+
+    case 'invoices/update-first-month':
+        (new InvoiceController())->updateFirstMonth();
+        break;
+
+    case 'invoices/send-verification':
+        (new InvoiceController())->sendVerification();
+        break;
+
+    case 'invoices/confirm-refund':
+        (new InvoiceController())->confirmRefund();
+        break;
         (new InvoiceController())->updateDeposit();
+        break;
+
+    case 'invoices/update':
+        (new InvoiceController())->update();
         break;
 
     case 'invoices/add-expense':
