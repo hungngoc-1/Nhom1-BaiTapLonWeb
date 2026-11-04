@@ -33,7 +33,48 @@ class RoomController {
                 // Nếu form gửi dạng số chuẩn (vd: 3000000 hoặc 3000000.00)
                 $price = is_numeric($_POST['price'] ?? '') ? (float)$_POST['price'] : (float)$priceRaw;
                 $status = $this->validStatus($_POST['status'] ?? 'available');
-                $description = trim($_POST['description'] ?? '');
+                $building = trim($_POST['building'] ?? '');
+                $room_type = trim($_POST['room_type'] ?? '');
+                $floor = trim($_POST['floor'] ?? '');
+                $area = trim($_POST['area'] ?? '');
+                $max_occupants = trim($_POST['max_occupants'] ?? '');
+                $amenities = trim($_POST['amenities'] ?? '');
+                $note = trim($_POST['note'] ?? $_POST['description'] ?? '');
+
+                // Dịch vụ khác được thêm bằng nút (+)
+                $serviceNames  = $_POST['service_names'] ?? [];
+                $servicePrices = $_POST['service_prices'] ?? [];
+                $serviceUnits  = $_POST['service_units'] ?? [];
+
+                $servicesToSave = [];
+                for ($i = 0; $i < count($serviceNames); $i++) {
+                    $sName = trim($serviceNames[$i] ?? '');
+                    if ($sName === '') continue;
+                    $sPrice = (float)($servicePrices[$i] ?? 0);
+                    $sUnit = trim($serviceUnits[$i] ?? 'Tháng') ?: 'Tháng';
+                    $servicesToSave[] = [
+                        'service_name' => $sName,
+                        'unit_price'   => $sPrice,
+                        'unit'         => $sUnit,
+                    ];
+                }
+
+                $descParts = [];
+                if ($building !== '') $descParts[] = "Tòa: {$building}";
+                if ($room_type !== '') $descParts[] = "Loại: {$room_type}";
+                if ($floor !== '') $descParts[] = "Tầng {$floor}";
+                if ($area !== '') $descParts[] = "Diện tích: {$area} m²";
+                if ($max_occupants !== '') $descParts[] = "Tối đa: {$max_occupants} người";
+                if ($amenities !== '') $descParts[] = "Tiện nghi: {$amenities}";
+                if (!empty($servicesToSave)) {
+                    $sTexts = array_map(function($s) {
+                        return $s['service_name'] . ' (' . number_format($s['unit_price'], 0, ',', '.') . 'đ/' . $s['unit'] . ')';
+                    }, $servicesToSave);
+                    $descParts[] = "Dịch vụ: " . implode(', ', $sTexts);
+                }
+                if ($note !== '') $descParts[] = $note;
+
+                $description = !empty($descParts) ? implode(" | ", $descParts) : trim($_POST['description'] ?? '');
 
                 if ($room_number === '' || mb_strlen($room_number) > 20) {
                     $_SESSION['room_flash_error'] = 'Vui lòng nhập mã phòng hợp lệ (tối đa 20 ký tự)!';

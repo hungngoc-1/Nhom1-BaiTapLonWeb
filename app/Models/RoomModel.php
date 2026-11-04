@@ -123,6 +123,8 @@ class RoomModel {
                        u.full_name AS tenant_name,
                        u.phone AS tenant_phone,
                        u.email AS tenant_email,
+                       u.roommate_name,
+                       u.roommate_phone,
                        (SELECT COUNT(*) FROM invoices i WHERE i.room_id = r.id AND i.status = 'unpaid') AS unpaid_count,
                        (SELECT COALESCE(SUM(i2.total_amount), 0) FROM invoices i2 WHERE i2.room_id = r.id AND i2.status = 'unpaid') AS unpaid_amount
                 FROM rooms r

@@ -83,6 +83,7 @@ $adminName = $_SESSION['full_name'] ?? 'Quản trị viên Hệ thống';
         .btn-pill-white { background: #fff; border-radius: 50px; font-weight: 800; color: #334155; padding: 10px 20px; border: 2px solid #e2e8f0; font-size: .88rem; transition: .2s; display: inline-flex; align-items: center; gap: 6px; text-decoration: none; }
         .btn-pill-white:hover { border-color: var(--teal-main); color: var(--teal-main); background: #f0fdfa; }
         .filter-control { border-radius: 50px; border: 2px solid #e2e8f0; padding: 9px 18px; font-weight: 700; font-size: .88rem; color: #334155; background-color: #f8fafc; }
+        select.filter-control { padding-right: 36px !important; }
         .filter-control:focus { background-color: #fff; border-color: var(--teal-main); box-shadow: 0 0 0 4px rgba(48,143,134,.15); outline: none; }
         .table-rounded-wrap { border-radius: 24px; border: 2px solid #e2e8f0; overflow: hidden; background: #fff; }
         .table-staymate thead th { background: #f0fdfa; color: var(--teal-main); font-weight: 900; font-size: .78rem; text-transform: uppercase; padding: 15px 18px; border-bottom: 2px solid #ccfbf1; }
@@ -98,6 +99,8 @@ $adminName = $_SESSION['full_name'] ?? 'Quản trị viên Hệ thống';
         .modal-staymate .modal-content { border-radius: 30px; border: 4px solid #fff; box-shadow: 0 25px 60px rgba(0,0,0,.2); overflow: hidden; }
         .modal-staymate .modal-header { background: linear-gradient(135deg, #f0fdfa, #ccfbf1); border-bottom: 2px solid #99f6e4; padding: 18px 26px; }
         .modal-staymate .form-control { border-radius: 16px; border: 2px solid #e2e8f0; padding: 10px 15px; font-weight: 700; }
+        .modal { z-index: 1060 !important; }
+        .modal-backdrop { z-index: 1050 !important; }
         .footer-custom { background: #ffffff; padding: 20px 0; color: #64748b; font-size: .85rem; font-weight: 700; margin-top: auto; border-top: 1px solid #f1f5f9; position: relative; z-index: 10; }
     </style>
 </head>
@@ -158,56 +161,12 @@ $adminName = $_SESSION['full_name'] ?? 'Quản trị viên Hệ thống';
     </nav>
 
     <div class="container-fluid px-4 px-xl-5 py-4 position-relative">
-        <a href="index.php?route=overview" class="btn-back-content">
-            <i class="fa-solid fa-arrow-left me-2"></i> Quay lại Tổng quan
-        </a>
-
-        <div class="header-title-wrapper">
-            <div>
-                <nav aria-label="breadcrumb">
-                    <ol class="breadcrumb mb-1" style="font-size: .85rem; font-weight: 700;">
-                        <li class="breadcrumb-item"><a href="index.php?route=dashboard" class="text-teal-main text-decoration-none"><i class="fa-solid fa-house"></i> Hệ thống Quản lý</a></li>
-                        <li class="breadcrumb-item"><a href="index.php?route=overview" class="text-teal-main text-decoration-none">Tổng quan</a></li>
-                        <li class="breadcrumb-item text-muted">Quản lý Khách thuê</li>
-                    </ol>
-                </nav>
-                <div class="main-title">
-                    Quản lý Khách thuê -
-                    <span class="bld-highlight">
-                        Hồ sơ &amp; Tài khoản Lưu trú
-                        <span class="title-sparkle ts-1"></span>
-                        <span class="title-sparkle ts-2"></span>
-                    </span>
-                </div>
-                <div class="text-muted fw-bold mt-1" style="font-size: .9rem;">
-                    <i class="fa-solid fa-database text-teal-main me-1"></i> Đồng bộ trực tiếp với bảng <code>users</code> (role = tenant) &amp; <code>contracts</code> của CSDL chung
-                </div>
-            </div>
-
-            <div class="d-flex flex-wrap gap-2 position-relative z-2">
-                <a href="index.php?route=tenant/portal" target="_blank" class="btn-pill-white">
-                    <i class="fa-solid fa-user-shield text-teal-main"></i> Cổng Khách Thuê
-                </a>
-                <button type="button" class="btn-pill-white position-relative" data-bs-toggle="modal" data-bs-target="#requestsModal">
-                    <i class="fa-solid fa-bell text-warning"></i> Yêu cầu khách gửi
-                    <?php 
-                    $pendingReqCount = 0;
-                    if (!empty($tenantRequests)) {
-                        foreach ($tenantRequests as $rq) if (($rq['status'] ?? '') === 'pending') $pendingReqCount++;
-                    }
-                    if ($pendingReqCount > 0): ?>
-                        <span class="badge rounded-pill bg-danger ms-1"><?= $pendingReqCount ?></span>
-                    <?php endif; ?>
-                </button>
-                <a href="index.php?route=contracts" class="btn-pill-white">
-                    <i class="fa-solid fa-file-signature text-teal-main"></i> Quản lý Hợp đồng
-                </a>
-                <button type="button" class="btn-teal-custom" data-bs-toggle="modal" data-bs-target="#addTenantModal">
-                    <i class="fa-solid fa-user-plus"></i> Thêm Khách thuê
-                </button>
-            </div>
-
-            <div class="header-house-graphic d-none d-lg-block"></div>
+        <!-- Dòng Quản lý Khách thuê & Nút Thêm Khách thuê -->
+        <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-3">
+            <h2 class="fw-black text-dark mb-0" style="font-weight: 900; font-size: 1.85rem;">Quản lý Khách thuê - Hồ sơ & Tài khoản lưu trú</h2>
+            <button type="button" class="btn-teal-custom" data-bs-toggle="modal" data-bs-target="#addTenantModal">
+                <i class="fa-solid fa-user-plus"></i> Thêm Khách thuê
+            </button>
         </div>
 
         <?php if (!empty($flash_success)): ?>
@@ -222,34 +181,6 @@ $adminName = $_SESSION['full_name'] ?? 'Quản trị viên Hệ thống';
                 <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
             </div>
         <?php endif; ?>
-
-        <!-- 4 Thẻ thống kê -->
-        <div class="row g-4 mb-4 position-relative z-2">
-            <div class="col-12 col-md-6 col-lg-3">
-                <div class="overview-card card-green">
-                    <div class="overview-title text-success"><i class="fa-solid fa-users"></i> TỔNG KHÁCH THUÊ</div>
-                    <div class="overview-val text-dark mt-2"><?= (int)($stats['total'] ?? 0) ?> <span class="fs-6 fw-bold text-muted">tài khoản</span></div>
-                </div>
-            </div>
-            <div class="col-12 col-md-6 col-lg-3">
-                <div class="overview-card card-blue">
-                    <div class="overview-title text-primary"><i class="fa-solid fa-house-user"></i> ĐANG LƯU TRÚ</div>
-                    <div class="overview-val text-dark mt-2"><?= (int)($stats['staying'] ?? 0) ?> <span class="fs-6 fw-bold text-muted">khách</span></div>
-                </div>
-            </div>
-            <div class="col-12 col-md-6 col-lg-3">
-                <div class="overview-card card-yellow">
-                    <div class="overview-title" style="color: #b45309;"><i class="fa-solid fa-user-clock"></i> CHƯA XẾP PHÒNG / ĐÃ ĐI</div>
-                    <div class="overview-val mt-2" style="color: #b45309;"><?= (int)($stats['unassigned'] ?? 0) ?> <span class="fs-6 fw-bold text-muted">khách</span></div>
-                </div>
-            </div>
-            <div class="col-12 col-md-6 col-lg-3">
-                <div class="overview-card card-purple">
-                    <div class="overview-title" style="color: #7e22ce;"><i class="fa-solid fa-file-invoice-dollar"></i> ĐANG CÓ HÓA ĐƠN NỢ</div>
-                    <div class="overview-val mt-2" style="color: #7e22ce;"><?= (int)($stats['debt_tenants'] ?? 0) ?> <span class="fs-6 fw-bold text-muted">khách</span></div>
-                </div>
-            </div>
-        </div>
 
         <div class="section-box">
             <form method="GET" action="index.php" class="row g-3 align-items-end mb-4 pb-3 border-bottom border-light">
@@ -285,10 +216,10 @@ $adminName = $_SESSION['full_name'] ?? 'Quản trị viên Hệ thống';
                     <thead>
                         <tr>
                             <th>ID</th>
-                            <th>HỌ VÀ TÊN &amp; TÀI KHOẢN</th>
-                            <th>ĐIỆN THOẠI</th>
-                            <th>EMAIL</th>
-                            <th>PHÒNG &amp; THỜI HẠN HỢP ĐỒNG</th>
+                            <th>HỌ VÀ TÊN &amp; CCCD</th>
+                            <th>ĐIỆN THOẠI &amp; TÀI KHOẢN</th>
+                            <th>EMAIL &amp; THƯỜNG TRÚ</th>
+                            <th>PHÒNG &amp; BẠN CÙNG PHÒNG</th>
                             <th>TRẠNG THÁI</th>
                             <th class="text-end">THAO TÁC</th>
                         </tr>
@@ -298,34 +229,59 @@ $adminName = $_SESSION['full_name'] ?? 'Quản trị viên Hệ thống';
                             <?php foreach ($tenants as $t):
                                 $tId = (int)$t['id'];
                                 $isStaying = !empty($t['contract_id']);
+                                $tStatus = !empty($t['status']) ? $t['status'] : ($isStaying ? 'Đang thuê' : 'Chưa xếp phòng');
                             ?>
                                 <tr>
                                     <td class="text-muted fw-bold">#<?= $tId ?></td>
                                     <td>
-                                        <div class="fw-black text-dark" style="font-weight: 800;"><?= h($t['full_name']) ?></div>
-                                        <div class="text-muted small"><i class="fa-regular fa-user me-1"></i><?= h($t['username']) ?></div>
+                                        <div class="fw-black text-dark" style="font-weight: 800; font-size: 0.95rem;"><?= h($t['full_name']) ?></div>
+                                        <?php if (!empty($t['cccd'])): ?>
+                                            <div class="text-muted small"><i class="fa-regular fa-id-card me-1 text-teal-main"></i>CCCD: <strong><?= h($t['cccd']) ?></strong></div>
+                                        <?php endif; ?>
+                                        <?php if (!empty($t['occupation'])): ?>
+                                            <div class="text-muted small"><i class="fa-solid fa-briefcase me-1"></i><?= h($t['occupation']) ?></div>
+                                        <?php endif; ?>
                                     </td>
-                                    <td class="fw-bold text-teal-main"><i class="fa-solid fa-phone me-1"></i><?= h($t['phone']) ?></td>
-                                    <td class="text-muted"><?= h($t['email']) ?></td>
+                                    <td>
+                                        <div class="fw-bold text-teal-main"><i class="fa-solid fa-phone me-1"></i><?= h($t['phone']) ?></div>
+                                        <div class="text-muted small">
+                                            <i class="fa-solid fa-key text-warning me-1"></i>TK: <strong><?= h($t['username']) ?></strong> <span class="badge bg-light text-secondary border">MK: 123</span>
+                                        </div>
+                                    </td>
+                                    <td class="text-muted">
+                                        <div><i class="fa-regular fa-envelope me-1"></i><?= h($t['email'] ?: 'Chưa cập nhật') ?></div>
+                                        <?php if (!empty($t['hometown'])): ?>
+                                            <div class="small"><i class="fa-solid fa-location-dot me-1 text-danger"></i><?= h($t['hometown']) ?></div>
+                                        <?php endif; ?>
+                                    </td>
                                     <td>
                                         <?php if ($isStaying): ?>
                                             <a href="index.php?route=rooms&keyword=<?= urlencode($t['room_number']) ?>" class="badge-room-pill">
                                                 <i class="fa-solid fa-bed"></i> Phòng <?= h($t['room_number']) ?>
                                             </a>
+                                            <?php if (!empty($t['roommate_name'])): ?>
+                                                <div class="small fw-bold text-dark mt-1">
+                                                    <i class="fa-solid fa-user-group text-teal-main me-1"></i>Ở cùng: <?= h($t['roommate_name']) ?>
+                                                    <?php if (!empty($t['roommate_phone'])): ?>
+                                                        <span class="text-muted">(<?= h($t['roommate_phone']) ?>)</span>
+                                                    <?php endif; ?>
+                                                </div>
+                                            <?php endif; ?>
                                             <div class="text-muted small mt-1">
                                                 <?= date('d/m/Y', strtotime($t['start_date'])) ?> → <?= date('d/m/Y', strtotime($t['end_date'])) ?>
                                                 &bull; <a href="index.php?route=contracts/detail&id=<?= (int)$t['contract_id'] ?>" class="text-teal-main fw-bold text-decoration-none">Xem HĐ</a>
                                             </div>
                                         <?php else: ?>
-                                            <span class="text-muted small">Chưa có HĐ hiệu lực</span>
-                                            <div><a href="index.php?route=contracts" class="small fw-bold text-teal-main text-decoration-none">+ Lập hợp đồng</a></div>
+                                            <span class="badge rounded-pill px-2 py-1 bg-light text-muted border">Chưa gắn phòng</span>
                                         <?php endif; ?>
                                     </td>
                                     <td>
-                                        <?php if ($isStaying): ?>
-                                            <span class="badge rounded-pill px-3 py-2" style="background:#dcfce7;color:#15803d;font-weight:800;">● Đang lưu trú</span>
+                                        <?php if ($tStatus === 'Đang thuê' || $isStaying): ?>
+                                            <span class="badge rounded-pill px-3 py-2" style="background:#dcfce7;color:#15803d;font-weight:800;">● Đang thuê</span>
+                                        <?php elseif ($tStatus === 'Chờ nhận phòng'): ?>
+                                            <span class="badge rounded-pill px-3 py-2" style="background:#fef9c3;color:#854d0e;font-weight:800;">Chờ nhận phòng</span>
                                         <?php else: ?>
-                                            <span class="badge rounded-pill px-3 py-2" style="background:#f1f5f9;color:#475569;font-weight:800;">Chưa xếp phòng</span>
+                                            <span class="badge rounded-pill px-3 py-2" style="background:#f1f5f9;color:#475569;font-weight:800;"><?= h($tStatus) ?></span>
                                         <?php endif; ?>
                                     </td>
                                     <td class="text-end">
@@ -342,39 +298,6 @@ $adminName = $_SESSION['full_name'] ?? 'Quản trị viên Hệ thống';
                                         </div>
                                     </td>
                                 </tr>
-
-                                <!-- Modal cập nhật khách thuê -->
-                                <div class="modal fade modal-staymate" id="editTenantModal<?= $tId ?>" tabindex="-1" aria-hidden="true">
-                                    <div class="modal-dialog modal-dialog-centered">
-                                        <form method="POST" action="index.php?route=tenants" class="modal-content">
-                                            <div class="modal-header">
-                                                <h5 class="modal-title fw-bold text-teal-main"><i class="fa-solid fa-user-pen me-2"></i>Cập nhật Khách thuê</h5>
-                                                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                                            </div>
-                                            <div class="modal-body p-4 row g-3">
-                                                <input type="hidden" name="csrf_token" value="<?= h($csrf) ?>">
-                                                <input type="hidden" name="action" value="update">
-                                                <input type="hidden" name="id" value="<?= $tId ?>">
-                                                <div class="col-12">
-                                                    <label class="form-label small fw-bold text-muted">Họ và tên <span class="text-danger">*</span></label>
-                                                    <input type="text" name="full_name" class="form-control" value="<?= h($t['full_name']) ?>" required>
-                                                </div>
-                                                <div class="col-md-6">
-                                                    <label class="form-label small fw-bold text-muted">Số điện thoại <span class="text-danger">*</span></label>
-                                                    <input type="text" name="phone" class="form-control" value="<?= h($t['phone']) ?>" required>
-                                                </div>
-                                                <div class="col-md-6">
-                                                    <label class="form-label small fw-bold text-muted">Email <span class="text-danger">*</span></label>
-                                                    <input type="email" name="email" class="form-control" value="<?= h($t['email']) ?>" required>
-                                                </div>
-                                            </div>
-                                            <div class="modal-footer border-0 px-4 pb-4 pt-0">
-                                                <button type="button" class="btn-pill-white" data-bs-dismiss="modal">Hủy</button>
-                                                <button type="submit" class="btn-teal-custom"><i class="fa-solid fa-floppy-disk"></i> Lưu thay đổi</button>
-                                            </div>
-                                        </form>
-                                    </div>
-                                </div>
                             <?php endforeach; ?>
                         <?php else: ?>
                             <tr>
@@ -387,47 +310,264 @@ $adminName = $_SESSION['full_name'] ?? 'Quản trị viên Hệ thống';
         </div>
     </div>
 
-    <!-- Modal Thêm Khách Thuê -->
+    <!-- ================= MODAL THÊM KHÁCH THUÊ MỚI (CHUẨN FORM ẢNH) ================= -->
     <div class="modal fade modal-staymate" id="addTenantModal" tabindex="-1" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered">
-            <form method="POST" action="index.php?route=tenants" class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title fw-bold text-teal-main"><i class="fa-solid fa-user-plus me-2"></i>Thêm Khách thuê mới</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        <div class="modal-dialog modal-dialog-centered modal-lg">
+            <form method="POST" action="index.php?route=tenants" class="modal-content border-0 shadow-lg" style="border-radius: 20px;">
+                <div class="modal-header border-0 pb-0 px-4 pt-4">
+                    <h5 class="modal-title fw-bold text-dark" style="font-size: 1.25rem;">Thêm Khách thuê mới</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Đóng"></button>
                 </div>
-                <div class="modal-body p-4 row g-3">
+                <div class="modal-body px-4 py-3">
                     <input type="hidden" name="csrf_token" value="<?= h($csrf) ?>">
                     <input type="hidden" name="action" value="create">
-                    <div class="col-12">
-                        <label class="form-label small fw-bold text-muted">Họ và tên <span class="text-danger">*</span></label>
-                        <input type="text" name="full_name" class="form-control" placeholder="VD: Nguyễn Văn An" required>
-                    </div>
-                    <div class="col-md-6">
-                        <label class="form-label small fw-bold text-muted">Tên đăng nhập <span class="text-danger">*</span></label>
-                        <input type="text" name="username" class="form-control" placeholder="VD: khach06" required>
-                    </div>
-                    <div class="col-md-6">
-                        <label class="form-label small fw-bold text-muted">Mật khẩu mặc định</label>
-                        <input type="password" name="password" class="form-control" value="123456" required>
-                    </div>
-                    <div class="col-md-6">
-                        <label class="form-label small fw-bold text-muted">Số điện thoại <span class="text-danger">*</span></label>
-                        <input type="text" name="phone" class="form-control" placeholder="VD: 0912345678" required>
-                    </div>
-                    <div class="col-md-6">
-                        <label class="form-label small fw-bold text-muted">Email <span class="text-danger">*</span></label>
-                        <input type="email" name="email" class="form-control" placeholder="VD: khach6@gmail.com" required>
+
+                    <div class="row g-3">
+                        <!-- Hàng 1: Họ tên & CCCD -->
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold small text-dark">Họ và tên <span class="text-danger">*</span></label>
+                            <input type="text" name="full_name" class="form-control rounded-3 py-2" placeholder="VD: Đinh Thảo Nguyên" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold small text-dark">Số CCCD / CMND (9-12 số) <span class="text-danger">*</span></label>
+                            <input type="text" name="cccd" class="form-control rounded-3 py-2" placeholder="VD: 037201091234" maxlength="20" required>
+                        </div>
+
+                        <!-- Hàng 2: SĐT, Ngày sinh, Giới tính -->
+                        <div class="col-md-5">
+                            <label class="form-label fw-bold small text-dark">Số điện thoại <span class="text-danger">*</span> <span class="text-teal-main fw-normal" style="font-size:0.75rem;">(Là tên tài khoản, MK: 123)</span></label>
+                            <input type="text" name="phone" class="form-control rounded-3 py-2" placeholder="VD: 0937001122" required>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label fw-bold small text-dark">Ngày sinh</label>
+                            <input type="date" name="birthday" class="form-control rounded-3 py-2" value="VD: 2001-06-15">
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label fw-bold small text-dark">Giới tính</label>
+                            <select name="gender" class="form-select rounded-3 py-2">
+                                <option value="Nữ" selected>Nữ</option>
+                                <option value="Nam">Nam</option>
+                                <option value="Khác">Khác</option>
+                            </select>
+                        </div>
+
+                        <!-- Hàng 3: Email & Nghề nghiệp -->
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold small text-dark">Email</label>
+                            <input type="email" name="email" class="form-control rounded-3 py-2" placeholder="VD: nguyendt@gmail.com">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold small text-dark">Nghề nghiệp / Nơi công tác</label>
+                            <input type="text" name="occupation" class="form-control rounded-3 py-2" placeholder="VD: Nhân viên Nhân sự (HR)">
+                        </div>
+
+                        <!-- Hàng 4: Quê quán, Liên hệ khẩn cấp, Trạng thái -->
+                        <div class="col-md-5">
+                            <label class="form-label fw-bold small text-dark">Quê quán / Địa chỉ thường trú</label>
+                            <input type="text" name="hometown" class="form-control rounded-3 py-2" placeholder="VD: Ninh Bình">
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label fw-bold small text-dark">Liên hệ khẩn cấp</label>
+                            <input type="text" name="emergency_contact" class="form-control rounded-3 py-2" placeholder="VD: 0904000111">
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label fw-bold small text-dark">Trạng thái</label>
+                            <select name="status" class="form-select rounded-3 py-2">
+                                <option value="Đang thuê" selected>Đang thuê</option>
+                                <option value="Chờ nhận phòng">Chờ nhận phòng</option>
+                                <option value="Đã chuyển đi">Đã chuyển đi</option>
+                            </select>
+                        </div>
+
+                        <!-- Chọn phòng thuê liên kết -->
+                        <div class="col-12 mt-3 pt-2 border-top">
+                            <label class="form-label fw-bold small text-dark d-flex align-items-center gap-2 mb-1">
+                                <i class="fa-solid fa-door-open text-teal-main"></i> Chọn phòng thuê liên kết
+                            </label>
+                            <select name="room_id" class="form-select rounded-3 py-2" id="tenantRoomSelect_new" onchange="handleTenantRoomChange(this, 'new')">
+                                <option value="" data-max-occupants="1">-- Chọn phòng thuê (Chưa xếp phòng) --</option>
+                                <?php if (!empty($allRooms)): ?>
+                                    <?php foreach ($allRooms as $r):
+                                        $rMax = (int)($r['details']['max_occupants'] ?? 2);
+                                        $isCurSelected = ($selectedRoomId > 0 && $selectedRoomId === (int)$r['id']);
+                                        $stLabel = ($r['status'] === 'available') ? 'Phòng trống' : 'Đang thuê';
+                                    ?>
+                                        <option value="<?= $r['id'] ?>" 
+                                                data-max-occupants="<?= $rMax ?>"
+                                                <?= $isCurSelected ? 'selected' : '' ?>>
+                                            Phòng <?= h($r['room_number']) ?> &bull; <?= number_format($r['price'], 0, ',', '.') ?> đ/tháng (Tối đa <?= $rMax ?> người) [<?= $stLabel ?>]
+                                        </option>
+                                    <?php endforeach; ?>
+                                <?php endif; ?>
+                            </select>
+                        </div>
+
+                        <!-- Khối thông tin bạn cùng phòng: Tự động hiển thị khi phòng tối đa >= 2 người -->
+                        <div class="col-12 roommate-block" id="roommateBlock_new" style="display: none;">
+                            <div class="p-3 rounded-4" style="background: #f0fdfa; border: 1.5px dashed #5eead4;">
+                                <div class="fw-bold text-teal-main mb-2 small d-flex align-items-center gap-2">
+                                    <i class="fa-solid fa-user-group"></i> 
+                                    <span>Thông tin bạn cùng phòng (Phòng tối đa <span class="max-occ-num">2</span> người)</span>
+                                </div>
+                                <div class="row g-2">
+                                    <div class="col-md-6">
+                                        <label class="form-label small fw-bold text-dark">Họ và tên bạn cùng phòng</label>
+                                        <input type="text" name="roommate_name" class="form-control rounded-3 py-2" placeholder="VD: Trần Thu Hà">
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label small fw-bold text-dark">Số điện thoại bạn cùng phòng</label>
+                                        <input type="text" name="roommate_phone" class="form-control rounded-3 py-2" placeholder="VD: 0987654321">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
-                <div class="modal-footer border-0 px-4 pb-4 pt-0">
-                    <button type="button" class="btn-pill-white" data-bs-dismiss="modal">Hủy</button>
-                    <button type="submit" class="btn-teal-custom"><i class="fa-solid fa-check"></i> Lưu khách thuê</button>
+                <div class="modal-footer border-0 px-4 pb-4 pt-1 d-flex justify-content-end gap-2">
+                    <button type="button" class="btn text-white px-4 py-2" style="background: #64748b; border-radius: 10px; font-weight: 700; font-size: 0.95rem;" data-bs-dismiss="modal">Hủy</button>
+                    <button type="submit" class="btn text-white px-4 py-2" style="background: #5b4bf7; border-radius: 10px; font-weight: 700; font-size: 0.95rem;">Lưu thông tin</button>
                 </div>
             </form>
         </div>
     </div>
 
-    <footer class="footer-custom container-fluid px-4 px-xl-5 d-flex flex-wrap justify-content-between align-items-center gap-2">
+    <!-- ================= TẤT CẢ MODAL CẬP NHẬT KHÁCH THUÊ (ĐẶT Ở ROOT TRÁNH LỖI STACKING CONTEXT) ================= -->
+    <?php if (!empty($tenants)): ?>
+        <?php foreach ($tenants as $t):
+            $tId = (int)$t['id'];
+            $curRoomId = (int)($t['room_id'] ?? 0);
+            $tGender = $t['gender'] ?? 'Nữ';
+            $tStatus = $t['status'] ?? 'Đang thuê';
+        ?>
+        <div class="modal fade modal-staymate" id="editTenantModal<?= $tId ?>" tabindex="-1" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered modal-lg">
+                <form method="POST" action="index.php?route=tenants" class="modal-content border-0 shadow-lg" style="border-radius: 20px;">
+                    <div class="modal-header border-0 pb-0 px-4 pt-4">
+                        <h5 class="modal-title fw-bold text-dark" style="font-size: 1.25rem;">
+                            Cập nhật Khách thuê: <?= h($t['full_name']) ?>
+                        </h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Đóng"></button>
+                    </div>
+                    <div class="modal-body px-4 py-3">
+                        <input type="hidden" name="csrf_token" value="<?= h($csrf) ?>">
+                        <input type="hidden" name="action" value="update">
+                        <input type="hidden" name="id" value="<?= $tId ?>">
+
+                        <div class="row g-3">
+                            <!-- Hàng 1: Họ tên & CCCD -->
+                            <div class="col-md-6">
+                                <label class="form-label fw-bold small text-dark">Họ và tên <span class="text-danger">*</span></label>
+                                <input type="text" name="full_name" class="form-control rounded-3 py-2" value="<?= h($t['full_name']) ?>" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-bold small text-dark">Số CCCD / CMND (9-12 số) <span class="text-danger">*</span></label>
+                                <input type="text" name="cccd" class="form-control rounded-3 py-2" value="<?= h($t['cccd'] ?? '037201091234') ?>" required>
+                            </div>
+
+                            <!-- Hàng 2: SĐT, Ngày sinh, Giới tính -->
+                            <div class="col-md-5">
+                                <label class="form-label fw-bold small text-dark">Số điện thoại <span class="text-danger">*</span> <span class="text-teal-main fw-normal" style="font-size:0.75rem;">(Tài khoản đăng nhập, MK: 123)</span></label>
+                                <input type="text" name="phone" class="form-control rounded-3 py-2" value="<?= h($t['phone']) ?>" required>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label fw-bold small text-dark">Ngày sinh</label>
+                                <input type="date" name="birthday" class="form-control rounded-3 py-2" value="<?= h($t['birthday'] ?? '2001-06-15') ?>">
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label fw-bold small text-dark">Giới tính</label>
+                                <select name="gender" class="form-select rounded-3 py-2">
+                                    <option value="Nữ" <?= $tGender === 'Nữ' ? 'selected' : '' ?>>Nữ</option>
+                                    <option value="Nam" <?= $tGender === 'Nam' ? 'selected' : '' ?>>Nam</option>
+                                    <option value="Khác" <?= $tGender === 'Khác' ? 'selected' : '' ?>>Khác</option>
+                                </select>
+                            </div>
+
+                            <!-- Hàng 3: Email & Nghề nghiệp -->
+                            <div class="col-md-6">
+                                <label class="form-label fw-bold small text-dark">Email</label>
+                                <input type="email" name="email" class="form-control rounded-3 py-2" value="<?= h($t['email']) ?>">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-bold small text-dark">Nghề nghiệp / Nơi công tác</label>
+                                <input type="text" name="occupation" class="form-control rounded-3 py-2" value="<?= h($t['occupation'] ?? 'Nhân viên Nhân sự (HR)') ?>">
+                            </div>
+
+                            <!-- Hàng 4: Quê quán, Liên hệ khẩn cấp, Trạng thái -->
+                            <div class="col-md-5">
+                                <label class="form-label fw-bold small text-dark">Quê quán / Địa chỉ thường trú</label>
+                                <input type="text" name="hometown" class="form-control rounded-3 py-2" value="<?= h($t['hometown'] ?? 'Ninh Bình') ?>">
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label fw-bold small text-dark">Liên hệ khẩn cấp</label>
+                                <input type="text" name="emergency_contact" class="form-control rounded-3 py-2" value="<?= h($t['emergency_contact'] ?? '0904000111') ?>">
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label fw-bold small text-dark">Trạng thái</label>
+                                <select name="status" class="form-select rounded-3 py-2">
+                                    <option value="Đang thuê" <?= $tStatus === 'Đang thuê' ? 'selected' : '' ?>>Đang thuê</option>
+                                    <option value="Chờ nhận phòng" <?= $tStatus === 'Chờ nhận phòng' ? 'selected' : '' ?>>Chờ nhận phòng</option>
+                                    <option value="Đã chuyển đi" <?= $tStatus === 'Đã chuyển đi' ? 'selected' : '' ?>>Đã chuyển đi</option>
+                                </select>
+                            </div>
+
+                            <!-- Chọn phòng thuê liên kết -->
+                            <div class="col-12 mt-3 pt-2 border-top">
+                                <label class="form-label fw-bold small text-dark d-flex align-items-center gap-2 mb-1">
+                                    <i class="fa-solid fa-door-open text-teal-main"></i> Phòng thuê liên kết
+                                </label>
+                                <select name="room_id" class="form-select rounded-3 py-2" onchange="handleTenantRoomChange(this, '<?= $tId ?>')">
+                                    <option value="" data-max-occupants="1">-- Chưa xếp phòng --</option>
+                                    <?php if (!empty($allRooms)): ?>
+                                        <?php foreach ($allRooms as $r):
+                                            $rMax = (int)($r['details']['max_occupants'] ?? 2);
+                                            $isThisRoom = ($curRoomId === (int)$r['id']);
+                                            $stLabel = ($r['status'] === 'available') ? 'Phòng trống' : 'Đang thuê';
+                                        ?>
+                                            <option value="<?= $r['id'] ?>" 
+                                                    data-max-occupants="<?= $rMax ?>"
+                                                    <?= $isThisRoom ? 'selected' : '' ?>>
+                                                Phòng <?= h($r['room_number']) ?> &bull; <?= number_format($r['price'], 0, ',', '.') ?> đ/tháng (Tối đa <?= $rMax ?> người) [<?= $stLabel ?>]
+                                            </option>
+                                        <?php endforeach; ?>
+                                    <?php endif; ?>
+                                </select>
+                            </div>
+
+                            <!-- Khối bạn cùng phòng -->
+                            <?php 
+                            $hasRoommate = !empty($t['roommate_name']) || !empty($t['roommate_phone']);
+                            ?>
+                            <div class="col-12 roommate-block" id="roommateBlock_<?= $tId ?>" style="display: <?= $hasRoommate ? 'block' : 'none' ?>;">
+                                <div class="p-3 rounded-4" style="background: #f0fdfa; border: 1.5px dashed #5eead4;">
+                                    <div class="fw-bold text-teal-main mb-2 small d-flex align-items-center gap-2">
+                                        <i class="fa-solid fa-user-group"></i> 
+                                        <span>Thông tin bạn cùng phòng</span>
+                                    </div>
+                                    <div class="row g-2">
+                                        <div class="col-md-6">
+                                            <label class="form-label small fw-bold text-dark">Họ và tên bạn cùng phòng</label>
+                                            <input type="text" name="roommate_name" class="form-control rounded-3 py-2" value="<?= h($t['roommate_name'] ?? '') ?>" placeholder="VD: Trần Thu Hà">
+                                        </div>
+                                        <div class="col-md-6">
+                                            <label class="form-label small fw-bold text-dark">Số điện thoại bạn cùng phòng</label>
+                                            <input type="text" name="roommate_phone" class="form-control rounded-3 py-2" value="<?= h($t['roommate_phone'] ?? '') ?>" placeholder="VD: 0987654321">
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer border-0 px-4 pb-4 pt-1 d-flex justify-content-end gap-2">
+                        <button type="button" class="btn text-white px-4 py-2" style="background: #64748b; border-radius: 10px; font-weight: 700; font-size: 0.95rem;" data-bs-dismiss="modal">Hủy</button>
+                        <button type="submit" class="btn text-white px-4 py-2" style="background: #5b4bf7; border-radius: 10px; font-weight: 700; font-size: 0.95rem;">Lưu thông tin</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+        <?php endforeach; ?>
+    <?php endif; ?>
+
+        <footer class="footer-custom container-fluid px-4 px-xl-5 d-flex flex-wrap justify-content-between align-items-center gap-2">
         <div><i class="fa-solid fa-building me-1" style="color:var(--teal-main);"></i> © 2026 StayMate - Quản lý Nhà trọ Chuyên nghiệp</div>
         <div class="d-flex flex-wrap gap-4">
             <span><i class="fa-solid fa-shield-halved me-1" style="color:var(--teal-main);"></i> WAMP MVC Architecture</span>
@@ -499,111 +639,35 @@ $adminName = $_SESSION['full_name'] ?? 'Quản trị viên Hệ thống';
             </div>
         </div>
     </div>
-    <!-- MODAL DUYET YEU CAU DIEU CHINH THONG TIN TU KHÁCH THUÊ -->
-    <div class="modal fade" id="requestsModal" tabindex="-1" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered modal-xl">
-            <div class="modal-content border-0 shadow-lg rounded-4">
-                <div class="modal-header bg-teal-main text-white rounded-top-4 p-3 px-4" style="background:#308f86;">
-                    <h5 class="modal-title fw-bold">
-                        <i class="fa-solid fa-bell me-2"></i> Yêu Cầu Điều Chỉnh Thông Tin Từ Khách Thuê
-                    </h5>
-                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-                </div>
-                <div class="modal-body p-4">
-                    <p class="text-muted small mb-3">
-                        Danh sách các yêu cầu thay đổi thông tin cá nhân do khách thuê gửi lên từ <strong>Cổng Khách Thuê</strong>. Quản lý có thể phê duyệt (hệ thống tự động cập nhật vào CSDL) hoặc từ chối kèm lý do.
-                    </p>
+    <script>
+    function handleTenantRoomChange(selectEl, prefix) {
+        const selectedOpt = selectEl.options[selectEl.selectedIndex];
+        const maxOcc = parseInt(selectedOpt.getAttribute('data-max-occupants') || '1', 10);
+        const block = document.getElementById('roommateBlock_' + prefix);
+        if (!block) return;
 
-                    <?php if (empty($tenantRequests)): ?>
-                        <div class="text-center py-4 bg-light rounded-4 border">
-                            <i class="fa-solid fa-circle-check fs-2 text-success mb-2"></i>
-                            <div class="fw-bold text-dark">Hiện chưa có yêu cầu nào từ khách thuê</div>
-                            <div class="text-muted small">Mọi yêu cầu gửi từ cổng khách thuê sẽ xuất hiện tại đây.</div>
-                        </div>
-                    <?php else: ?>
-                        <div class="table-responsive">
-                            <table class="table table-bordered table-hover align-middle mb-0" style="font-size: 0.88rem;">
-                                <thead class="table-light">
-                                    <tr>
-                                        <th>Thời gian</th>
-                                        <th>Khách thuê</th>
-                                        <th>Mục yêu cầu sửa</th>
-                                        <th>Nội dung mới đề xuất</th>
-                                        <th>Lý do từ khách</th>
-                                        <th>Trạng thái</th>
-                                        <th class="text-center" style="width: 180px;">Xử lý</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <?php foreach ($tenantRequests as $trq): ?>
-                                        <tr>
-                                            <td class="small text-muted"><?= date('d/m/Y H:i', strtotime($trq['created_at'])) ?></td>
-                                            <td>
-                                                <div class="fw-bold text-dark"><?= h($trq['tenant_name']) ?></div>
-                                                <div class="text-muted small"><?= h($trq['tenant_phone']) ?> (<?= h($trq['username']) ?>)</div>
-                                            </td>
-                                            <td class="fw-bold text-primary">
-                                                <?php
-                                                $mapF = [
-                                                    'phone'     => 'Số điện thoại',
-                                                    'email'     => 'Địa chỉ Email',
-                                                    'full_name' => 'Họ và tên',
-                                                    'id_card'   => 'CCCD / Định danh',
-                                                    'co_tenant' => 'Người ở cùng',
-                                                    'other'     => 'Yêu cầu khác'
-                                                ];
-                                                echo h($mapF[$trq['field_target']] ?? $trq['field_target']);
-                                                ?>
-                                            </td>
-                                            <td class="fw-bold text-success" style="word-break: break-all;">
-                                                <?= h($trq['new_value']) ?>
-                                            </td>
-                                            <td class="small text-muted"><?= h($trq['reason'] ?? '---') ?></td>
-                                            <td>
-                                                <?php if ($trq['status'] === 'approved'): ?>
-                                                    <span class="badge bg-success rounded-pill px-2 py-1">Đã duyệt</span>
-                                                <?php elseif ($trq['status'] === 'rejected'): ?>
-                                                    <span class="badge bg-danger rounded-pill px-2 py-1">Từ chối</span>
-                                                <?php else: ?>
-                                                    <span class="badge bg-warning text-dark rounded-pill px-2 py-1">Chờ duyệt</span>
-                                                <?php endif; ?>
-                                            </td>
-                                            <td class="text-center">
-                                                <?php if ($trq['status'] === 'pending'): ?>
-                                                    <div class="d-flex justify-content-center gap-1">
-                                                        <form method="POST" action="index.php?route=tenants" onsubmit="return confirm('Bạn có chắc chắn muốn DUYỆT và cập nhật thông tin này cho khách thuê?');">
-                                                            <input type="hidden" name="csrf_token" value="<?= h($csrf) ?>">
-                                                            <input type="hidden" name="action" value="approve_request">
-                                                            <input type="hidden" name="request_id" value="<?= (int)$trq['id'] ?>">
-                                                            <button type="submit" class="btn btn-sm btn-success rounded-pill px-3 fw-bold">
-                                                                <i class="fa-solid fa-check"></i> Duyệt
-                                                            </button>
-                                                        </form>
-                                                        <form method="POST" action="index.php?route=tenants" onsubmit="return confirm('Từ chối yêu cầu này?');">
-                                                            <input type="hidden" name="csrf_token" value="<?= h($csrf) ?>">
-                                                            <input type="hidden" name="action" value="reject_request">
-                                                            <input type="hidden" name="request_id" value="<?= (int)$trq['id'] ?>">
-                                                            <button type="submit" class="btn btn-sm btn-outline-danger rounded-pill px-2 fw-bold" title="Từ chối">
-                                                                <i class="fa-solid fa-xmark"></i>
-                                                            </button>
-                                                        </form>
-                                                    </div>
-                                                <?php else: ?>
-                                                    <span class="small text-muted"><?= h($trq['manager_note'] ?? 'Hoàn tất') ?></span>
-                                                <?php endif; ?>
-                                            </td>
-                                        </tr>
-                                    <?php endforeach; ?>
-                                </tbody>
-                            </table>
-                        </div>
-                    <?php endif; ?>
-                </div>
-                <div class="modal-footer bg-light">
-                    <button type="button" class="btn btn-secondary rounded-pill px-4 fw-bold" data-bs-dismiss="modal">Đóng</button>
-                </div>
-            </div>
-        </div>
-    </div>
+        if (maxOcc >= 2) {
+            block.style.display = 'block';
+            const numSpan = block.querySelector('.max-occ-num');
+            if (numSpan) numSpan.textContent = maxOcc;
+        } else {
+            block.style.display = 'none';
+        }
+    }
+
+    // Auto check on page load for add modal if pre-selected
+    document.addEventListener('DOMContentLoaded', function() {
+        const selectNew = document.getElementById('tenantRoomSelect_new');
+        if (selectNew && selectNew.value !== '') {
+            handleTenantRoomChange(selectNew, 'new');
+            // Auto open modal if route has room_id parameter
+            const urlParams = new URLSearchParams(window.location.search);
+            if (urlParams.has('room_id')) {
+                const addModal = new bootstrap.Modal(document.getElementById('addTenantModal'));
+                addModal.show();
+            }
+        }
+    });
+    </script>
 </body>
 </html>
