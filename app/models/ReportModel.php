@@ -131,7 +131,11 @@ class ReportModel {
     }
 
     private function initDefaultBuildings(): void {
-        $needReset = empty($_SESSION['buildings_config']) || ($_SESSION['buildings_config']['A']['room_prefix'] ?? '') !== 'A' || ($_SESSION['buildings_config']['B']['room_prefix'] ?? '') !== 'B' || ($_SESSION['buildings_config']['C']['room_prefix'] ?? '') !== 'C';
+        $needReset = empty($_SESSION['buildings_config']) 
+            || ($_SESSION['buildings_config']['A']['room_prefix'] ?? '') === 'A'
+            || ($_SESSION['buildings_config']['B']['room_prefix'] ?? '') === 'B'
+            || ($_SESSION['buildings_config']['C']['room_prefix'] ?? '') === 'C';
+
         if ($needReset) {
             $_SESSION['buildings_config'] = [
                 'A' => [
@@ -143,7 +147,7 @@ class ReportModel {
                     'manager_acc' => 'quanly_a',
                     'manager_phone' => '0912 345 678',
                     'manager_email' => 'quanly_a@nhatro.com',
-                    'room_prefix' => 'A',
+                    'room_prefix' => 'P1',
                     'room_types'  => ['Phòng Đơn Tiêu Chuẩn', 'Phòng Ban Công Thoáng Mát'],
                     'theme'       => 'teal'
                 ],
@@ -156,7 +160,7 @@ class ReportModel {
                     'manager_acc' => 'quanly_b',
                     'manager_phone' => '0987 654 321',
                     'manager_email' => 'quanly_b@nhatro.com',
-                    'room_prefix' => 'B',
+                    'room_prefix' => 'P2',
                     'room_types'  => ['Phòng Studio Full Nội Thất', 'Phòng Ban Công Thoáng Mát'],
                     'theme'       => 'blue'
                 ],
@@ -169,7 +173,7 @@ class ReportModel {
                     'manager_acc' => 'quanly_c',
                     'manager_phone' => '0934 567 890',
                     'manager_email' => 'quanly_c@nhatro.com',
-                    'room_prefix' => 'C',
+                    'room_prefix' => 'P3',
                     'room_types'  => ['Phòng Studio Full Nội Thất', 'Phòng Duplex Gác Lửng', 'Căn Hộ 1 Phòng Ngủ (1PN)'],
                     'theme'       => 'yellow'
                 ]
@@ -287,9 +291,29 @@ class ReportModel {
         }
         $configs = $this->getBuildingsConfig();
         if (isset($configs[$buildingId])) {
-            return $configs[$buildingId]['room_prefix'];
+            $pfx = strtoupper(trim($configs[$buildingId]['room_prefix'] ?? ''));
+            if ($pfx === 'A') return 'P1';
+            if ($pfx === 'B') return 'P2';
+            if ($pfx === 'C') return 'P3';
+            return $pfx;
         }
+        if ($buildingId === 'A') return 'P1';
+        if ($buildingId === 'B') return 'P2';
+        if ($buildingId === 'C') return 'P3';
         return '';
+    }
+
+    public function getRoomPrefixes(string $buildingId): array {
+        if ($buildingId === '' || strtolower($buildingId) === 'all') {
+            return [];
+        }
+        $p = $this->getRoomPrefixByBuilding($buildingId);
+        $res = [];
+        if ($p !== '') $res[] = $p;
+        if ($buildingId === 'A') { $res[] = 'P1'; $res[] = 'A'; }
+        elseif ($buildingId === 'B') { $res[] = 'P2'; $res[] = 'B'; }
+        elseif ($buildingId === 'C') { $res[] = 'P3'; $res[] = 'C'; }
+        return array_values(array_unique($res));
     }
 
     // 1. Lấy danh sách Tòa nhà kèm số liệu thực tế từ CSDL (rooms, contracts, invoices)
