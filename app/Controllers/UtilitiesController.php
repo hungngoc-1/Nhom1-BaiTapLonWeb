@@ -92,7 +92,59 @@ class UtilitiesController {
                 $params[] = (int)$roomFilter;
             }
 
-            if ($invoiceStatus === 'created') {
+            if ($invoiceStatus === 'pending') {
+                $checkPeriod = $monthYear !== '' ? $monthYear : date('m-Y');
+                $sql = "
+                    SELECT 
+                        0 AS id,
+                        r.id AS room_id,
+                        ? AS month_year,
+                        COALESCE((
+                            SELECT u2.electric_new FROM utilities_readings u2 WHERE u2.room_id = r.id ORDER BY SUBSTRING(u2.month_year, 4, 4) DESC, SUBSTRING(u2.month_year, 1, 2) DESC, u2.id DESC LIMIT 1
+                        ), 0) AS electric_old,
+                        COALESCE((
+                            SELECT u2.electric_new FROM utilities_readings u2 WHERE u2.room_id = r.id ORDER BY SUBSTRING(u2.month_year, 4, 4) DESC, SUBSTRING(u2.month_year, 1, 2) DESC, u2.id DESC LIMIT 1
+                        ), 0) AS electric_new,
+                        COALESCE((
+                            SELECT u2.water_new FROM utilities_readings u2 WHERE u2.room_id = r.id ORDER BY SUBSTRING(u2.month_year, 4, 4) DESC, SUBSTRING(u2.month_year, 1, 2) DESC, u2.id DESC LIMIT 1
+                        ), 0) AS water_old,
+                        COALESCE((
+                            SELECT u2.water_new FROM utilities_readings u2 WHERE u2.room_id = r.id ORDER BY SUBSTRING(u2.month_year, 4, 4) DESC, SUBSTRING(u2.month_year, 1, 2) DESC, u2.id DESC LIMIT 1
+                        ), 0) AS water_new,
+                        r.room_number,
+                        r.price AS room_price,
+                        (
+                            SELECT usr.full_name FROM contracts c JOIN users usr ON c.tenant_id = usr.id WHERE c.room_id = r.id AND c.status = 'active' ORDER BY c.id DESC LIMIT 1
+                        ) AS tenant_name,
+                        NULL AS invoice_id,
+                        NULL AS invoice_status,
+                        0 AS invoice_total,
+                        1 AS is_pending_unrecorded
+                    FROM rooms r
+                    WHERE r.status = 'rented'
+                    AND NOT EXISTS (
+                        SELECT 1 FROM utilities_readings u WHERE u.room_id = r.id AND u.month_year = ?
+                    )
+                ";
+                $params = [$checkPeriod, $checkPeriod];
+                if ($roomFilter !== '' && is_numeric($roomFilter)) {
+                    $sql .= " AND r.id = ?";
+                    $params[] = (int)$roomFilter;
+                }
+                if ($keyword !== '') {
+                    $cleanRoom = preg_replace('/^[pP]/', '', $keyword);
+                    $sql .= " AND (r.room_number LIKE ? OR r.room_number LIKE ?)";
+                    $params[] = '%' . $keyword . '%';
+                    $params[] = '%' . $cleanRoom . '%';
+                }
+                $sql .= " ORDER BY r.room_number ASC";
+            } elseif ($invoiceStatus === 'paid') {
+                $sql .= " AND inv.id IS NOT NULL AND inv.status = 'paid'";
+            } elseif ($invoiceStatus === 'unpaid') {
+                $sql .= " AND inv.id IS NOT NULL AND inv.status = 'unpaid'";
+            } elseif ($invoiceStatus === 'recorded') {
+                $sql .= " AND u.id IS NOT NULL AND (inv.id IS NULL OR inv.status = 'unpaid')";
+            } elseif ($invoiceStatus === 'created') {
                 $sql .= " AND inv.id IS NOT NULL";
             } elseif ($invoiceStatus === 'not_created') {
                 $sql .= " AND inv.id IS NULL";

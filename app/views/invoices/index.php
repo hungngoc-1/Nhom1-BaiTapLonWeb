@@ -427,9 +427,11 @@ $pendingInPeriod = array_values(array_filter($pendingView, fn($x) => $filters['p
             <div class="col-6 col-lg-2">
                 <label class="form-label fw-bold text-muted text-uppercase mb-1" style="font-size:.75rem">Trạng thái</label>
                 <select name="status" class="form-select filter-control">
-                    <option value="">-- Tất cả --</option>
-                    <option value="paid" <?= $filters['status'] === 'paid' ? 'selected' : '' ?>>Đã thu</option>
-                    <option value="unpaid" <?= $filters['status'] === 'unpaid' ? 'selected' : '' ?>>Chưa thu (trong hạn)</option>
+                    <option value="">-- Tất cả trạng thái --</option>
+                    <option value="paid" <?= $filters['status'] === 'paid' ? 'selected' : '' ?>>Đã thanh toán (Đã thu)</option>
+                    <option value="unpaid" <?= $filters['status'] === 'unpaid' ? 'selected' : '' ?>>Chưa thanh toán (Chưa thu)</option>
+                    <option value="recorded" <?= $filters['status'] === 'recorded' ? 'selected' : '' ?>>Đã chốt (Đã chốt ĐN)</option>
+                    <option value="pending" <?= $filters['status'] === 'pending' ? 'selected' : '' ?>>Chưa chốt (Chưa chốt ĐN)</option>
                     <option value="overdue" <?= $filters['status'] === 'overdue' ? 'selected' : '' ?>>Quá hạn</option>
                 </select>
             </div>

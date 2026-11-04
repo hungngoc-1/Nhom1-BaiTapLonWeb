@@ -17,7 +17,7 @@ class InvoiceController {
         $periods = $this->model->getPeriods();
         $period = $_GET['period'] ?? ($periods[0] ?? 'all');
         $status = $_GET['status'] ?? '';
-        if (!in_array($status, ['', 'paid', 'unpaid', 'overdue'], true)) $status = '';
+        if (!in_array($status, ['', 'paid', 'unpaid', 'overdue', 'recorded', 'pending'], true)) $status = '';
         return [
             'period'  => $period,
             'status'  => $status,
