@@ -445,7 +445,15 @@ try {
         $sqlReadings .= " AND u.room_id = ?";
         $paramsReadings[] = (int)$selectedRoomFilter;
     }
-    if ($selectedInvStatus === 'created') {
+    if ($selectedInvStatus === 'paid') {
+        $sqlReadings .= " AND inv.id IS NOT NULL AND inv.status = 'paid'";
+    } elseif ($selectedInvStatus === 'unpaid') {
+        $sqlReadings .= " AND inv.id IS NOT NULL AND inv.status = 'unpaid'";
+    } elseif ($selectedInvStatus === 'recorded') {
+        // Đã chốt số: Chỉ lấy các phòng đã ghi số điện nước mà chưa thanh toán (hoặc chưa lập HĐ)
+        // Tuyệt đối không lẫn các phòng đã thanh toán xong vào
+        $sqlReadings .= " AND u.id IS NOT NULL AND (inv.id IS NULL OR inv.status = 'unpaid')";
+    } elseif ($selectedInvStatus === 'created') {
         $sqlReadings .= " AND inv.id IS NOT NULL";
     } elseif ($selectedInvStatus === 'not_created') {
         $sqlReadings .= " AND inv.id IS NULL";
@@ -482,6 +490,33 @@ try {
         }
     }
     $progressPercent = $totalRentedCount > 0 ? round(($recordedRentedCount / $totalRentedCount) * 100) : 0;
+
+    // Nếu lọc "Chưa chốt", nạp danh sách các phòng chưa ghi số điện nước kỳ này
+    if ($selectedInvStatus === 'pending') {
+        $readings = [];
+        foreach ($unrecordedRooms as $urm) {
+            if ($selectedRoomFilter !== '' && is_numeric($selectedRoomFilter) && (int)$urm['id'] !== (int)$selectedRoomFilter) {
+                continue;
+            }
+            $readings[] = [
+                'id' => 0,
+                'room_id' => (int)$urm['id'],
+                'month_year' => $activeCheckPeriod,
+                'electric_old' => (int)($urm['last_electric'] ?? 0),
+                'electric_new' => (int)($urm['last_electric'] ?? 0),
+                'water_old' => (int)($urm['last_water'] ?? 0),
+                'water_new' => (int)($urm['last_water'] ?? 0),
+                'created_at' => null,
+                'room_number' => $urm['room_number'],
+                'room_price' => (float)$urm['price'],
+                'tenant_name' => $urm['tenant_name'] ?? 'Đang thuê',
+                'invoice_id' => null,
+                'invoice_status' => null,
+                'invoice_total' => 0,
+                'is_pending_unrecorded' => true
+            ];
+        }
+    }
 
     $totalElecKwh = 0;
     $totalWaterM3 = 0;
@@ -1379,7 +1414,11 @@ try {
                 <div class="col-6 col-md-3 col-lg-2">
                     <label class="form-label fw-bold text-muted text-uppercase mb-1" style="font-size: 0.84rem;">Trạng thái HĐ</label>
                     <select id="invoiceFilter" class="form-select filter-control" onchange="applyFilters()">
-                        <option value="" <?= $selectedInvStatus === '' ? 'selected' : '' ?>>-- Tất cả --</option>
+                        <option value="" <?= $selectedInvStatus === '' ? 'selected' : '' ?>>-- Tất cả trạng thái --</option>
+                        <option value="paid" <?= $selectedInvStatus === 'paid' ? 'selected' : '' ?>>Đã thanh toán</option>
+                        <option value="unpaid" <?= $selectedInvStatus === 'unpaid' ? 'selected' : '' ?>>Chưa thanh toán</option>
+                        <option value="recorded" <?= $selectedInvStatus === 'recorded' ? 'selected' : '' ?>>Đã chốt (Đã ghi số)</option>
+                        <option value="pending" <?= $selectedInvStatus === 'pending' ? 'selected' : '' ?>>Chưa chốt (Chưa ghi số)</option>
                         <option value="created" <?= $selectedInvStatus === 'created' ? 'selected' : '' ?>>Đã lập hóa đơn</option>
                         <option value="not_created" <?= $selectedInvStatus === 'not_created' ? 'selected' : '' ?>>Chưa lập hóa đơn</option>
                     </select>
@@ -1420,6 +1459,7 @@ try {
                     <tbody id="tableBody">
                         <?php if (count($readings) > 0): ?>
                             <?php foreach ($readings as $row):
+                                $isPendingUnrecorded = !empty($row['is_pending_unrecorded']);
                                 $dienTieuThu = max(0, (int)$row['electric_new'] - (int)$row['electric_old']);
                                 $nuocTieuThu = max(0, (int)$row['water_new'] - (int)$row['water_old']);
                                 $tienDien = $dienTieuThu * $elecPrice;
@@ -1432,7 +1472,9 @@ try {
                             <tr id="row_reading_<?= (int)$row['id'] ?>" 
                                 data-room="<?= htmlspecialchars($roomNumber) ?>" 
                                 data-tenant="<?= htmlspecialchars($tenantName) ?>" 
-                                data-period="<?= htmlspecialchars($periodVal) ?>">
+                                data-period="<?= htmlspecialchars($periodVal) ?>"
+                                data-status="<?= $isPendingUnrecorded ? 'pending' : (!empty($row['invoice_id']) ? $row['invoice_status'] : 'recorded') ?>"
+                                class="<?= $isPendingUnrecorded ? 'table-warning-subtle' : '' ?>">
                                 <td class="ps-4">
                                     <div class="d-flex align-items-center gap-2 mb-2">
                                         <span class="badge-room-pill"><i class="fa-solid fa-door-closed"></i> <?= htmlspecialchars($roomNumber) ?></span>
@@ -1447,6 +1489,22 @@ try {
                                 </td>
 
                                 <td>
+                                    <?php if ($isPendingUnrecorded): ?>
+                                        <div class="p-2 rounded-3 bg-warning-subtle border border-warning d-flex flex-wrap align-items-center justify-content-between gap-2">
+                                            <div>
+                                                <span class="badge rounded-pill bg-warning text-dark fw-bold px-2 py-1">
+                                                    <i class="fa-regular fa-clock me-1"></i> Chưa chốt số kỳ <?= htmlspecialchars($periodVal) ?>
+                                                </span>
+                                                <div class="text-muted small fw-bold mt-1">
+                                                    Số cũ: Đ <?= (int)$row['electric_old'] ?> | N <?= (int)$row['water_old'] ?>
+                                                </div>
+                                            </div>
+                                            <button type="button" class="btn btn-sm btn-teal-custom rounded-pill px-3 py-1 fw-bold" 
+                                                    onclick="openAddModalForRoom(<?= (int)$row['room_id'] ?>, '<?= htmlspecialchars($periodVal) ?>')">
+                                                <i class="fa-solid fa-pen-nib me-1"></i> Ghi số ngay
+                                            </button>
+                                        </div>
+                                    <?php else: ?>
                                     <div class="d-flex flex-column gap-2 py-1">
                                         <!-- Hàng Điện -->
                                         <div class="d-flex flex-wrap align-items-center justify-content-between p-2 rounded-3 bg-light border border-warning-subtle">
@@ -1493,9 +1551,18 @@ try {
                                             </div>
                                         </div>
                                     </div>
+                                    <?php endif; ?>
                                 </td>
 
                                 <td>
+                                    <?php if ($isPendingUnrecorded): ?>
+                                        <div class="d-flex flex-column gap-1">
+                                            <span class="badge rounded-pill bg-warning-subtle text-warning-emphasis border border-warning px-3 py-1 fw-bold w-fit" style="width:fit-content;font-size:0.84rem;">
+                                                <i class="fa-solid fa-hourglass-start me-1"></i> Chờ chốt số
+                                            </span>
+                                            <div class="text-muted small">Chưa tính tiền điện nước</div>
+                                        </div>
+                                    <?php else: ?>
                                     <div class="d-flex flex-column gap-1">
                                         <div>
                                             <span class="text-muted small">Điện + Nước:</span>
@@ -1513,11 +1580,24 @@ try {
                                                         <i class="fa-solid fa-circle-check me-1"></i> Đã thanh toán
                                                     </span>
                                                 <?php else: ?>
-                                                    <span class="badge rounded-pill bg-warning-subtle text-warning-emphasis border border-warning px-3 py-1 fw-bold" style="font-size: 0.84rem;">
-                                                        <i class="fa-solid fa-file-invoice-dollar me-1"></i> Đã lập HĐ (Chờ thu)
-                                                    </span>
+                                                    <div class="d-flex flex-wrap align-items-center gap-1">
+                                                        <span class="badge rounded-pill bg-info-subtle text-info-emphasis border border-info px-2 py-1 fw-bold" style="font-size: 0.82rem;">
+                                                            <i class="fa-solid fa-bolt me-1"></i> Đã chốt
+                                                        </span>
+                                                        <span class="badge rounded-pill bg-warning-subtle text-warning-emphasis border border-warning px-2 py-1 fw-bold" style="font-size: 0.82rem;">
+                                                            <i class="fa-solid fa-file-invoice-dollar me-1"></i> Chưa thanh toán
+                                                        </span>
+                                                    </div>
                                                 <?php endif; ?>
                                             <?php else: ?>
+                                                <div class="d-flex flex-wrap align-items-center gap-1 mb-1">
+                                                    <span class="badge rounded-pill bg-info-subtle text-info-emphasis border border-info px-2 py-1 fw-bold" style="font-size: 0.82rem;">
+                                                        <i class="fa-solid fa-bolt me-1"></i> Đã chốt số
+                                                    </span>
+                                                    <span class="badge rounded-pill bg-secondary-subtle text-secondary border border-secondary px-2 py-1 fw-bold" style="font-size: 0.8rem;">
+                                                        Chờ lập HĐ
+                                                    </span>
+                                                </div>
                                                 <form method="POST" action="index.php?route=utilities&period=<?= urlencode($selectedPeriod) ?>" class="d-inline">
                                                     <input type="hidden" name="action" value="create_invoice">
                                                     <input type="hidden" name="reading_id" value="<?= (int)$row['id'] ?>">
@@ -1528,9 +1608,16 @@ try {
                                             <?php endif; ?>
                                         </div>
                                     </div>
+                                    <?php endif; ?>
                                 </td>
 
                                 <td class="text-center pe-4 no-print">
+                                    <?php if ($isPendingUnrecorded): ?>
+                                        <button type="button" class="btn btn-sm btn-teal-custom rounded-pill px-3 py-1 fw-bold" 
+                                                onclick="openAddModalForRoom(<?= (int)$row['room_id'] ?>, '<?= htmlspecialchars($periodVal) ?>')">
+                                            <i class="fa-solid fa-plus me-1"></i> Chốt số
+                                        </button>
+                                    <?php else: ?>
                                     <div class="d-inline-flex align-items-center gap-2">
                                         <button type="button" class="btn-icon-circle btn-icon-view" title="Xem phiếu tính tiền chi tiết"
                                             onclick="openReceiptModal('<?= htmlspecialchars($row['room_number']) ?>', '<?= htmlspecialchars($tenantName) ?>', '<?= htmlspecialchars($periodVal) ?>', <?= (int)$row['electric_old'] ?>, <?= (int)$row['electric_new'] ?>, <?= (int)$row['water_old'] ?>, <?= (int)$row['water_new'] ?>, <?= (float)($row['room_price'] ?? 0) ?>)">
@@ -1546,6 +1633,7 @@ try {
                                             <i class="fa-solid fa-trash"></i>
                                         </a>
                                     </div>
+                                    <?php endif; ?>
                                 </td>
                             </tr>
                             <?php endforeach; ?>
@@ -2243,6 +2331,16 @@ try {
         // 3. NÚT "KIỂM TRA" PHÒNG: CUỘN XUỐNG VÀ LỌC TỨC THÌ
         // ===============================================================
         function checkRoomDetails(roomNumber) {
+            // Nếu bộ lọc trạng thái đang ẩn phòng này, reset bộ lọc về Tất cả để phòng hiển thị
+            const invFilter = document.getElementById('invoiceFilter');
+            if (invFilter && invFilter.value !== '') {
+                const targetRow = document.querySelector(`#tableBody tr[data-room="${roomNumber}"]`);
+                if (!targetRow) {
+                    invFilter.value = '';
+                    applyFilters();
+                    return;
+                }
+            }
             const searchInp = document.getElementById('searchInput');
             if (searchInp) {
                 searchInp.value = roomNumber;
@@ -2354,16 +2452,23 @@ try {
                 tr.setAttribute('data-room', roomNum);
                 tr.setAttribute('data-tenant', tenantName);
                 tr.setAttribute('data-period', period);
+                tr.setAttribute('data-status', item.is_pending_unrecorded ? 'pending' : (item.invoice_id ? item.invoice_status : 'recorded'));
 
                 let invHtml = '';
-                if (item.invoice_id) {
+                if (item.is_pending_unrecorded) {
+                    invHtml = '<span class="badge rounded-pill bg-warning-subtle text-warning-emphasis border border-warning px-3 py-1 fw-bold" style="font-size: 0.84rem;"><i class="fa-regular fa-clock me-1"></i> Chưa chốt số</span>';
+                } else if (item.invoice_id) {
                     if (item.invoice_status === 'paid') {
                         invHtml = '<span class="badge rounded-pill bg-success-subtle text-success border border-success-subtle px-3 py-1 fw-bold" style="font-size: 0.84rem;"><i class="fa-solid fa-circle-check me-1"></i> Đã thanh toán</span>';
                     } else {
-                        invHtml = '<span class="badge rounded-pill bg-warning-subtle text-warning-emphasis border border-warning px-3 py-1 fw-bold" style="font-size: 0.84rem;"><i class="fa-solid fa-file-invoice-dollar me-1"></i> Đã lập HĐ (Chờ thu)</span>';
+                        invHtml = '<div class="d-flex flex-wrap align-items-center gap-1"><span class="badge rounded-pill bg-info-subtle text-info-emphasis border border-info px-2 py-1 fw-bold" style="font-size: 0.82rem;"><i class="fa-solid fa-bolt me-1"></i> Đã chốt</span><span class="badge rounded-pill bg-warning-subtle text-warning-emphasis border border-warning px-2 py-1 fw-bold" style="font-size: 0.82rem;"><i class="fa-solid fa-file-invoice-dollar me-1"></i> Chưa thanh toán</span></div>';
                     }
                 } else {
                     invHtml = `
+                        <div class="d-flex flex-wrap align-items-center gap-1 mb-1">
+                            <span class="badge rounded-pill bg-info-subtle text-info-emphasis border border-info px-2 py-1 fw-bold" style="font-size: 0.82rem;"><i class="fa-solid fa-bolt me-1"></i> Đã chốt số</span>
+                            <span class="badge rounded-pill bg-secondary-subtle text-secondary border border-secondary px-2 py-1 fw-bold" style="font-size: 0.8rem;">Chờ lập HĐ</span>
+                        </div>
                         <form method="POST" action="index.php?route=utilities" class="d-inline">
                             <input type="hidden" name="action" value="create_invoice">
                             <input type="hidden" name="reading_id" value="${Number(item.id)}">
@@ -2489,8 +2594,9 @@ try {
                     const period = document.getElementById('periodFilter')?.value || '';
                     const periodParam = period === 'all' ? '' : period;
 
+                    const invStatus = document.getElementById('invoiceFilter')?.value || '';
                     try {
-                        const res = await fetch(`index.php?route=api/utilities/search&q=${encodeURIComponent(keyword)}&month_year=${encodeURIComponent(periodParam)}`);
+                        const res = await fetch(`index.php?route=api/utilities/search&q=${encodeURIComponent(keyword)}&month_year=${encodeURIComponent(periodParam)}&invoice_status=${encodeURIComponent(invStatus)}`);
                         if (loadingIndicator) loadingIndicator.style.display = 'none';
                         if (!res.ok) return;
 

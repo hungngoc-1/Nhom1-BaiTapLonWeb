@@ -106,6 +106,8 @@ class InvoiceModel {
         if (!empty($f['room_id'])) { $sql .= " AND i.room_id = ?"; $p[] = (int)$f['room_id']; }
         if (($f['status'] ?? '') === 'paid') { $sql .= " AND i.status = 'paid'"; }
         if (in_array($f['status'] ?? '', ['unpaid', 'overdue'], true)) { $sql .= " AND i.status = 'unpaid'"; }
+        if (($f['status'] ?? '') === 'recorded') { $sql .= " AND ur.id IS NOT NULL AND i.status = 'unpaid'"; }
+        if (($f['status'] ?? '') === 'pending') { $sql .= " AND ur.id IS NULL"; }
         if (!empty($f['keyword'])) {
             $sql .= " AND (r.room_number LIKE ? OR u.full_name LIKE ? OR CONCAT('HD', LPAD(i.id, 4, '0')) LIKE ?)";
             $kw = '%' . $f['keyword'] . '%';
