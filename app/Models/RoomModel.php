@@ -195,10 +195,109 @@ class RoomModel {
             } else {
                 $row['floor_label'] = 'Khu chính';
             }
+
+            $row['details'] = self::parseRoomDetails($row);
+            $row['services'] = $this->getRoomServices((int)$row['id']);
         }
         unset($row);
 
         return $list;
+    }
+
+    public static function parseRoomDetails(array $room): array {
+        $desc = (string)($room['description'] ?? '');
+        $roomNumber = (string)($room['room_number'] ?? '');
+
+        // Tầng mặc định từ mã phòng (VD: P101 -> 1, P201 -> 2)
+        $floor = 1;
+        if (preg_match('/^[A-Za-z]*(\d)\d{2}$/', $roomNumber, $m)) {
+            $floor = (int)$m[1];
+        } elseif (preg_match('/tầng\s*(\d+)/iu', $desc, $m)) {
+            $floor = (int)$m[1];
+        }
+
+        // Tòa nhà
+        $building = 'Tòa A - Smart Stay Sunrise';
+        if (preg_match('/Tòa:\s*([^|]+)/iu', $desc, $m)) {
+            $building = trim($m[1]);
+        }
+
+        // Loại phòng
+        $roomType = 'Phòng Tiêu chuẩn (Standard) (2.600.000đ)';
+        if (preg_match('/Loại:\s*([^|]+)/iu', $desc, $m)) {
+            $roomType = trim($m[1]);
+        } elseif ((float)($room['price'] ?? 0) >= 4000000) {
+            $roomType = 'Phòng Studio (4.000.000đ)';
+        } elseif ((float)($room['price'] ?? 0) >= 3500000) {
+            $roomType = 'Phòng Cao cấp (VIP) (3.500.000đ)';
+        }
+
+        // Diện tích
+        $area = 22.00;
+        if (preg_match('/Diện tích:\s*([\d\.]+)/iu', $desc, $m)) {
+            $area = (float)$m[1];
+        }
+
+        // Số người tối đa
+        $maxOccupants = 2;
+        if (preg_match('/Tối đa:\s*(\d+)/iu', $desc, $m)) {
+            $maxOccupants = (int)$m[1];
+        }
+
+        // Tiện nghi
+        $amenities = 'Máy lạnh, Nước nóng, Wifi, Gác lửng, WC riêng';
+        if (preg_match('/Tiện nghi:\s*([^|]+)/iu', $desc, $m)) {
+            $amenities = trim($m[1]);
+        }
+
+        // Ghi chú / mô tả còn lại
+        $note = $desc;
+        if (preg_match('/Ghi chú:\s*([^|]+)/iu', $desc, $m)) {
+            $note = trim($m[1]);
+        } else {
+            $clean = preg_replace('/(Tòa:[^|]*\|?|Loại:[^|]*\|?|Tầng\s*\d+\|?|Diện tích:[^|]*\|?|Tối đa:[^|]*\|?|Tiện nghi:[^|]*\|?|Dịch vụ:[^|]*\|?)/iu', '', $desc);
+            $clean = trim(trim((string)$clean), '|');
+            if ($clean !== '') {
+                $note = trim($clean);
+            }
+        }
+
+        return [
+            'building'      => $building,
+            'room_type'     => $roomType,
+            'floor'         => $floor,
+            'area'          => $area,
+            'max_occupants' => $maxOccupants,
+            'amenities'     => $amenities,
+            'note'          => $note,
+        ];
+    }
+
+    public function getRoomServices(int $roomId): array {
+        $stmt = $this->conn->prepare("SELECT * FROM room_services WHERE room_id = :room_id ORDER BY id ASC");
+        $stmt->execute([':room_id' => $roomId]);
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    public function saveRoomServices(int $roomId, array $services): void {
+        $stmt = $this->conn->prepare("DELETE FROM room_services WHERE room_id = :room_id");
+        $stmt->execute([':room_id' => $roomId]);
+
+        if (empty($services)) return;
+
+        $ins = $this->conn->prepare("INSERT INTO room_services (room_id, service_name, unit_price, unit) VALUES (:room_id, :name, :price, :unit)");
+        foreach ($services as $s) {
+            $name = trim($s['service_name'] ?? '');
+            if ($name === '') continue;
+            $price = (float)($s['unit_price'] ?? 0);
+            $unit = trim($s['unit'] ?? 'Tháng') ?: 'Tháng';
+            $ins->execute([
+                ':room_id' => $roomId,
+                ':name'    => $name,
+                ':price'   => $price,
+                ':unit'    => $unit,
+            ]);
+        }
     }
 
     public function getRoomById(int $id): ?array {
@@ -208,25 +307,16 @@ class RoomModel {
         return $res ?: null;
     }
 
-    public function createRoom(string $room_number, float $price, string $status, string $description): bool {
-        require_once __DIR__ . '/ReportModel.php';
-        $mgr = ReportModel::getManagerBuildingInfo();
-        $buildingId = $mgr ? $mgr['id'] : null;
-        if (!$buildingId) {
-            $prefix = strtoupper(substr($room_number, 0, 1));
-            if ($prefix === 'A') $buildingId = 1;
-            elseif ($prefix === 'B') $buildingId = 2;
-            elseif ($prefix === 'C') $buildingId = 3;
-        }
-        $sql = "INSERT INTO rooms (room_number, price, status, description, building_id) VALUES (:room_number, :price, :status, :description, :building_id)";
+    public function createRoom(string $room_number, float $price, string $status, string $description): int {
+        $sql = "INSERT INTO rooms (room_number, price, status, description) VALUES (:room_number, :price, :status, :description)";
         $stmt = $this->conn->prepare($sql);
-        return $stmt->execute([
+        $res = $stmt->execute([
             ':room_number'  => $room_number,
             ':price'        => $price,
             ':status'       => $status,
             ':description'  => $description,
-            ':building_id'  => $buildingId,
         ]);
+        return $res ? (int)$this->conn->lastInsertId() : 0;
     }
 
     public function updateRoom(int $id, string $room_number, float $price, string $status, string $description): bool {
@@ -242,6 +332,7 @@ class RoomModel {
     }
 
     public function deleteRoom(int $id): bool {
+        $this->conn->prepare("DELETE FROM room_services WHERE room_id = :id")->execute([':id' => $id]);
         $stmt = $this->conn->prepare("DELETE FROM rooms WHERE id = :id");
         return $stmt->execute([':id' => $id]);
     }

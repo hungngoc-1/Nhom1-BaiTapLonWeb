@@ -30,14 +30,13 @@ class RoomController {
             if ($action === 'create') {
                 $room_number = strtoupper(trim($_POST['room_number'] ?? ''));
                 $priceRaw = str_replace([',', '.', ' '], '', trim($_POST['price'] ?? '0'));
-                // Nếu form gửi dạng số chuẩn (vd: 3000000 hoặc 3000000.00)
                 $price = is_numeric($_POST['price'] ?? '') ? (float)$_POST['price'] : (float)$priceRaw;
                 $status = $this->validStatus($_POST['status'] ?? 'available');
-                $building = trim($_POST['building'] ?? '');
-                $room_type = trim($_POST['room_type'] ?? '');
-                $floor = trim($_POST['floor'] ?? '');
-                $area = trim($_POST['area'] ?? '');
-                $max_occupants = trim($_POST['max_occupants'] ?? '');
+                $building = trim($_POST['building'] ?? 'Tòa A - Smart Stay Sunrise');
+                $room_type = trim($_POST['room_type'] ?? 'Phòng Tiêu chuẩn (Standard) (2.600.000đ)');
+                $floor = trim($_POST['floor'] ?? '1');
+                $area = trim($_POST['area'] ?? '22.00');
+                $max_occupants = trim($_POST['max_occupants'] ?? '2');
                 $amenities = trim($_POST['amenities'] ?? '');
                 $note = trim($_POST['note'] ?? $_POST['description'] ?? '');
 
@@ -82,7 +81,10 @@ class RoomController {
                     $_SESSION['room_flash_error'] = 'Giá thuê phòng phải là số lớn hơn 0!';
                 } else {
                     try {
-                        $this->model->createRoom($room_number, $price, $status, $description);
+                        $newId = $this->model->createRoom($room_number, $price, $status, $description);
+                        if ($newId > 0 && !empty($servicesToSave)) {
+                            $this->model->saveRoomServices($newId, $servicesToSave);
+                        }
                         $_SESSION['room_flash_success'] = "Đã thêm phòng {$room_number} vào hệ thống thành công!";
                     } catch (PDOException $e) {
                         $_SESSION['room_flash_error'] = "Không thể thêm: Mã phòng '{$room_number}' đã tồn tại trong CSDL!";
@@ -93,9 +95,51 @@ class RoomController {
             } elseif ($action === 'update') {
                 $id = (int)($_POST['id'] ?? 0);
                 $room_number = strtoupper(trim($_POST['room_number'] ?? ''));
-                $price = is_numeric($_POST['price'] ?? '') ? (float)$_POST['price'] : 0;
+                $priceRaw = str_replace([',', '.', ' '], '', trim($_POST['price'] ?? '0'));
+                $price = is_numeric($_POST['price'] ?? '') ? (float)$_POST['price'] : (float)$priceRaw;
                 $status = $this->validStatus($_POST['status'] ?? 'available');
-                $description = trim($_POST['description'] ?? '');
+                $building = trim($_POST['building'] ?? 'Tòa A - Smart Stay Sunrise');
+                $room_type = trim($_POST['room_type'] ?? 'Phòng Tiêu chuẩn (Standard) (2.600.000đ)');
+                $floor = trim($_POST['floor'] ?? '1');
+                $area = trim($_POST['area'] ?? '22.00');
+                $max_occupants = trim($_POST['max_occupants'] ?? '2');
+                $amenities = trim($_POST['amenities'] ?? '');
+                $note = trim($_POST['note'] ?? $_POST['description'] ?? '');
+
+                // Dịch vụ khác của phòng
+                $serviceNames  = $_POST['service_names'] ?? [];
+                $servicePrices = $_POST['service_prices'] ?? [];
+                $serviceUnits  = $_POST['service_units'] ?? [];
+
+                $servicesToSave = [];
+                for ($i = 0; $i < count($serviceNames); $i++) {
+                    $sName = trim($serviceNames[$i] ?? '');
+                    if ($sName === '') continue;
+                    $sPrice = (float)($servicePrices[$i] ?? 0);
+                    $sUnit = trim($serviceUnits[$i] ?? 'Tháng') ?: 'Tháng';
+                    $servicesToSave[] = [
+                        'service_name' => $sName,
+                        'unit_price'   => $sPrice,
+                        'unit'         => $sUnit,
+                    ];
+                }
+
+                $descParts = [];
+                if ($building !== '') $descParts[] = "Tòa: {$building}";
+                if ($room_type !== '') $descParts[] = "Loại: {$room_type}";
+                if ($floor !== '') $descParts[] = "Tầng {$floor}";
+                if ($area !== '') $descParts[] = "Diện tích: {$area} m²";
+                if ($max_occupants !== '') $descParts[] = "Tối đa: {$max_occupants} người";
+                if ($amenities !== '') $descParts[] = "Tiện nghi: {$amenities}";
+                if (!empty($servicesToSave)) {
+                    $sTexts = array_map(function($s) {
+                        return $s['service_name'] . ' (' . number_format($s['unit_price'], 0, ',', '.') . 'đ/' . $s['unit'] . ')';
+                    }, $servicesToSave);
+                    $descParts[] = "Dịch vụ: " . implode(', ', $sTexts);
+                }
+                if ($note !== '') $descParts[] = $note;
+
+                $description = !empty($descParts) ? implode(" | ", $descParts) : trim($_POST['description'] ?? '');
 
                 if ($id <= 0 || $room_number === '' || mb_strlen($room_number) > 20) {
                     $_SESSION['room_flash_error'] = 'Thông tin mã phòng không hợp lệ!';
@@ -104,6 +148,7 @@ class RoomController {
                 } else {
                     try {
                         $this->model->updateRoom($id, $room_number, $price, $status, $description);
+                        $this->model->saveRoomServices($id, $servicesToSave);
                         $_SESSION['room_flash_success'] = "Đã cập nhật thông tin phòng {$room_number} thành công!";
                     } catch (PDOException $e) {
                         $_SESSION['room_flash_error'] = "Không thể cập nhật: Mã phòng '{$room_number}' đã bị trùng với phòng khác!";
