@@ -14,6 +14,8 @@ $csrf = $_SESSION['csrf_token'] ?? '';
 $tenantName = $profile['full_name'] ?? ($_SESSION['full_name'] ?? 'Khách thuê');
 $roomNumber = $profile['room_number'] ?? 'Chưa gán phòng';
 $buildingName = $profile['building_name'] ?? 'Khu Căn Hộ StayMate';
+$buildingAddress = $profile['building_address'] ?? 'Hà Nội';
+$roomType = $profile['room_type'] ?? 'Phòng Tiêu chuẩn';
 $contractCode = $contract['contract_code'] ?? 'Chưa có hợp đồng';
 $userRole = $_SESSION['role'] ?? 'tenant';
 $isManagerPreview = ($userRole === 'admin' || $userRole === 'manager' || $userRole === 'landlord');
@@ -323,6 +325,85 @@ $isManagerPreview = ($userRole === 'admin' || $userRole === 'manager' || $userRo
             box-shadow: 0 8px 20px rgba(225,29,72,0.25);
         }
 
+                /* Invoice Paper Style & Print */
+        .invoice-paper {
+            background: #ffffff;
+            border-radius: 18px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.06);
+            border: 1px solid #e2e8f0;
+        }
+        .btn-outline-teal {
+            color: var(--teal-main);
+            border: 1.5px solid var(--teal-main);
+            background: transparent;
+        }
+        .btn-outline-teal:hover {
+            color: #ffffff;
+            background: var(--teal-main);
+        }
+        .inv-stamp {
+            display: inline-block;
+            padding: 6px 16px;
+            border-radius: 8px;
+            font-weight: 900;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            font-size: 0.85rem;
+            border: 2px solid;
+        }
+        .inv-stamp-paid {
+            background-color: #ecfdf5;
+            color: #059669;
+            border-color: #10b981;
+        }
+        .inv-stamp-unpaid {
+            background-color: #fff7ed;
+            color: #ea580c;
+            border-color: #f97316;
+        }
+        .inv-stamp-overdue {
+            background-color: #fef2f2;
+            color: #dc2626;
+            border-color: #ef4444;
+        }
+
+        @media print {
+            body * {
+                visibility: hidden !important;
+            }
+            #invoiceDetailModal, #invoiceDetailModal * {
+                visibility: visible !important;
+            }
+            #invoiceDetailModal {
+                position: absolute !important;
+                left: 0 !important;
+                top: 0 !important;
+                width: 100% !important;
+                margin: 0 !important;
+                padding: 0 !important;
+                background: #ffffff !important;
+            }
+            .modal-dialog {
+                max-width: 100% !important;
+                margin: 0 !important;
+            }
+            .modal-header .btn-close, .modal-footer, .no-print {
+                display: none !important;
+            }
+            .modal-content {
+                border: none !important;
+                box-shadow: none !important;
+            }
+            .modal-body {
+                padding: 0 !important;
+            }
+            .invoice-paper {
+                border: 1px solid #ccc !important;
+                box-shadow: none !important;
+                padding: 20px !important;
+            }
+        }
+
         .notice-banner {
             background: #fffbeb;
             border: 1.5px solid #fde68a;
@@ -343,16 +424,24 @@ $isManagerPreview = ($userRole === 'admin' || $userRole === 'manager' || $userRo
     <header class="navbar-custom">
         <div class="container-fluid d-flex justify-content-between align-items-center">
             <div class="d-flex align-items-center gap-3">
-                <a href="index.php?route=tenant/portal" class="brand-logo">
+                <a href="index.php?route=tenant/portal" class="brand-logo me-2">
                     <i class="fa-solid fa-house-chimney"></i>
                     <div>
                         <div class="brand-text">StayMate</div>
                         <div class="brand-sub">Cổng Khách Thuê Thông Minh</div>
                     </div>
                 </a>
-                <span class="tenant-tag d-none d-md-inline-flex">
-                    <i class="fa-solid fa-door-open text-teal-main"></i> Phòng: <strong><?= h($roomNumber) ?></strong>
-                </span>
+                <div class="d-none d-md-flex align-items-center gap-2">
+                    <span class="badge bg-light text-dark border px-3 py-2 rounded-pill fw-bold shadow-xs">
+                        <i class="fa-solid fa-building text-teal-main me-1"></i> <?= h($buildingName) ?>
+                    </span>
+                    <span class="badge bg-teal-soft text-teal-main border border-teal-subtle px-3 py-2 rounded-pill fw-black" style="font-weight: 800;">
+                        <i class="fa-solid fa-door-open me-1"></i> Phòng <?= h($roomNumber) ?>
+                    </span>
+                    <span class="badge bg-warning-subtle text-warning-emphasis border border-warning px-3 py-2 rounded-pill fw-bold">
+                        <i class="fa-solid fa-bed me-1 text-warning-emphasis"></i> <?= h($roomType) ?>
+                    </span>
+                </div>
             </div>
 
             <!-- Profile & Actions -->
@@ -418,23 +507,43 @@ $isManagerPreview = ($userRole === 'admin' || $userRole === 'manager' || $userRo
 
         <!-- BANNER WELCOME & SUMMARY -->
         <div class="welcome-card">
-            <div class="row align-items-center">
-                <div class="col-lg-8">
+            <div class="row align-items-center g-3">
+                <div class="col-lg-7">
                     <div class="d-inline-flex align-items-center gap-2 bg-white bg-opacity-25 px-3 py-1 rounded-pill mb-2" style="font-size: 0.82rem; font-weight: 700;">
-                        <i class="fa-solid fa-building-user"></i> Căn hộ thuê: <?= h($buildingName) ?>
+                        <i class="fa-solid fa-circle-check"></i> Cổng thông tin cư dân chính thức StayMate
                     </div>
                     <h2 class="fw-extrabold mb-2" style="font-weight: 900; letter-spacing: -0.5px;">
                         Xin chào, <?= h($tenantName) ?>! 👋
                     </h2>
-                    <p class="mb-0 opacity-90" style="font-size: 0.95rem; max-width: 600px;">
-                        Chào mừng bạn đến với Cổng tra cứu thông tin khách thuê StayMate. Tại đây bạn có thể xem hóa đơn hàng tháng, kiểm tra đơn giá dịch vụ minh bạch, tra cứu hợp đồng và gửi yêu cầu hỗ trợ đến Ban Quản Lý.
+                    <p class="mb-0 opacity-90" style="font-size: 0.95rem; max-width: 620px;">
+                        Chào mừng bạn đến với Cổng thông tin khách thuê StayMate. Tại đây bạn có thể tra cứu hóa đơn hàng tháng, kiểm tra đơn giá dịch vụ minh bạch, xem hợp đồng thuê và gửi yêu cầu hỗ trợ đến Ban Quản Lý.
                     </p>
                 </div>
-                <div class="col-lg-4 text-lg-end mt-3 mt-lg-0">
-                    <div class="bg-white bg-opacity-10 p-3 rounded-4 border border-white border-opacity-25 d-inline-block text-start">
-                        <div class="small opacity-75">Phòng bạn đang ở:</div>
-                        <div class="fs-4 fw-black text-warning"><i class="fa-solid fa-key me-1"></i> Phòng <?= h($roomNumber) ?></div>
-                        <div class="small opacity-90"><i class="fa-solid fa-file-contract me-1"></i> Mã HĐ: <strong><?= h($contractCode) ?></strong></div>
+                <div class="col-lg-5 text-lg-end">
+                    <div class="bg-white bg-opacity-15 p-3 rounded-4 border border-white border-opacity-25 d-inline-block text-start w-100 shadow-sm" style="max-width: 440px; backdrop-filter: blur(8px);">
+                        <div class="d-flex align-items-center justify-content-between pb-2 mb-2 border-bottom border-white border-opacity-25">
+                            <span class="badge bg-white text-dark fw-extrabold px-3 py-1.5 rounded-pill shadow-xs">
+                                <i class="fa-solid fa-building text-teal-main me-1"></i> <?= h($buildingName) ?>
+                            </span>
+                            <span class="badge bg-warning text-dark fw-extrabold px-3 py-1.5 rounded-pill shadow-xs">
+                                <i class="fa-solid fa-tag me-1"></i> <?= h($roomType) ?>
+                            </span>
+                        </div>
+                        <div class="row g-2 align-items-center">
+                            <div class="col-7">
+                                <div class="small opacity-75">Số phòng bạn đang ở:</div>
+                                <div class="fs-3 fw-black text-warning" style="letter-spacing: -0.5px;">
+                                    <i class="fa-solid fa-door-closed me-1"></i> Phòng <?= h($roomNumber) ?>
+                                </div>
+                            </div>
+                            <div class="col-5 text-end">
+                                <div class="small opacity-75">Mã hợp đồng:</div>
+                                <div class="fw-extrabold text-white font-monospace"><?= h($contractCode) ?></div>
+                            </div>
+                        </div>
+                        <div class="mt-2 pt-2 border-top border-white border-opacity-25 small opacity-90 d-flex align-items-center gap-1">
+                            <i class="fa-solid fa-location-dot text-warning"></i> <?= h($buildingAddress) ?>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -535,7 +644,7 @@ $isManagerPreview = ($userRole === 'admin' || $userRole === 'manager' || $userRo
                             <h3 class="card-header-title">
                                 <i class="fa-solid fa-file-invoice-dollar text-teal-main"></i> Hóa Đơn Tiền Phòng &amp; Dịch Vụ Của Bạn
                             </h3>
-                            <p class="text-muted small mb-0 mt-1">Danh sách tất cả các kỳ hóa đơn phòng <?= h($roomNumber) ?>. Nhấn "Xem chi tiết &amp; Thanh toán" để xem bóc tách chi phí và mã QR thanh toán nhanh.</p>
+                            <p class="text-muted small mb-0 mt-1">Danh sách tất cả các kỳ hóa đơn phòng <?= h($roomNumber) ?> (<?= h($buildingName) ?>). Nhấn "Xem hóa đơn" để tra cứu bảng kê chi tiết các khoản và thông tin thanh toán.</p>
                         </div>
                         <?php if ($unpaidCount > 0): ?>
                             <div class="badge bg-danger bg-opacity-10 text-danger border border-danger border-opacity-25 p-2 px-3 rounded-pill fw-bold">
@@ -607,7 +716,7 @@ $isManagerPreview = ($userRole === 'admin' || $userRole === 'manager' || $userRo
                                             <td class="text-center">
                                                 <button type="button" class="btn btn-sm btn-teal rounded-pill"
                                                         onclick="viewInvoiceDetail(<?= (int)$inv['id'] ?>, '<?= h($inv['code']) ?>', '<?= h($inv['month_year']) ?>', '<?= money($inv['total_amount']) ?>', '<?= h($inv['status']) ?>')">
-                                                    <i class="fa-solid fa-eye me-1"></i> Chi tiết &amp; QR
+                                                    <i class="fa-solid fa-file-invoice me-1"></i> Xem hóa đơn
                                                 </button>
                                             </td>
                                         </tr>
@@ -1044,30 +1153,40 @@ $isManagerPreview = ($userRole === 'admin' || $userRole === 'manager' || $userRo
         </div>
     </footer>
 
-    <!-- MODAL CHI TIẾT HÓA ĐƠN & THANH TOÁN QR -->
+    <!-- MODAL CHI TIẾT HÓA ĐƠN & BẢN HÓA ĐƠN ĐIỆN TỬ -->
     <div class="modal fade" id="invoiceDetailModal" tabindex="-1">
         <div class="modal-dialog modal-dialog-centered modal-lg">
-            <div class="modal-content rounded-4 border-0 shadow">
-                <div class="modal-header border-bottom bg-teal-main text-white rounded-top-4 p-3 px-4">
-                    <h5 class="modal-title fw-bold" id="modalInvTitle">
-                        <i class="fa-solid fa-file-invoice-dollar me-2"></i> Chi Tiết Hóa Đơn
+            <div class="modal-content rounded-4 border-0 shadow-lg overflow-hidden">
+                <div class="modal-header border-bottom bg-teal-main text-white p-3 px-4 d-flex justify-content-between align-items-center">
+                    <h5 class="modal-title fw-bold mb-0" id="modalInvTitle">
+                        <i class="fa-solid fa-file-invoice-dollar me-2"></i> Bản Hóa Đơn Điện Tử
                     </h5>
-                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                    <div class="d-flex align-items-center gap-2">
+                        <button type="button" class="btn btn-sm btn-light rounded-pill fw-bold text-teal-main px-3 d-inline-flex align-items-center gap-1 shadow-xs no-print" onclick="window.print()">
+                            <i class="fa-solid fa-print"></i> In hóa đơn
+                        </button>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                    </div>
                 </div>
-                <div class="modal-body p-4">
-                    <div id="modalInvLoading" class="text-center py-4">
+                <div class="modal-body p-3 p-md-4 bg-light">
+                    <div id="modalInvLoading" class="text-center py-5">
                         <div class="spinner-border text-teal-main" role="status"></div>
-                        <div class="mt-2 text-muted fw-bold">Đang tải chi tiết hóa đơn...</div>
+                        <div class="mt-2 text-muted fw-bold">Đang tải bản hóa đơn chi tiết...</div>
                     </div>
                     <div id="modalInvBody" style="display: none;">
                         <!-- Nội dung render chi tiết -->
                     </div>
                 </div>
-                <div class="modal-footer border-top p-3 px-4 bg-light rounded-bottom-4 justify-content-between">
+                <div class="modal-footer border-top p-3 px-4 bg-white justify-content-between no-print">
                     <div class="text-muted small">
-                        <i class="fa-solid fa-circle-info text-teal-main me-1"></i> Chuyển khoản với cú pháp được tạo sẵn trên QR để hệ thống tự động ghi nhận.
+                        <i class="fa-solid fa-shield-halved text-teal-main me-1"></i> Mọi thắc mắc về số liệu cước phí, quý khách vui lòng liên hệ Ban Quản Lý để được hỗ trợ.
                     </div>
-                    <button type="button" class="btn btn-secondary rounded-pill px-4 fw-bold" data-bs-dismiss="modal">Đóng</button>
+                    <div class="d-flex gap-2">
+                        <button type="button" class="btn btn-outline-secondary rounded-pill px-3 fw-bold" onclick="window.print()">
+                            <i class="fa-solid fa-print me-1"></i> In hóa đơn
+                        </button>
+                        <button type="button" class="btn btn-secondary rounded-pill px-4 fw-bold" data-bs-dismiss="modal">Đóng</button>
+                    </div>
                 </div>
             </div>
         </div>
@@ -1082,10 +1201,74 @@ $isManagerPreview = ($userRole === 'admin' || $userRole === 'manager' || $userRo
             document.getElementById('hiddenOldValue').value = opt.getAttribute('data-old') || '';
         }
 
-        // Xem chi tiết hóa đơn qua AJAX
+        // Đọc số tiền thành chữ tiếng Việt
+        function numberToWordsVn(n) {
+            n = Math.round(Math.abs(n));
+            if (n === 0) return 'Không';
+            const digits = ['không', 'một', 'hai', 'ba', 'bốn', 'năm', 'sáu', 'bảy', 'tám', 'chín'];
+            const units = ['', 'nghìn', 'triệu', 'tỷ', 'nghìn tỷ'];
+            
+            function readThree(val, full) {
+                let h = Math.floor(val / 100);
+                let t = Math.floor((val % 100) / 10);
+                let u = val % 10;
+                let s = '';
+                if (h > 0 || full) {
+                    s += digits[h] + ' trăm ';
+                }
+                if (t === 0 && u > 0) {
+                    if (h > 0 || full) s += 'lẻ ';
+                    s += digits[u];
+                } else if (t === 1) {
+                    s += 'mười ';
+                    if (u === 5) s += 'lăm';
+                    else if (u > 0) s += digits[u];
+                } else if (t > 1) {
+                    s += digits[t] + ' mươi ';
+                    if (u === 1) s += 'mốt';
+                    else if (u === 5) s += 'lăm';
+                    else if (u > 0) s += digits[u];
+                }
+                return s.trim();
+            }
+
+            let result = '';
+            let uIdx = 0;
+            let temp = n;
+            while (temp > 0) {
+                let chunk = temp % 1000;
+                if (chunk > 0) {
+                    let chunkStr = readThree(chunk, temp >= 1000);
+                    result = chunkStr + ' ' + units[uIdx] + ' ' + result;
+                }
+                temp = Math.floor(temp / 1000);
+                uIdx++;
+            }
+            result = result.trim();
+            return result.charAt(0).toUpperCase() + result.slice(1);
+        }
+
+        // Sao chép nhanh văn bản
+        function copyText(val, msg) {
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+                navigator.clipboard.writeText(val).then(() => {
+                    alert(msg || 'Đã sao chép vào bộ nhớ tạm!');
+                });
+            } else {
+                const ta = document.createElement('textarea');
+                ta.value = val;
+                document.body.appendChild(ta);
+                ta.select();
+                document.execCommand('copy');
+                document.body.removeChild(ta);
+                alert(msg || 'Đã sao chép vào bộ nhớ tạm!');
+            }
+        }
+
+        // Xem chi tiết hóa đơn (Bản Hóa Đơn Đầy Đủ Thông Tin, Tuyệt Đối Không Dùng QR)
         function viewInvoiceDetail(invoiceId, code, period, totalFmt, status) {
             const modal = new bootstrap.Modal(document.getElementById('invoiceDetailModal'));
-            document.getElementById('modalInvTitle').innerHTML = '<i class="fa-solid fa-file-invoice-dollar me-2"></i> Hóa đơn ' + code + ' (Kỳ ' + period + ')';
+            document.getElementById('modalInvTitle').innerHTML = '<i class="fa-solid fa-file-invoice-dollar me-2"></i> Hóa Đơn ' + code + ' (Kỳ Tháng ' + period + ')';
             document.getElementById('modalInvLoading').style.display = 'block';
             document.getElementById('modalInvBody').style.display = 'none';
             modal.show();
@@ -1105,95 +1288,285 @@ $isManagerPreview = ($userRole === 'admin' || $userRole === 'manager' || $userRo
 
                     const inv = res.invoice;
                     const totalNum = parseFloat(inv.total_amount) || 0;
-                    const qrContent = encodeURIComponent('HD' + inv.id + ' ' + (inv.room_number || '') + ' TIEN PHONG');
-                    const qrUrl = 'https://img.vietqr.io/image/MB-0901000001-compact2.png?amount=' + totalNum + '&addInfo=' + qrContent + '&accountName=STAYMATE%20QUAN%20LY';
+                    const eUsed = Math.max(0, (parseInt(inv.electric_new) || 0) - (parseInt(inv.electric_old) || 0));
+                    const wUsed = Math.max(0, (parseInt(inv.water_new) || 0) - (parseInt(inv.water_old) || 0));
 
-                    let detailsHtml = '';
+                    // Dấu trạng thái thanh toán (Stamp)
+                    let stampHtml = '';
+                    let paymentStatusNote = '';
+                    if (inv.status === 'paid') {
+                        stampHtml = '<span class="inv-stamp inv-stamp-paid"><i class="fa-solid fa-circle-check me-1"></i> ĐÃ THANH TOÁN</span>';
+                        paymentStatusNote = '<span class="text-success fw-bold"><i class="fa-solid fa-check-double me-1"></i> Đã thanh toán đầy đủ</span>';
+                        if (inv.paid_at) {
+                            paymentStatusNote += ' <span class="text-muted small">(ngày ' + inv.paid_at + ')</span>';
+                        }
+                    } else if (inv.is_overdue) {
+                        stampHtml = '<span class="inv-stamp inv-stamp-overdue"><i class="fa-solid fa-triangle-exclamation me-1"></i> QUÁ HẠN NỘP</span>';
+                        paymentStatusNote = '<span class="text-danger fw-bold"><i class="fa-solid fa-circle-exclamation me-1"></i> Đã quá hạn thanh toán!</span>';
+                    } else {
+                        stampHtml = '<span class="inv-stamp inv-stamp-unpaid"><i class="fa-solid fa-clock me-1"></i> CHƯA THANH TOÁN</span>';
+                        paymentStatusNote = '<span class="text-warning-emphasis fw-bold"><i class="fa-solid fa-hourglass-half me-1"></i> Chờ thanh toán</span>';
+                    }
+
+                    // Khối thống kê chỉ số điện nước nếu có phát sinh
+                    let meterWidgetHtml = '';
+                    if (inv.electric_new !== null && inv.electric_new !== undefined) {
+                        meterWidgetHtml = `
+                            <div class="row g-2 mb-3">
+                                <div class="col-sm-6">
+                                    <div class="p-2.5 bg-white rounded-3 border d-flex align-items-center gap-3 shadow-xs">
+                                        <div class="p-2.5 rounded-3 fs-4 text-warning" style="background-color: #fefce8;">
+                                            <i class="fa-solid fa-bolt"></i>
+                                        </div>
+                                        <div>
+                                            <div class="small text-muted fw-bold text-uppercase">Chỉ số Điện kỳ này</div>
+                                            <div class="fw-bold text-dark">
+                                                Cũ: <strong>${inv.electric_old || 0}</strong> &rarr; Mới: <strong>${inv.electric_new || 0}</strong>
+                                                <span class="badge bg-warning text-dark ms-2 fw-bold">+${eUsed} kWh</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-sm-6">
+                                    <div class="p-2.5 bg-white rounded-3 border d-flex align-items-center gap-3 shadow-xs">
+                                        <div class="p-2.5 rounded-3 fs-4 text-info" style="background-color: #f0fdfa;">
+                                            <i class="fa-solid fa-faucet-drip"></i>
+                                        </div>
+                                        <div>
+                                            <div class="small text-muted fw-bold text-uppercase">Chỉ số Nước kỳ này</div>
+                                            <div class="fw-bold text-dark">
+                                                Cũ: <strong>${inv.water_old || 0}</strong> &rarr; Mới: <strong>${inv.water_new || 0}</strong>
+                                                <span class="badge bg-info text-white ms-2 fw-bold">+${wUsed} m³</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        `;
+                    }
+
+                    // Danh sách chi tiết bảng kê các khoản thu
+                    let tableRowsHtml = '';
                     if (inv.details && inv.details.length > 0) {
-                        inv.details.forEach(d => {
+                        inv.details.forEach((d, idx) => {
                             const unitPrice = parseFloat(d.applied_price).toLocaleString('vi-VN') + ' đ';
                             const subtotal = parseFloat(d.subtotal).toLocaleString('vi-VN') + ' đ';
-                            const sName = d.service_name || 'Tiền phòng';
-                            const sUnit = d.unit ? ('/' + d.unit) : '';
-                            detailsHtml += `
+                            const sName = d.service_name || 'Tiền thuê phòng';
+                            const sUnit = d.unit || 'Tháng';
+                            const qty = parseFloat(d.quantity);
+                            const qtyStr = (qty % 1 === 0) ? qty.toFixed(0) : qty.toFixed(2);
+
+                            // Chọn icon phù hợp
+                            let sIcon = '<i class="fa-solid fa-tag text-teal-main me-1.5"></i>';
+                            const nameLower = sName.toLowerCase();
+                            if (nameLower.includes('phòng') || !d.service_id) {
+                                sIcon = '<i class="fa-solid fa-door-open text-teal-main me-1.5"></i>';
+                            } else if (nameLower.includes('điện')) {
+                                sIcon = '<i class="fa-solid fa-bolt text-warning me-1.5"></i>';
+                            } else if (nameLower.includes('nước')) {
+                                sIcon = '<i class="fa-solid fa-faucet-drip text-info me-1.5"></i>';
+                            } else if (nameLower.includes('wifi') || nameLower.includes('internet')) {
+                                sIcon = '<i class="fa-solid fa-wifi text-primary me-1.5"></i>';
+                            } else if (nameLower.includes('rác')) {
+                                sIcon = '<i class="fa-solid fa-trash-can text-secondary me-1.5"></i>';
+                            } else if (nameLower.includes('vệ sinh')) {
+                                sIcon = '<i class="fa-solid fa-broom text-success me-1.5"></i>';
+                            } else if (nameLower.includes('thang máy')) {
+                                sIcon = '<i class="fa-solid fa-elevator text-secondary me-1.5"></i>';
+                            }
+
+                            tableRowsHtml += `
                                 <tr>
-                                    <td class="fw-bold">${sName}</td>
-                                    <td class="text-center">${d.quantity} ${sUnit}</td>
-                                    <td class="text-end">${unitPrice}</td>
-                                    <td class="text-end fw-bold">${subtotal}</td>
+                                    <td class="text-center text-muted fw-bold">${idx + 1}</td>
+                                    <td class="fw-bold text-dark">${sIcon} ${sName}</td>
+                                    <td class="text-center">${qtyStr} <span class="text-muted small">(${sUnit})</span></td>
+                                    <td class="text-end font-monospace">${unitPrice}</td>
+                                    <td class="text-end fw-bold font-monospace text-dark">${subtotal}</td>
                                 </tr>
                             `;
                         });
                     } else {
-                        // Fallback điện nước
-                        const eUsed = Math.max(0, (parseInt(inv.electric_new) || 0) - (parseInt(inv.electric_old) || 0));
-                        const wUsed = Math.max(0, (parseInt(inv.water_new) || 0) - (parseInt(inv.water_old) || 0));
-                        detailsHtml += `
+                        // Fallback bảng kê dự phòng nếu chưa có bảng invoice_details
+                        tableRowsHtml += `
                             <tr>
-                                <td class="fw-bold">Tiền thuê phòng ${inv.room_number || ''}</td>
-                                <td class="text-center">1 tháng</td>
-                                <td class="text-end">${parseFloat(inv.room_price || 0).toLocaleString('vi-VN')} đ</td>
-                                <td class="text-end fw-bold">${parseFloat(inv.room_price || 0).toLocaleString('vi-VN')} đ</td>
+                                <td class="text-center text-muted fw-bold">1</td>
+                                <td class="fw-bold text-dark"><i class="fa-solid fa-door-open text-teal-main me-1.5"></i> Tiền thuê phòng ${inv.room_number || ''}</td>
+                                <td class="text-center">1 <span class="text-muted small">(Tháng)</span></td>
+                                <td class="text-end font-monospace">${parseFloat(inv.room_price || 0).toLocaleString('vi-VN')} đ</td>
+                                <td class="text-end fw-bold font-monospace text-dark">${parseFloat(inv.room_price || 0).toLocaleString('vi-VN')} đ</td>
                             </tr>
                             <tr>
-                                <td class="fw-bold"><i class="fa-solid fa-bolt text-warning me-1"></i> Tiền điện (${inv.electric_old || 0} &rarr; ${inv.electric_new || 0})</td>
-                                <td class="text-center">${eUsed} kWh</td>
-                                <td class="text-end">3.500 đ</td>
-                                <td class="text-end fw-bold">${(eUsed * 3500).toLocaleString('vi-VN')} đ</td>
+                                <td class="text-center text-muted fw-bold">2</td>
+                                <td class="fw-bold text-dark"><i class="fa-solid fa-bolt text-warning me-1.5"></i> Tiền điện sinh hoạt (${inv.electric_old || 0} &rarr; ${inv.electric_new || 0})</td>
+                                <td class="text-center">${eUsed} <span class="text-muted small">(kWh)</span></td>
+                                <td class="text-end font-monospace">3.500 đ</td>
+                                <td class="text-end fw-bold font-monospace text-dark">${(eUsed * 3500).toLocaleString('vi-VN')} đ</td>
                             </tr>
                             <tr>
-                                <td class="fw-bold"><i class="fa-solid fa-faucet-drip text-info me-1"></i> Tiền nước (${inv.water_old || 0} &rarr; ${inv.water_new || 0})</td>
-                                <td class="text-center">${wUsed} khối</td>
-                                <td class="text-end">20.000 đ</td>
-                                <td class="text-end fw-bold">${(wUsed * 20000).toLocaleString('vi-VN')} đ</td>
+                                <td class="text-center text-muted fw-bold">3</td>
+                                <td class="fw-bold text-dark"><i class="fa-solid fa-faucet-drip text-info me-1.5"></i> Tiền nước sinh hoạt (${inv.water_old || 0} &rarr; ${inv.water_new || 0})</td>
+                                <td class="text-center">${wUsed} <span class="text-muted small">(m³)</span></td>
+                                <td class="text-end font-monospace">20.000 đ</td>
+                                <td class="text-end fw-bold font-monospace text-dark">${(wUsed * 20000).toLocaleString('vi-VN')} đ</td>
                             </tr>
                         `;
                     }
 
+                    // Render toàn bộ bản hóa đơn hoàn chỉnh
                     container.innerHTML = `
-                        <div class="row g-4">
-                            <div class="col-md-7">
-                                <h6 class="fw-bold text-dark border-bottom pb-2 mb-3">
-                                    <i class="fa-solid fa-list-check text-teal-main me-1"></i> Bảng Kê Chi Tiết Các Khoản
+                        <div class="invoice-paper p-3 p-md-4">
+                            <!-- HEADER PHIẾU THU -->
+                            <div class="row align-items-start border-bottom pb-3 mb-3">
+                                <div class="col-sm-7">
+                                    <div class="d-flex align-items-center gap-2 mb-1">
+                                        <div class="bg-teal-main text-white p-2 rounded-3 d-inline-flex align-items-center justify-content-center shadow-xs" style="width: 40px; height: 40px;">
+                                            <i class="fa-solid fa-building-user fs-5"></i>
+                                        </div>
+                                        <div>
+                                            <h5 class="fw-black mb-0 text-dark" style="font-weight: 900; letter-spacing: -0.5px;">STAYMATE RESIDENCE</h5>
+                                            <div class="text-muted small">Hệ Thống Quản Lý Căn Hộ &amp; Phòng Trọ Tiện Nghi</div>
+                                        </div>
+                                    </div>
+                                    <div class="small text-secondary mt-2">
+                                        <div><i class="fa-solid fa-building me-1 text-teal-main"></i> <strong>Tòa nhà:</strong> <span class="text-dark fw-bold">${inv.building_name}</span></div>
+                                        <div><i class="fa-solid fa-location-dot me-1 text-teal-main"></i> <strong>Địa chỉ:</strong> ${inv.building_address}</div>
+                                    </div>
+                                </div>
+                                <div class="col-sm-5 text-sm-end mt-3 mt-sm-0">
+                                    <div class="text-uppercase fw-extrabold text-teal-main fs-5 mb-1" style="letter-spacing: 0.5px;">HÓA ĐƠN TIỀN NHÀ</div>
+                                    <div class="fw-bold text-dark fs-6">Mã HĐ: <span class="text-primary font-monospace">${inv.code}</span></div>
+                                    <div class="text-muted small">Kỳ thu cước: <strong>Tháng ${inv.month_year}</strong></div>
+                                    <div class="mt-2">
+                                        ${stampHtml}
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- KHỐI THÔNG TIN KHÁCH HÀNG & PHÒNG THUÊ -->
+                            <div class="bg-light p-3 rounded-3 mb-3 border">
+                                <div class="row g-2">
+                                    <div class="col-6 col-md-3">
+                                        <div class="text-muted small">Khách thuê:</div>
+                                        <div class="fw-bold text-dark"><i class="fa-solid fa-user me-1 text-secondary"></i> ${inv.tenant_name || 'Khách thuê'}</div>
+                                    </div>
+                                    <div class="col-6 col-md-3">
+                                        <div class="text-muted small">Số điện thoại:</div>
+                                        <div class="fw-bold text-dark font-monospace"><i class="fa-solid fa-phone me-1 text-secondary"></i> ${inv.tenant_phone || '---'}</div>
+                                    </div>
+                                    <div class="col-6 col-md-3">
+                                        <div class="text-muted small">Phòng &amp; Tòa:</div>
+                                        <div class="fw-bold text-teal-main"><i class="fa-solid fa-door-open me-1"></i> Phòng <strong>${inv.room_number}</strong> (${inv.building_name ? inv.building_name.split(' - ')[0] : 'Tòa nhà'})</div>
+                                    </div>
+                                    <div class="col-6 col-md-3">
+                                        <div class="text-muted small">Loại phòng:</div>
+                                        <div class="fw-bold text-dark"><i class="fa-solid fa-tag me-1 text-warning"></i> ${inv.room_type || 'Phòng Tiêu Chuẩn'}</div>
+                                    </div>
+                                    <div class="col-6 col-md-3 mt-md-2">
+                                        <div class="text-muted small">Mã hợp đồng:</div>
+                                        <div class="fw-bold text-dark font-monospace"><i class="fa-solid fa-file-contract me-1 text-secondary"></i> ${inv.contract_code || '---'}</div>
+                                    </div>
+                                    <div class="col-6 col-md-3 mt-md-2">
+                                        <div class="text-muted small">Hạn thanh toán:</div>
+                                        <div class="fw-bold text-danger"><i class="fa-solid fa-calendar-xmark me-1"></i> Ngày ${inv.due_date}</div>
+                                    </div>
+                                    <div class="col-12 col-md-6 mt-md-2">
+                                        <div class="text-muted small">Trạng thái:</div>
+                                        <div>${paymentStatusNote}</div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- KHỐI CHỈ SỐ CÔNG TƠ ĐIỆN NƯỚC -->
+                            ${meterWidgetHtml}
+
+                            <!-- BẢNG KÊ CHI TIẾT CÁC KHOẢN -->
+                            <div class="mb-3">
+                                <h6 class="fw-extrabold text-dark mb-2">
+                                    <i class="fa-solid fa-list-check text-teal-main me-1"></i> Bảng Kê Chi Tiết Khoản Thu Tháng ${inv.month_year}
                                 </h6>
                                 <div class="table-responsive">
-                                    <table class="table table-sm table-bordered">
-                                        <thead class="table-light">
+                                    <table class="table table-bordered align-middle mb-0" style="border-color: #e2e8f0;">
+                                        <thead class="table-light text-secondary small fw-bold text-uppercase">
                                             <tr>
-                                                <th>Khoản thu</th>
-                                                <th class="text-center">Số lượng</th>
-                                                <th class="text-end">Đơn giá</th>
-                                                <th class="text-end">Thành tiền</th>
+                                                <th class="text-center" style="width: 50px;">STT</th>
+                                                <th>Khoản thu / Dịch vụ</th>
+                                                <th class="text-center" style="width: 140px;">Số lượng / Chỉ số</th>
+                                                <th class="text-end" style="width: 140px;">Đơn giá</th>
+                                                <th class="text-end" style="width: 160px;">Thành tiền</th>
                                             </tr>
                                         </thead>
                                         <tbody>
-                                            ${detailsHtml}
+                                            ${tableRowsHtml}
                                         </tbody>
                                         <tfoot>
-                                            <tr class="table-warning">
-                                                <th colspan="3" class="text-end fs-6 fw-extrabold">TỔNG CỘNG:</th>
-                                                <th class="text-end fs-5 fw-black text-danger">${totalFmt}</th>
+                                            <tr style="background-color: #f8fafc;">
+                                                <td colspan="4" class="text-end fw-bold text-dark fs-6 py-3">TỔNG CỘNG CẦN THANH TOÁN:</td>
+                                                <td class="text-end fw-black text-danger fs-5 py-3 font-monospace">${totalFmt}</td>
                                             </tr>
                                         </tfoot>
                                     </table>
                                 </div>
-                                <div class="p-2 bg-light rounded-3 small text-muted">
-                                    <strong>Trạng thái:</strong> ${status === 'paid' ? '<span class="text-success fw-bold">Đã thanh toán</span>' : '<span class="text-danger fw-bold">Chưa thanh toán</span>'}<br>
-                                    <strong>Hợp đồng:</strong> ${inv.contract_code || 'Hợp đồng phòng ' + inv.room_number}
+                                <div class="p-2.5 px-3 bg-light rounded-bottom-3 border border-top-0 d-flex flex-wrap justify-content-between align-items-center small text-muted">
+                                    <div>Số tiền bằng chữ: <strong class="text-dark">${numberToWordsVn(totalNum)} đồng chẵn</strong></div>
+                                    <div>Đơn vị tính: <strong>VND (Việt Nam Đồng)</strong></div>
                                 </div>
                             </div>
-                            <div class="col-md-5 text-center">
-                                <div class="p-3 bg-light rounded-4 border">
-                                    <h6 class="fw-bold text-dark mb-1">
-                                        <i class="fa-solid fa-qrcode text-teal-main me-1"></i> Quét Mã QR Thanh Toán
+
+                            <!-- KHỐI HƯỚNG DẪN THANH TOÁN (KHÔNG DÙNG QR) -->
+                            <div class="p-3 rounded-3 border no-print" style="background-color: #f0fdfa; border-color: #99f6e4 !important;">
+                                <div class="d-flex align-items-center justify-content-between mb-2">
+                                    <h6 class="fw-bold text-teal-main mb-0">
+                                        <i class="fa-solid fa-wallet me-1"></i> Kênh Thanh Toán &amp; Hướng Dẫn Nộp Tiền
                                     </h6>
-                                    <p class="text-muted small mb-2">Hỗ trợ tất cả ứng dụng Ngân hàng &amp; Ví Momo</p>
-                                    <div class="bg-white p-2 rounded-3 border d-inline-block shadow-sm mb-2">
-                                        <img src="${qrUrl}" alt="VietQR" style="max-width: 190px; width: 100%; border-radius: 8px;" onerror="this.src='https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${qrContent}'">
+                                    <span class="badge bg-white text-secondary border fw-bold">
+                                        <i class="fa-solid fa-shield-halved text-success me-1"></i> Thanh toán an toàn
+                                    </span>
+                                </div>
+                                <div class="row g-3">
+                                    <div class="col-md-7">
+                                        <div class="p-3 bg-white rounded-3 border h-100 shadow-xs">
+                                            <div class="fw-bold text-dark mb-1"><i class="fa-solid fa-building-columns text-primary me-1"></i> Kênh 1: Chuyển khoản Ngân hàng (Internet Banking)</div>
+                                            <div class="small text-secondary mb-2">Vui lòng chuyển khoản đúng số tài khoản và nội dung dưới đây:</div>
+                                            <table class="table table-sm table-borderless mb-0 small">
+                                                <tr>
+                                                    <td class="text-muted" style="width: 110px;">Ngân hàng:</td>
+                                                    <td class="fw-bold text-dark">MB Bank (Ngân hàng TMCP Quân Đội)</td>
+                                                </tr>
+                                                <tr>
+                                                    <td class="text-muted">Số tài khoản:</td>
+                                                    <td>
+                                                        <strong class="text-teal-main fs-6 font-monospace">0901000001</strong>
+                                                        <button type="button" class="btn btn-xs btn-outline-teal py-0 px-2 ms-2 rounded-pill fw-bold" style="font-size: 0.75rem;" onclick="copyText('0901000001', 'Đã sao chép Số tài khoản MB Bank: 0901000001')">
+                                                            <i class="fa-regular fa-copy me-1"></i> Copy
+                                                        </button>
+                                                    </td>
+                                                </tr>
+                                                <tr>
+                                                    <td class="text-muted">Chủ tài khoản:</td>
+                                                    <td class="fw-bold text-dark">STAYMATE QUAN LY</td>
+                                                </tr>
+                                                <tr>
+                                                    <td class="text-muted">Nội dung CK:</td>
+                                                    <td>
+                                                        <strong class="text-danger font-monospace">HD${inv.id} ${inv.room_number || ''} TIEN PHONG</strong>
+                                                        <button type="button" class="btn btn-xs btn-outline-teal py-0 px-2 ms-2 rounded-pill fw-bold" style="font-size: 0.75rem;" onclick="copyText('HD' + inv.id + ' ' + (inv.room_number || '') + ' TIEN PHONG', 'Đã sao chép Nội dung chuyển khoản!')">
+                                                            <i class="fa-regular fa-copy me-1"></i> Copy
+                                                        </button>
+                                                    </td>
+                                                </tr>
+                                            </table>
+                                        </div>
                                     </div>
-                                    <div class="small fw-bold text-dark">STK: <span class="text-teal-main">0901000001</span> - MB Bank</div>
-                                    <div class="small text-muted">Chủ TK: STAYMATE QUAN LY</div>
-                                    <div class="small text-muted">Nội dung: <code>HD${inv.id} ${inv.room_number || ''} TIEN PHONG</code></div>
+                                    <div class="col-md-5">
+                                        <div class="p-3 bg-white rounded-3 border h-100 shadow-xs">
+                                            <div class="fw-bold text-dark mb-1"><i class="fa-solid fa-hand-holding-dollar text-success me-1"></i> Kênh 2: Nộp tiền mặt trực tiếp</div>
+                                            <div class="small text-secondary">
+                                                <p class="mb-1">• Quý khách có thể nộp trực tiếp tại <strong>Văn phòng Ban Quản Lý (Tầng 1 - ${inv.building_name})</strong>.</p>
+                                                <p class="mb-1">• Giờ thu tiền: <strong>08h00 &ndash; 20h30</strong> các ngày trong tuần.</p>
+                                                <p class="mb-0">• Hotline hỗ trợ cư dân: <strong class="text-dark">0912 345 678</strong></p>
+                                            </div>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         </div>
