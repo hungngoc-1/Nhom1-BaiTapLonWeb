@@ -141,17 +141,13 @@ class AuthController {
                 unset($_SESSION['old_username']);
 
                 $_SESSION['flash_success'] = "Đăng nhập thành công! Xin chào " . $user['full_name'] . ".";
-                if (($user['role'] ?? '') === 'admin') {
-                    header("Location: index.php?route=dashboard");
-                } elseif (($user['role'] ?? '') === 'tenant') {
+                                if (($user['role'] ?? '') === 'tenant') {
+                    // Khách thuê vào thẳng cổng khách thuê
                     header("Location: index.php?route=tenant/portal");
                 } else {
-                    require_once __DIR__ . '/../Models/ReportModel.php';
-                    $reportModel = new ReportModel();
-                    $allowed = $reportModel->getAllowedBuildingIds();
-                    $assignedBuilding = reset($allowed) ?: 'A';
-                    $_SESSION['selected_building_id'] = $assignedBuilding;
-                    header("Location: index.php?route=overview&building_id=" . urlencode($assignedBuilding));
+                    // Cả Admin và Quản lý đều vào trang Tòa nhà (dashboard)
+                    // Quản lý sẽ chỉ nhìn thấy tòa nhà mình quản lý tại trang này
+                    header("Location: index.php?route=dashboard");
                 }
                 exit;
             } else {

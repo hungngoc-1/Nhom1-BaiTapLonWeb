@@ -390,54 +390,6 @@
                     <button type="submit" class="btn-login">Đăng nhập <i class="bi bi-arrow-right"></i></button>
                 </form>
 
-                <div style="margin-top: 18px; padding: 14px; background: #F0FBF9; border-radius: 16px; border: 1.5px dashed #A8E4DD;">
-                    <!-- KHỐI 1: KHÁCH THUÊ PHÒNG (CHỈ VÀO CỔNG KHÁCH THUÊ) -->
-                    <div style="margin-bottom: 12px; padding-bottom: 10px; border-bottom: 1px dashed #A8E4DD;">
-                        <div style="font-size: 0.84rem; font-weight: 800; color: #166E66; margin-bottom: 4px; display: flex; align-items: center; justify-content: space-between;">
-                            <span><i class="bi bi-person-badge-fill text-success"></i> 1. Đăng nhập Khách Thuê (Cư Dân):</span>
-                            <span class="badge" style="background: #e6f4f2; color: #166E66; font-size: 0.68rem; padding: 2px 6px; border-radius: 6px;">Chỉ vào Cổng Khách Thuê</span>
-                        </div>
-                        <div style="font-size: 0.73rem; color: #475569; margin-bottom: 6px;">
-                            <i class="bi bi-shield-check text-success"></i> Khách thuê chỉ xem hóa đơn, tiền phòng & hợp đồng của mình, <strong>không xem được trang quản lý</strong>.
-                        </div>
-                        <div style="display: flex; gap: 6px; flex-wrap: wrap;">
-                            <button type="button" class="btn-quick-fill" style="padding: 6px 12px; font-size: 0.78rem; font-weight: 800; background: #166E66; color: #fff; border: none; border-radius: 8px;" onclick="fillLogin('kh_a101', 'hash'); document.getElementById('loginForm').submit();" title="Khách thuê Nguyễn Tiến Đạt - Phòng A101 (Tòa A)">
-                                <i class="bi bi-door-open-fill"></i> P.A101 - Nguyễn Tiến Đạt
-                            </button>
-                            <button type="button" class="btn-quick-fill" style="padding: 6px 12px; font-size: 0.78rem; font-weight: 800; background: #166E66; color: #fff; border: none; border-radius: 8px;" onclick="fillLogin('kh_b101', 'hash'); document.getElementById('loginForm').submit();" title="Khách thuê Mai Thùy Dung - Phòng B101 (Tòa B)">
-                                <i class="bi bi-door-open-fill"></i> P.B101 - Mai Thùy Dung
-                            </button>
-                            <button type="button" class="btn-quick-fill" style="padding: 6px 12px; font-size: 0.78rem; font-weight: 800; background: #166E66; color: #fff; border: none; border-radius: 8px;" onclick="fillLogin('kh_c101', 'hash'); document.getElementById('loginForm').submit();" title="Khách thuê Hoàng Thị Ngọc Bích - Phòng C101 (Tòa C)">
-                                <i class="bi bi-door-open-fill"></i> P.C101 - Hoàng Bích
-                            </button>
-                        </div>
-                    </div>
-
-                    <!-- KHỐI 2: BAN QUẢN LÝ (VÀO TRANG TỔNG QUAN / QUẢN TRỊ) -->
-                    <div>
-                        <div style="font-size: 0.8rem; font-weight: 700; color: #334155; margin-bottom: 4px; display: flex; align-items: center; justify-content: space-between;">
-                            <span><i class="bi bi-shield-lock-fill text-warning"></i> 2. Đăng nhập Ban Quản Lý & Admin:</span>
-                            <span class="badge" style="background: #f1f5f9; color: #64748b; font-size: 0.68rem; padding: 2px 6px; border-radius: 6px;">Vào trang Tổng quan</span>
-                        </div>
-                        <div style="display: flex; gap: 5px; flex-wrap: wrap;">
-                            <button type="button" class="btn-quick-fill" style="padding: 4px 8px; font-size: 0.74rem; background: #113437; color: #fff;" onclick="fillLogin('admin', 'hash'); document.getElementById('loginForm').submit();" title="Quản trị viên toàn hệ thống (Nguyễn Tuấn Dũng)">
-                                <i class="bi bi-shield-shaded"></i> Admin Tổng
-                            </button>
-                            <button type="button" class="btn-quick-fill" style="padding: 4px 8px; font-size: 0.74rem; background: #475569; color: #fff;" onclick="fillLogin('quanly_a', 'hash'); document.getElementById('loginForm').submit();" title="Quản lý Tòa A (Nguyễn Văn Quân)">
-                                <i class="bi bi-building"></i> QL Tòa A (Quân)
-                            </button>
-                            <button type="button" class="btn-quick-fill" style="padding: 4px 8px; font-size: 0.74rem; background: #475569; color: #fff;" onclick="fillLogin('quanly_b', 'hash'); document.getElementById('loginForm').submit();" title="Quản lý Tòa B (Trần Thị Mai Lan)">
-                                <i class="bi bi-building"></i> QL Tòa B (Lan)
-                            </button>
-                            <button type="button" class="btn-quick-fill" style="padding: 4px 8px; font-size: 0.74rem; background: #475569; color: #fff;" onclick="fillLogin('quanly_c', 'hash'); document.getElementById('loginForm').submit();" title="Quản lý Tòa C (Lê Hoàng Nam)">
-                                <i class="bi bi-building"></i> QL Tòa C (Nam)
-                            </button>
-                        </div>
-                    </div>
-                </div>
-
-                
-                
                 <div class="card-footer-text">© <?= date('Y') ?> StayMate. Hệ thống quản lý phòng trọ.</div>
             </div>
         </div>

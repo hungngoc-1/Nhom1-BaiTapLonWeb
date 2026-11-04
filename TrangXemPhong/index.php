@@ -854,9 +854,7 @@ $guestUser = $_SESSION['guest_user'] ?? null;
                     </a>
                 <?php endif; ?>
 
-                <a href="../index.php?route=dashboard" class="btn btn-sm btn-outline-secondary rounded-pill fw-bold px-3">
-                    <i class="fa-solid fa-gauge-high me-1"></i> Quản lý
-                </a>
+
             </div>
         </div>
     </nav>
@@ -901,11 +899,7 @@ $guestUser = $_SESSION['guest_user'] ?? null;
                 </button>
             <?php endforeach; ?>
 
-            <div class="mt-auto pt-3 border-top">
-                <a href="../index.php?route=dashboard" class="btn btn-outline-secondary w-100 rounded-pill fw-bold">
-                    <i class="fa-solid fa-shield-halved me-1"></i> Vào trang Quản trị (Admin)
-                </a>
-            </div>
+
         </div>
     </div>
 

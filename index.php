@@ -7,18 +7,20 @@ if (empty($_SESSION['csrf_token'])) {
 }
 
 $route = $_GET['route'] ?? null;
+$currentUserRole = $_SESSION['role'] ?? ($_SESSION['user']['role'] ?? null);
+$isLoggedIn = !empty($_SESSION['user_id']) || !empty($_SESSION['username']);
+
 if ($route === null || $route === '') {
-    $role = $_SESSION['role'] ?? ($_SESSION['user']['role'] ?? null);
-    if (!empty($_SESSION['user_id']) || !empty($_SESSION['username'])) {
-        if ($role === 'tenant') {
+    if ($isLoggedIn) {
+        if ($currentUserRole === 'tenant') {
             $route = 'tenant/portal';
-        } elseif (in_array($role, ['manager', 'landlord'], true)) {
-            $route = 'overview';
         } else {
             $route = 'dashboard';
         }
     } else {
-        $route = 'auth/login';
+        // Chưa đăng nhập thì mặc định vào trang xem phòng khách
+        header("Location: TrangXemPhong/index.php");
+        exit;
     }
 }
 
@@ -34,13 +36,14 @@ if ($route === 'auth/logout') {
 }
 
 // ==============================================================================
+// ==============================================================================
 // 2. BẢO MẬT & PHÂN QUYỀN TRUY CẬP (ACCESS CONTROL & ROUTE GUARDING)
 // Ngăn chặn lỗ hổng Broken Access Control (OWASP Top 10)
 // ==============================================================================
 $currentUserRole = $_SESSION['role'] ?? ($_SESSION['user']['role'] ?? null);
 $isLoggedIn = !empty($_SESSION['user_id']) || !empty($_SESSION['username']);
 
-// Danh sách các route công khai (Khách vãng lai / Postman test API được phép truy cập)
+// Danh sách các route công khai (Người xem phòng / Chưa đăng nhập được phép truy cập)
 $publicRoutes = [
     'login',
     'auth/login',
@@ -55,27 +58,25 @@ $publicRoutes = [
     'api/reports/utilities'
 ];
 
-// Nếu đã đăng nhập mà truy cập trang đăng nhập -> Tự động chuyển hướng về trang chủ phù hợp
+// NẾU CHƯA ĐĂNG NHẬP MÀ TRUY CẬP BẤT KỲ ĐƯỜNG LINK NỘI BỘ NÀO:
+// -> BẢO MẬT: Chuyển hướng 100% về trang Xem phòng khách
+if (!$isLoggedIn && !in_array($route, $publicRoutes, true)) {
+    header("Location: TrangXemPhong/index.php");
+    exit;
+}
+
+// Nếu đã đăng nhập mà lại truy cập trang login -> Tự động chuyển hướng về trang chủ phù hợp
 if ($isLoggedIn && in_array($route, ['login', 'auth/login'], true)) {
     if ($currentUserRole === 'tenant') {
         header("Location: index.php?route=tenant/portal");
-    } elseif ($currentUserRole === 'manager' || $currentUserRole === 'landlord') {
-        header("Location: index.php?route=overview");
     } else {
         header("Location: index.php?route=dashboard");
     }
     exit;
 }
 
-// Nếu CHƯA đăng nhập mà cố tình truy cập các trang nội bộ -> Chặn và đẩy về trang login
-if (!$isLoggedIn && !in_array($route, $publicRoutes, true)) {
-    $_SESSION['flash_error'] = "Vui lòng đăng nhập để truy cập hệ thống!";
-    header("Location: index.php?route=auth/login");
-    exit;
-}
-
-// Phân quyền chặt chẽ cho Khách thuê (role === 'tenant')
-// Khách chỉ được xem Cổng Khách Thuê và các route con của mình, tuyệt đối cấm vào trang quản lý
+// PHÂN QUYỀN KHÁCH THUÊ (role === 'tenant'):
+// Chỉ được vào cổng khách thuê và các route con của mình, tuyệt đối cấm vào các trang quản lý
 if ($isLoggedIn && $currentUserRole === 'tenant') {
     $tenantAllowedRoutes = [
         'tenant',
@@ -97,27 +98,21 @@ if ($isLoggedIn && $currentUserRole === 'tenant') {
     ];
 
     if (!in_array($route, $tenantAllowedRoutes, true)) {
-        $_SESSION['flash_error'] = "Tài khoản khách thuê không có quyền truy cập vào khu vực quản trị nội bộ!";
         header("Location: index.php?route=tenant/portal");
         exit;
     }
 }
 
-// Phân quyền chặt chẽ cho Quản lý Tòa nhà (role === 'manager' hoặc 'landlord')
-// Quản lý KHÔNG được vào trang Quản lý các Tòa nhà (dashboard) và KHÔNG được quản lý tài khoản (accounts, users)
+// PHÂN QUYỀN QUẢN LÝ (role === 'manager' hoặc 'landlord'):
+// Quản lý được vào trang Tòa nhà (dashboard) và các trang nghiệp vụ, nhưng TUYỆT ĐỐI KHÔNG ĐƯỢC vào trang Tài khoản (accounts, users)
 if ($isLoggedIn && in_array($currentUserRole, ['manager', 'landlord'], true)) {
-    if ($route === 'dashboard') {
-        header("Location: index.php?route=overview");
-        exit;
-    }
     if (in_array($route, ['accounts', 'users'], true)) {
-        $_SESSION['flash_error'] = "Quản lý không có quyền quản lý tài khoản người dùng và khách thuê!";
+        $_SESSION['flash_error'] = "Tài khoản Quản lý không có quyền truy cập trang Quản lý Tài khoản!";
         header("Location: index.php?route=overview");
         exit;
     }
 }
 
-// Nạp các Controller cần thiết
 require_once __DIR__ . '/app/Controllers/DashboardController.php';
 require_once __DIR__ . '/app/Controllers/AuthController.php';
 require_once __DIR__ . '/app/Controllers/RoomController.php';

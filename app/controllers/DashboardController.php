@@ -270,7 +270,20 @@ class DashboardController {
         $keyword   = trim($_GET['keyword'] ?? '');
         $status    = trim($_GET['status'] ?? '');
 
-        $buildings = $this->reportModel->getBuildingsWithStats();
+        $allBuildings = $this->reportModel->getBuildingsWithStats();
+        // Nếu là Quản lý, chỉ hiển thị tòa nhà mà tài khoản đó được phân quyền quản lý
+        if ($userRole !== 'admin') {
+            $filteredBuildings = [];
+            foreach ($allBuildings as $bId => $bItem) {
+                if (in_array((string)$bId, $allowedBldIds, true)) {
+                    $filteredBuildings[$bId] = $bItem;
+                }
+            }
+            $buildings = !empty($filteredBuildings) ? $filteredBuildings : $allBuildings;
+            $filterBuilding = (string)array_key_first($buildings);
+        } else {
+            $buildings = $allBuildings;
+        }
         $stats         = $this->reportModel->getSummaryStats($filterBuilding);
         $chartData     = $this->reportModel->getMonthlyRevenue($filterBuilding);
         $debtList      = $this->reportModel->getDebtList($keyword, $status, $filterBuilding);
@@ -294,11 +307,23 @@ class DashboardController {
             session_start();
         }
 
-        $buildings = $this->reportModel->getBuildingsWithStats();
-        $firstBld  = !empty($buildings) ? (string)array_key_first($buildings) : 'A';
-
-        $allowedBldIds = $this->reportModel->getAllowedBuildingIds();
         $userRole      = $_SESSION['role'] ?? 'admin';
+        $allowedBldIds = $this->reportModel->getAllowedBuildingIds();
+
+        $allBuildings = $this->reportModel->getBuildingsWithStats();
+        // Nếu là Quản lý, chỉ hiển thị tòa nhà mà tài khoản đó được phân quyền quản lý
+        if ($userRole !== 'admin') {
+            $filteredBuildings = [];
+            foreach ($allBuildings as $bId => $bItem) {
+                if (in_array((string)$bId, $allowedBldIds, true)) {
+                    $filteredBuildings[$bId] = $bItem;
+                }
+            }
+            $buildings = !empty($filteredBuildings) ? $filteredBuildings : $allBuildings;
+        } else {
+            $buildings = $allBuildings;
+        }
+        $firstBld  = !empty($buildings) ? (string)array_key_first($buildings) : 'A';
 
         $reqBld = trim($_GET['building_id'] ?? ($_POST['building_id'] ?? ''));
 

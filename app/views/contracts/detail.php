@@ -91,10 +91,10 @@ $durationDays = max(1, (int)round(($endTs - $startTs) / 86400));
 </head>
 <body>
 
-    <!-- THANH MENU ĐIỀU HƯỚNG TRÊN CÙNG -->
+    <!-- THANH MENU ĐIỀU HƯỚNG TRÊN CÙNG: CHỈ LOGO VÀ NÚT QUAY LẠI DANH SÁCH HỢP ĐỒNG -->
     <nav class="navbar navbar-expand-lg navbar-custom sticky-top">
-        <div class="container-fluid px-3 px-xl-5">
-            <a class="brand-logo me-4" href="index.php?route=dashboard">
+        <div class="container-fluid px-3 px-xl-5 d-flex justify-content-between align-items-center">
+            <a class="brand-logo" href="index.php?route=dashboard">
                 <i class="fa-solid fa-house-chimney text-teal-main"></i>
                 <div>
                     <div class="brand-text">StayMate</div>
@@ -102,7 +102,11 @@ $durationDays = max(1, (int)round(($endTs - $startTs) / 86400));
                 </div>
             </a>
 
-            <div class="d-flex align-items-center gap-3 order-lg-3">
+            <div class="d-flex align-items-center gap-3">
+                <a href="index.php?route=contracts" class="btn btn-outline-secondary rounded-pill px-3 py-2 fw-bold shadow-sm" style="font-size: 0.88rem; border: 2px solid #cbd5e1; color: #334155;">
+                    <i class="fa-solid fa-arrow-left me-1 text-teal-main"></i> Quay lại Danh sách Hợp đồng
+                </a>
+
                 <div class="dropdown">
                     <div class="d-flex align-items-center gap-2 cursor-pointer" data-bs-toggle="dropdown" style="cursor: pointer;">
                         <div class="avatar-circle">AS</div>
@@ -126,24 +130,6 @@ $durationDays = max(1, (int)round(($endTs - $startTs) / 86400));
                         <li><a class="dropdown-item rounded-3 py-2 text-danger fw-bold" href="index.php?route=auth/logout"><i class="fa-solid fa-right-from-bracket me-2"></i> Đăng xuất</a></li>
                     </ul>
                 </div>
-
-                <button class="btn-hamburger d-lg-none" type="button" data-bs-toggle="collapse" data-bs-target="#staymateMobileNav">
-                    <i class="fa-solid fa-bars"></i>
-                </button>
-            </div>
-
-            <div class="collapse navbar-collapse mobile-nav-collapse order-lg-2" id="staymateMobileNav">
-                <ul class="nav nav-pills flex-nowrap me-auto">
-                    <li class="nav-item"><a class="nav-link" href="index.php?route=overview"><i class="fa-solid fa-border-all"></i> Tổng quan</a></li>
-                    <li class="nav-item"><a class="nav-link" href="index.php?route=rooms"><i class="fa-solid fa-bed"></i> Phòng trọ</a></li>
-                    <li class="nav-item"><a class="nav-link" href="index.php?route=tenants"><i class="fa-solid fa-users"></i> Khách thuê</a></li>
-                    <li class="nav-item"><a class="nav-link active" href="index.php?route=contracts"><i class="fa-solid fa-file-signature"></i> Hợp đồng</a></li>
-                    <li class="nav-item"><a class="nav-link" href="index.php?route=utilities"><i class="fa-solid fa-bolt"></i> Điện Nước</a></li>
-                    <li class="nav-item"><a class="nav-link" href="index.php?route=invoices"><i class="fa-solid fa-file-invoice-dollar"></i> Hóa đơn</a></li>
-                    <li class="nav-item"><a class="nav-link" href="index.php?route=accounts"><i class="fa-solid fa-user-gear"></i> Tài khoản</a></li>
-                    <li class="nav-item"><a class="nav-link" href="index.php?route=showcase" target="_blank"><i class="fa-regular fa-eye"></i> Xem phòng khách</a></li>
-                    <li class="nav-item"><a class="nav-link" href="index.php?route=tenant/portal" target="_blank"><i class="fa-solid fa-user-shield text-teal-main"></i> Cổng khách thuê</a></li>
-                </ul>
             </div>
         </div>
     </nav>
@@ -194,34 +180,7 @@ $durationDays = max(1, (int)round(($endTs - $startTs) / 86400));
             <div class="alert alert-success rounded-4 fw-bold d-print-none"><i class="fa-solid fa-circle-check me-2"></i><?= h($flash_success) ?></div>
         <?php endif; ?>
 
-        <!-- HỘP THÔNG TIN TÍCH HỢP PHÂN QUYỀN KHÁCH THUÊ (DÀNH CHO BẠN LÀM PHÂN QUYỀN) -->
-        <div class="integration-box mb-4 d-print-none">
-            <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-2">
-                <div class="fw-bold text-teal-main small text-uppercase">
-                    <i class="fa-solid fa-key me-1"></i> Thông Tin Tích Hợp Phân Quyền Khách Thuê (Dành cho thành viên phụ trách Phân quyền)
-                </div>
-                <span class="badge bg-white text-teal-main border border-teal-main px-3 py-1 fw-bold">ID Sẵn Sàng Liên Kết</span>
-            </div>
-            <div class="row g-2 small">
-                <div class="col-md-3">
-                    <span class="text-muted">Mã Khách Thuê (Tenant ID):</span>
-                    <strong class="text-dark bg-white px-2 py-0.5 rounded border d-block mt-1">
-                        ID: <span id="copy_tenant_id"><?= (int)$contract['tenant_id'] ?></span>
-                    </strong>
-                </div>
-                <div class="col-md-3">
-                    <span class="text-muted">Mã Hợp Đồng (Contract ID):</span>
-                    <strong class="text-dark bg-white px-2 py-0.5 rounded border d-block mt-1">
-                        ID: <span id="copy_contract_id"><?= (int)$contract['id'] ?></span>
-                    </strong>
-                </div>
-                <div class="col-md-6">
-                    <span class="text-muted">Đường dẫn xem HĐ cho Khách thuê:</span>
-                    <div class="input-group input-group-sm mt-1">
-                        <input type="text" class="form-control bg-white font-monospace" id="linkTenantView" value="<?= 'index.php?route=tenant/contract&id=' . (int)$contract['id'] ?>" readonly>
-                        <button class="btn btn-outline-secondary" type="button" onclick="navigator.clipboard.writeText(document.getElementById('linkTenantView').value); alert('Đã sao chép link xem hợp đồng!');">Copy Link</button>
-                    </div>
-                </div>
+        
                 <div class="col-12 mt-1">
                     <span class="text-muted">REST API JSON:</span>
                     <code class="d-block bg-white p-2 rounded border mt-1 user-select-all font-monospace">

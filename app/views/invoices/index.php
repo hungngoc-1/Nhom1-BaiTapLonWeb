@@ -115,9 +115,20 @@ $pendingInPeriod = array_values(array_filter($pendingView, fn($x) => $filters['p
 
         .rate-chip { display: inline-flex; align-items: center; gap: 6px; background: #fff; border: 2px solid #e2e8f0; border-radius: 50px; padding: 6px 14px; font-weight: 800; font-size: .8rem; color: #334155; }
 
-        .table-rounded-wrap { border-radius: 24px; border: 2px solid #e2e8f0; overflow: hidden; background: #fff; box-shadow: 0 6px 20px rgba(0,0,0,.03); }
+        .table-rounded-wrap, .table-responsive { 
+            border-radius: 24px; 
+            border: 2px solid #e2e8f0; 
+            overflow-x: auto; 
+            overflow-y: auto; 
+            max-height: 540px; 
+            background: #fff; 
+            box-shadow: 0 6px 20px rgba(0,0,0,.03); 
+        }
+        .table-rounded-wrap::-webkit-scrollbar, .table-responsive::-webkit-scrollbar { width: 6px; height: 6px; }
+        .table-rounded-wrap::-webkit-scrollbar-thumb, .table-responsive::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+        .table-rounded-wrap::-webkit-scrollbar-thumb:hover, .table-responsive::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
         .table-staymate { margin-bottom: 0; }
-        .table-staymate thead th { background: #f0fdfa; color: var(--teal-main); font-weight: 900; font-size: .72rem; text-transform: uppercase; letter-spacing: .4px; padding: 14px 10px; border-bottom: 2px solid #ccfbf1; white-space: nowrap; }
+        .table-staymate thead th { position: sticky; top: 0; z-index: 5; background: #f0fdfa !important; color: var(--teal-main); font-weight: 900; font-size: .72rem; text-transform: uppercase; letter-spacing: .4px; padding: 14px 10px; border-bottom: 2px solid #ccfbf1; white-space: nowrap; }
         .table-staymate tbody td { padding: 14px 10px; vertical-align: middle; border-bottom: 1px solid #f1f5f9; font-weight: 600; color: #1e293b; white-space: nowrap; }
         .table-staymate thead th:first-child, .table-staymate tbody td:first-child { padding-left: 18px; }
         .table-staymate tbody tr:hover { background: #f8fafc; }
@@ -210,7 +221,7 @@ $pendingInPeriod = array_values(array_filter($pendingView, fn($x) => $filters['p
                 <li class="nav-item"><a class="nav-link" href="index.php?route=contracts"><i class="fa-solid fa-file-signature"></i> Hợp đồng</a></li>
                 <li class="nav-item"><a class="nav-link" href="index.php?route=utilities"><i class="fa-solid fa-bolt"></i> Điện Nước</a></li>
                 <li class="nav-item"><a class="nav-link active" href="index.php?route=invoices"><i class="fa-solid fa-file-invoice-dollar"></i> Hóa đơn</a></li>
-                <li class="nav-item"><a class="nav-link" href="index.php?route=accounts"><i class="fa-solid fa-user-gear"></i> Tài khoản</a></li>
+                <?php if (($_SESSION['role'] ?? '') === 'admin'): ?><li class="nav-item"><a class="nav-link" href="index.php?route=accounts"><i class="fa-solid fa-user-gear"></i> Tài khoản</a></li><?php endif; ?>
                 <li class="nav-item"><a class="nav-link" href="index.php?route=showcase" target="_blank"><i class="fa-regular fa-eye"></i> Xem phòng khách</a></li>
                 <li class="nav-item"><a class="nav-link" href="index.php?route=tenant/portal" target="_blank"><i class="fa-solid fa-user-shield text-teal-main"></i> Cổng khách thuê</a></li>
             </ul>
@@ -451,107 +462,16 @@ $pendingInPeriod = array_values(array_filter($pendingView, fn($x) => $filters['p
 
                 <div class="tab-content" id="revenueSubTabsContent">
                     <!-- SUB-TAB 2: HÓA ĐƠN HÀNG THÁNG -->
-                    <div class="tab-pane fade <?= ($filters['subtab'] === 'deposit' || $filters['subtab'] === 'all') ? '' : 'show active' ?>" id="sub-monthly" role="tabpanel">
+                    <div class="tab-pane fade <?= ($filters['subtab'] === 'monthly' || empty($filters['subtab'])) ? 'show active' : '' ?>" id="sub-monthly" role="tabpanel">
                         <?php require __DIR__ . '/table_monthly_invoices.php'; ?>
                     </div>
 
-        <div class="table-rounded-wrap table-responsive">
-            <table class="table table-staymate align-middle">
-                <thead>
-                    <tr>
-                        <th>MÃ HĐ</th><th>PHÒNG &amp; KHÁCH</th><th>KỲ</th><th style="min-width:140px;">CỌC (TRẠNG THÁI)</th><th class="text-end">TIỀN PHÒNG</th><th class="text-end">ĐIỆN</th><th class="text-end">NƯỚC</th><th class="text-end">DỊCH VỤ</th><th class="text-end">TỔNG CỘNG</th><th>HẠN TT</th><th>TRẠNG THÁI</th><th class="text-end no-print">THAO TÁC</th>
-                    </tr>
-                </thead>
-                <tbody>
-                <?php if ($invoices): foreach ($invoices as $inv):
-                    $b = $inv['breakdown'];
-                    $eUsed = max(0, (int)($inv['electric_new'] ?? 0) - (int)($inv['electric_old'] ?? 0));
-                    $wUsed = max(0, (int)($inv['water_new'] ?? 0) - (int)($inv['water_old'] ?? 0));
-                ?>
-                    <tr>
-                        <td><a class="code-pill" href="index.php?route=invoices/detail&id=<?= (int)$inv['id'] ?>"><?= h($inv['code']) ?></a></td>
-                        <td>
-                            <div class="d-flex align-items-center gap-2">
-                                <span class="badge-room-pill"><?= h($inv['room_number']) ?></span>
-                                <div class="fw-bold tenant-name" style="font-size:0.92rem"><?= h($inv['tenant_name'] ?? 'Khách thuê') ?></div>
-                            </div>
-                        </td>
-                        <td><span class="badge-period-pill"><i class="fa-regular fa-calendar text-teal-main"></i><?= h($inv['month_year']) ?></span></td>
-                        <td>
-                            <div class="d-flex flex-column gap-1">
-                                <div>
-                                    <span class="badge rounded-pill <?= $inv['deposit_badge_class'] ?> fw-bold px-2 py-1">
-                                        <i class="<?= $inv['deposit_icon'] ?> me-1"></i> <?= h($inv['deposit_label']) ?>
-                                    </span>
-                                </div>
-                                <div class="small fw-bold text-muted" style="font-size:0.82rem">
-                                    <?= h($inv['deposit_sub']) ?>
-                                </div>
-                                <?php if (!empty($inv['contract_id_val'])): ?>
-                                    <button type="button" class="btn btn-link btn-sm p-0 text-decoration-none text-teal-main fw-bold no-print" style="font-size:.72rem;text-align:left"
-                                            onclick="openDepositModal(<?= (int)$inv['contract_id_val'] ?>, <?= h(json_encode($inv['room_number'])) ?>, <?= h(json_encode($inv['tenant_name'] ?? '')) ?>, <?= (float)$inv['deposit_amount'] ?>, '<?= h($inv['deposit_key']) ?>')">
-                                        <i class="fa-solid fa-pen-to-square me-1"></i> Sửa cọc
-                                    </button>
-                                <?php endif; ?>
-                            </div>
-                        </td>
-                        <td class="text-end"><?= money($b['room']) ?></td>
-                        <td class="text-end"><?= money($b['elec']) ?><div class="sub-note"><?= $eUsed ?> kWh</div></td>
-                        <td class="text-end"><?= money($b['water']) ?><div class="sub-note"><?= $wUsed ?> m³</div></td>
-                        <td class="text-end"><?= money($b['other']) ?></td>
-                        <td class="text-end" style="font-weight:900;color:var(--teal-main);font-size:.98rem"><?= money($inv['total_amount']) ?></td>
-                        <td><span class="<?= $inv['is_overdue'] ? 'text-danger' : '' ?> fw-bold"><?= date('d/m/Y', strtotime($inv['due_date'])) ?></span></td>
-                        <td>
-                            <?php if ($inv['status'] === 'paid'): ?>
-                                <span class="st-pill st-paid"><i class="fa-solid fa-circle-check"></i> Đã thu</span>
-                                <div class="sub-note mt-1"><?= $inv['paid_at'] ? date('d/m/Y', strtotime($inv['paid_at'])) : '' ?> · <?= h($methods[$inv['payment_method'] ?? ''] ?? '') ?></div>
-                            <?php elseif ($inv['is_overdue']): ?>
-                                <span class="st-pill st-overdue"><i class="fa-solid fa-triangle-exclamation"></i> Quá hạn</span>
-                            <?php else: ?>
-                                <span class="st-pill st-unpaid"><i class="fa-regular fa-clock"></i> Chưa thu</span>
-                            <?php endif; ?>
-                        </td>
-                        <td class="text-end no-print">
-                            <div class="d-inline-flex gap-2">
-                                <a class="btn-icon-circle btn-icon-view" title="Xem / In hóa đơn" href="index.php?route=invoices/detail&id=<?= (int)$inv['id'] ?>"><i class="fa-solid fa-eye"></i></a>
-                                <?php if ($inv['status'] === 'unpaid'): ?>
-                                    <button type="button" class="btn-icon-circle btn-icon-pay" title="Xác nhận thu tiền"
-                                        onclick="openPayModal(<?= (int)$inv['id'] ?>, <?= h(json_encode($inv['code'])) ?>, <?= h(json_encode($inv['room_number'])) ?>, <?= h(json_encode($inv['tenant_name'] ?? '')) ?>, <?= (float)$inv['total_amount'] ?>)"><i class="fa-solid fa-money-bill-wave"></i></button>
-                                    <form method="POST" action="index.php?route=invoices/delete" class="d-inline" onsubmit="return confirm('Bạn có chắc chắn muốn xóa hóa đơn <?= h($inv['code']) ?> không?');">
-                                        <input type="hidden" name="csrf_token" value="<?= h($csrf) ?>">
-                                        <input type="hidden" name="id" value="<?= (int)$inv['id'] ?>">
-                                        <input type="hidden" name="return_query" value="<?= h($returnQuery) ?>">
-                                        <button type="submit" class="btn-icon-circle btn-icon-del" title="Xóa hóa đơn"><i class="fa-solid fa-trash"></i></button>
-                                    </form>
-                                <?php else: ?>
-                                    <span class="btn-icon-circle btn-icon-lock" title="Đã thu tiền – hóa đơn bị khóa"><i class="fa-solid fa-lock"></i></span>
-                                <?php endif; ?>
-                            </div>
-                        </td>
-                    </tr>
-                <?php endforeach; else: ?>
-                    <tr><td colspan="12" class="text-center py-5 text-muted">
-                        <i class="fa-solid fa-folder-open fs-1 text-teal-main opacity-25 mb-3 d-block"></i>
-                        <p class="fw-bold mb-2">Chưa có hóa đơn nào phù hợp bộ lọc.</p>
-                        <button type="button" class="btn-teal-custom" data-bs-toggle="modal" data-bs-target="#createModal"><i class="fa-solid fa-plus"></i> Lập hóa đơn</button>
-                    </td></tr>
-                <?php endif; ?>
-                </tbody>
-                <?php if ($invoices): ?>
-                <tfoot>
-                    <tr style="background:#f8fafc">
-                        <td colspan="8" class="text-end fw-black" style="font-weight:900">TỔNG CỘNG (<?= count($invoices) ?> hóa đơn):</td>
-                        <td class="text-end" style="font-weight:900;color:var(--teal-main)"><?= money($stats['total']) ?></td>
-                        <td colspan="3" class="small fw-bold">Đã thu <span class="text-success"><?= money($stats['paid']) ?></span> · Còn nợ <span class="text-danger"><?= money($stats['unpaid']) ?></span></td>
-                    </tr>
-                </tfoot>
-                <?php endif; ?>
-            </table>
-        </div>
-    </div>
-    </div> <!-- END TAB 1 -->
+                    <!-- SUB-TAB 1: TIỀN CỌC & THU PHÒNG THÁNG ĐẦU -->
+                    <div class="tab-pane fade <?= ($filters['subtab'] === 'deposit') ? 'show active' : '' ?>" id="sub-deposit" role="tabpanel">
+                        <?php require __DIR__ . '/table_deposit_first_month.php'; ?>
+                    </div>
 
-                    <!-- SUB-TAB XEM CẢ 2 BẢNG ĐỒNG THỜI -->
+                    <!-- SUB-TAB 3: XEM CẢ 2 BẢNG ĐỒNG THỜI -->
                     <div class="tab-pane fade <?= ($filters['subtab'] === 'all') ? 'show active' : '' ?>" id="sub-both" role="tabpanel">
                         <div class="mb-5 pb-4 border-bottom">
                             <h5 class="fw-black text-dark mb-3" style="font-weight:900">

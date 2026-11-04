@@ -85,8 +85,18 @@ $adminName = $_SESSION['full_name'] ?? 'Quản trị viên Hệ thống';
         .filter-control { border-radius: 50px; border: 2px solid #e2e8f0; padding: 9px 18px; font-weight: 700; font-size: .88rem; color: #334155; background-color: #f8fafc; }
         select.filter-control { padding-right: 36px !important; }
         .filter-control:focus { background-color: #fff; border-color: var(--teal-main); box-shadow: 0 0 0 4px rgba(48,143,134,.15); outline: none; }
-        .table-rounded-wrap { border-radius: 24px; border: 2px solid #e2e8f0; overflow: hidden; background: #fff; }
-        .table-staymate thead th { background: #f0fdfa; color: var(--teal-main); font-weight: 900; font-size: .78rem; text-transform: uppercase; padding: 15px 18px; border-bottom: 2px solid #ccfbf1; }
+        .table-rounded-wrap, .table-responsive { 
+            border-radius: 24px; 
+            border: 2px solid #e2e8f0; 
+            overflow-x: auto; 
+            overflow-y: auto; 
+            max-height: 540px; 
+            background: #fff; 
+        }
+        .table-rounded-wrap::-webkit-scrollbar, .table-responsive::-webkit-scrollbar { width: 6px; height: 6px; }
+        .table-rounded-wrap::-webkit-scrollbar-thumb, .table-responsive::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+        .table-rounded-wrap::-webkit-scrollbar-thumb:hover, .table-responsive::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+        .table-staymate thead th { position: sticky; top: 0; z-index: 5; background: #f0fdfa !important; color: var(--teal-main); font-weight: 900; font-size: .78rem; text-transform: uppercase; padding: 15px 18px; border-bottom: 2px solid #ccfbf1; }
         .table-staymate tbody td { padding: 15px 18px; vertical-align: middle; border-bottom: 1px solid #f1f5f9; font-weight: 600; }
         .table-staymate tbody tr:hover { background: #f8fafc; }
         .badge-room-pill { background: var(--teal-main); color: #fff; padding: 5px 14px; border-radius: 50px; font-weight: 800; font-size: .8rem; text-decoration: none; display: inline-flex; align-items: center; gap: 5px; }
@@ -154,7 +164,7 @@ $adminName = $_SESSION['full_name'] ?? 'Quản trị viên Hệ thống';
                 <li class="nav-item"><a class="nav-link" href="index.php?route=contracts"><i class="fa-solid fa-file-signature"></i> Hợp đồng</a></li>
                 <li class="nav-item"><a class="nav-link" href="index.php?route=utilities"><i class="fa-solid fa-bolt"></i> Điện Nước</a></li>
                 <li class="nav-item"><a class="nav-link" href="index.php?route=invoices"><i class="fa-solid fa-file-invoice-dollar"></i> Hóa đơn</a></li>
-                <li class="nav-item"><a class="nav-link" href="index.php?route=accounts"><i class="fa-solid fa-user-gear"></i> Tài khoản</a></li>
+                <?php if (($_SESSION['role'] ?? '') === 'admin'): ?><li class="nav-item"><a class="nav-link" href="index.php?route=accounts"><i class="fa-solid fa-user-gear"></i> Tài khoản</a></li><?php endif; ?>
                 <li class="nav-item"><a class="nav-link" href="index.php?route=showcase" target="_blank"><i class="fa-regular fa-eye"></i> Xem phòng khách</a></li>
                 <li class="nav-item"><a class="nav-link" href="index.php?route=tenant/portal" target="_blank"><i class="fa-solid fa-user-shield text-teal-main"></i> Cổng khách thuê</a></li>
             </ul>

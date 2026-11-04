@@ -900,7 +900,19 @@ try {
         }
 
         /* ================= BẢNG DỮ LIỆU BO GÓC SÂU ================= */
-        .table-rounded-wrap {
+        .table-rounded-wrap, .table-responsive { 
+            border-radius: 24px; 
+            border: 2px solid #e2e8f0; 
+            overflow-x: auto; 
+            overflow-y: auto; 
+            max-height: 540px; 
+            background: #fff; 
+        }
+        .table-rounded-wrap::-webkit-scrollbar, .table-responsive::-webkit-scrollbar { width: 6px; height: 6px; }
+        .table-rounded-wrap::-webkit-scrollbar-thumb, .table-responsive::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+        .table-rounded-wrap::-webkit-scrollbar-thumb:hover, .table-responsive::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+        .table-staymate thead th { position: sticky; top: 0; z-index: 5; background: #f0fdfa !important; }
+        .table-rounded-wrap-old {
             border-radius: 24px;
             border: 2px solid #e2e8f0;
             overflow: hidden;
@@ -1137,7 +1149,7 @@ try {
                 <li class="nav-item"><a class="nav-link" href="index.php?route=contracts"><i class="fa-solid fa-file-signature"></i> Hợp đồng</a></li>
                 <li class="nav-item"><a class="nav-link active" href="index.php?route=utilities"><i class="fa-solid fa-bolt"></i> Điện Nước</a></li>
                 <li class="nav-item"><a class="nav-link" href="index.php?route=invoices"><i class="fa-solid fa-file-invoice-dollar"></i> Hóa đơn</a></li>
-                <li class="nav-item"><a class="nav-link" href="index.php?route=accounts"><i class="fa-solid fa-user-gear"></i> Tài khoản</a></li>
+                <?php if (($_SESSION['role'] ?? '') === 'admin'): ?><li class="nav-item"><a class="nav-link" href="index.php?route=accounts"><i class="fa-solid fa-user-gear"></i> Tài khoản</a></li><?php endif; ?>
                 <li class="nav-item"><a class="nav-link" href="index.php?route=showcase" target="_blank"><i class="fa-regular fa-eye"></i> Xem phòng khách</a></li>
                 <li class="nav-item"><a class="nav-link" href="index.php?route=tenant/portal" target="_blank"><i class="fa-solid fa-user-shield text-teal-main"></i> Cổng khách thuê</a></li>
             </ul>

@@ -124,7 +124,18 @@ $sixMonthsEndDay = date('Y-m-d', strtotime('+6 months'));
         .form-control, .form-select { border-radius: 14px; border: 1.5px solid #e2e8f0; padding: 9px 14px; font-weight: 600; font-size: 0.88rem; }
         .form-control:focus, .form-select:focus { border-color: var(--teal-main); box-shadow: 0 0 0 3px rgba(48, 143, 134, 0.15); }
 
-        .table-custom thead th { background-color: #f0fdfa; color: var(--teal-main); font-size: 0.78rem; font-weight: 900; text-transform: uppercase; padding: 14px 16px; border-bottom: 2px solid #ccfbf1; }
+        .table-responsive { 
+            border-radius: 24px; 
+            border: 2px solid #e2e8f0; 
+            overflow-x: auto; 
+            overflow-y: auto; 
+            max-height: 540px; 
+            background: #fff; 
+        }
+        .table-responsive::-webkit-scrollbar { width: 6px; height: 6px; }
+        .table-responsive::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+        .table-responsive::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+        .table-custom thead th { position: sticky; top: 0; z-index: 5; background-color: #f0fdfa !important; color: var(--teal-main); font-size: 0.78rem; font-weight: 900; text-transform: uppercase; padding: 14px 16px; border-bottom: 2px solid #ccfbf1; }
         .table-custom tbody td { padding: 15px 16px; vertical-align: middle; border-bottom: 1px solid #f1f5f9; font-weight: 600; }
         .table-custom tbody tr:hover { background-color: #f8fafc; }
 
@@ -223,7 +234,7 @@ $sixMonthsEndDay = date('Y-m-d', strtotime('+6 months'));
                     <li class="nav-item"><a class="nav-link active" href="index.php?route=contracts"><i class="fa-solid fa-file-signature"></i> Hợp đồng</a></li>
                     <li class="nav-item"><a class="nav-link" href="index.php?route=utilities"><i class="fa-solid fa-bolt"></i> Điện Nước</a></li>
                     <li class="nav-item"><a class="nav-link" href="index.php?route=invoices"><i class="fa-solid fa-file-invoice-dollar"></i> Hóa đơn</a></li>
-                    <li class="nav-item"><a class="nav-link" href="index.php?route=accounts"><i class="fa-solid fa-user-gear"></i> Tài khoản</a></li>
+                    <?php if (($_SESSION['role'] ?? '') === 'admin'): ?><li class="nav-item"><a class="nav-link" href="index.php?route=accounts"><i class="fa-solid fa-user-gear"></i> Tài khoản</a></li><?php endif; ?>
                     <li class="nav-item"><a class="nav-link" href="index.php?route=showcase" target="_blank"><i class="fa-regular fa-eye"></i> Xem phòng khách</a></li>
                     <li class="nav-item"><a class="nav-link" href="index.php?route=tenant/portal" target="_blank"><i class="fa-solid fa-user-shield text-teal-main"></i> Cổng khách thuê</a></li>
                 </ul>

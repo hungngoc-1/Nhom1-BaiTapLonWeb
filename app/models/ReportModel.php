@@ -147,7 +147,7 @@ class ReportModel {
                     'manager_acc' => 'quanly_a',
                     'manager_phone' => '0912 345 678',
                     'manager_email' => 'quanly_a@nhatro.com',
-                    'room_prefix' => 'P1',
+                    'room_prefix' => 'A',
                     'room_types'  => ['Phòng Đơn Tiêu Chuẩn', 'Phòng Ban Công Thoáng Mát'],
                     'theme'       => 'teal'
                 ],
@@ -160,7 +160,7 @@ class ReportModel {
                     'manager_acc' => 'quanly_b',
                     'manager_phone' => '0987 654 321',
                     'manager_email' => 'quanly_b@nhatro.com',
-                    'room_prefix' => 'P2',
+                    'room_prefix' => 'B',
                     'room_types'  => ['Phòng Studio Full Nội Thất', 'Phòng Ban Công Thoáng Mát'],
                     'theme'       => 'blue'
                 ],
@@ -173,7 +173,7 @@ class ReportModel {
                     'manager_acc' => 'quanly_c',
                     'manager_phone' => '0934 567 890',
                     'manager_email' => 'quanly_c@nhatro.com',
-                    'room_prefix' => 'P3',
+                    'room_prefix' => 'C',
                     'room_types'  => ['Phòng Studio Full Nội Thất', 'Phòng Duplex Gác Lửng', 'Căn Hộ 1 Phòng Ngủ (1PN)'],
                     'theme'       => 'yellow'
                 ]
@@ -198,7 +198,7 @@ class ReportModel {
             return array_keys($allBlds);
         }
 
-        if ($role === 'landlord') {
+        if (in_array($role, ['landlord', 'manager'], true)) {
             $allowed = [];
             foreach ($allBlds as $bId => $bInfo) {
                 $acc = $bInfo['manager_acc'] ?? '';
@@ -292,15 +292,12 @@ class ReportModel {
         $configs = $this->getBuildingsConfig();
         if (isset($configs[$buildingId])) {
             $pfx = strtoupper(trim($configs[$buildingId]['room_prefix'] ?? ''));
-            if ($pfx === 'A') return 'P1';
-            if ($pfx === 'B') return 'P2';
-            if ($pfx === 'C') return 'P3';
-            return $pfx;
+            if ($pfx !== '') return $pfx;
         }
-        if ($buildingId === 'A') return 'P1';
-        if ($buildingId === 'B') return 'P2';
-        if ($buildingId === 'C') return 'P3';
-        return '';
+        if ($buildingId === 'A' || $buildingId === '1') return 'A';
+        if ($buildingId === 'B' || $buildingId === '2') return 'B';
+        if ($buildingId === 'C' || $buildingId === '3') return 'C';
+        return $buildingId;
     }
 
     public function getRoomPrefixes(string $buildingId): array {
@@ -616,39 +613,66 @@ class ReportModel {
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
-    // 8. Ghi nhận & Lấy danh sách Nhật ký Hoạt động (chỉ ghi khi có thay đổi dữ liệu, ghi rõ tài khoản thực hiện)
-    public function logActivity(string $title, string $type = 'info'): void {
+    // 8. Ghi nhận & Lấy danh sách Nhật ký Hoạt động (lưu SQL, tự động lọc/xóa nếu quá 30 ngày)
+    public function logActivity(string $title, string $type = 'info', ?string $buildingId = null): void {
         if (session_status() === PHP_SESSION_NONE) {
             session_start();
-        }
-        if (!isset($_SESSION['activity_logs']) || !is_array($_SESSION['activity_logs'])) {
-            $_SESSION['activity_logs'] = [];
         }
         $userFullName = $_SESSION['full_name'] ?? 'Quản trị viên';
         $userRole     = $_SESSION['role'] ?? 'admin';
         $userName     = $_SESSION['username'] ?? 'admin';
+        if ($buildingId === null) {
+            $buildingId = $_SESSION['building_id'] ?? 'all';
+        }
 
-        array_unshift($_SESSION['activity_logs'], [
-            'id'       => uniqid('act_'),
-            'user'     => $userFullName,
-            'username' => $userName,
-            'role'     => $userRole,
-            'title'    => $title,
-            'time'     => date('H:i:s - d/m/Y'),
-            'type'     => $type
-        ]);
-        // Giữ tối đa 50 thao tác gần nhất trong session
-        $_SESSION['activity_logs'] = array_slice($_SESSION['activity_logs'], 0, 50);
+        try {
+            $stmt = $this->conn->prepare("
+                INSERT INTO activity_logs (user_name, role, building_id, action_type, title, created_at)
+                VALUES (:u, :r, :b, :t, :tit, NOW())
+            ");
+            $stmt->execute([
+                ':u'   => $userFullName,
+                ':r'   => $userRole,
+                ':b'   => $buildingId,
+                ':t'   => $type,
+                ':tit' => $title
+            ]);
+        } catch (Exception $e) {}
     }
 
     public function getNotifications(string $buildingId = 'all'): array {
-        if (session_status() === PHP_SESSION_NONE) {
-            session_start();
+        try {
+            // Tự động xóa các hoạt động quá 30 ngày theo đúng yêu cầu
+            $this->conn->exec("DELETE FROM activity_logs WHERE created_at < DATE_SUB(NOW(), INTERVAL 30 DAY)");
+
+            $sql = "SELECT * FROM activity_logs WHERE 1=1";
+            $params = [];
+            if ($buildingId !== '' && $buildingId !== 'all') {
+                $sql .= " AND (building_id = :bld OR building_id = 'all' OR building_id IS NULL)";
+                $params[':bld'] = $buildingId;
+            }
+            $sql .= " ORDER BY created_at DESC LIMIT 50";
+
+            $stmt = $this->conn->prepare($sql);
+            $stmt->execute($params);
+            $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+            $out = [];
+            foreach ($rows as $r) {
+                $out[] = [
+                    'id'       => $r['id'],
+                    'user'     => $r['user_name'],
+                    'username' => $r['user_name'],
+                    'role'     => $r['role'],
+                    'title'    => $r['title'],
+                    'time'     => date('H:i - d/m/Y', strtotime($r['created_at'])),
+                    'type'     => $r['action_type']
+                ];
+            }
+            return $out;
+        } catch (Exception $e) {
+            return [];
         }
-        if (!isset($_SESSION['activity_logs']) || !is_array($_SESSION['activity_logs'])) {
-            $_SESSION['activity_logs'] = [];
-        }
-        return $_SESSION['activity_logs'];
     }
 
     // 9. Xác nhận Thu tiền Hóa đơn trên SQL (`status = 'paid'`)

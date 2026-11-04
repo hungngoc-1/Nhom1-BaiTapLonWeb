@@ -237,8 +237,9 @@ if (!empty($filterBuilding) && $filterBuilding !== 'all' && isset($buildings[$fi
 <body>
 
     <!-- Navbar -->
-    <nav class="navbar navbar-expand-lg navbar-custom">
+    <nav class="navbar navbar-expand-lg navbar-custom sticky-top">
         <div class="container-fluid px-4 px-xl-5 d-flex justify-content-between align-items-center">
+            <!-- 1. LOGO STAYMATE -->
             <a class="brand-logo" href="index.php?route=dashboard">
                 <i class="fa-solid fa-house-chimney text-teal-main"></i>
                 <div>
@@ -247,41 +248,20 @@ if (!empty($filterBuilding) && $filterBuilding !== 'all' && isset($buildings[$fi
                 </div>
             </a>
 
-            <button class="btn-hamburger d-lg-none" type="button" data-bs-toggle="collapse" data-bs-target="#staymateNavbarNav" aria-controls="staymateNavbarNav" aria-expanded="false" aria-label="Mở Menu"><i class="fa-solid fa-bars"></i></button>
-            <div class="collapse navbar-collapse mobile-nav-collapse" id="staymateNavbarNav">
-                <ul class="nav nav-pills flex-nowrap me-auto">
-                    <li class="nav-item"><a class="nav-link active" href="index.php?route=overview"><i class="fa-solid fa-border-all"></i> Tổng quan</a></li>
-                    <li class="nav-item"><a class="nav-link" href="index.php?route=rooms"><i class="fa-solid fa-bed"></i> Phòng trọ</a></li>
-                    <li class="nav-item"><a class="nav-link" href="index.php?route=tenants"><i class="fa-solid fa-users"></i> Khách thuê</a></li>
-                    <li class="nav-item"><a class="nav-link" href="index.php?route=contracts"><i class="fa-solid fa-file-signature"></i> Hợp đồng</a></li>
-                    <li class="nav-item"><a class="nav-link" href="index.php?route=utilities"><i class="fa-solid fa-bolt"></i> Điện Nước</a></li>
-                    <li class="nav-item"><a class="nav-link" href="index.php?route=invoices"><i class="fa-solid fa-file-invoice-dollar"></i> Hóa đơn</a></li>
-                    <li class="nav-item"><a class="nav-link" href="index.php?route=accounts"><i class="fa-solid fa-user-gear"></i> Tài khoản</a></li>
-                    <li class="nav-item"><a class="nav-link" href="index.php?route=showcase" target="_blank"><i class="fa-regular fa-eye"></i> Xem phòng khách</a></li>
-                    <li class="nav-item"><a class="nav-link" href="index.php?route=tenant/portal" target="_blank"><i class="fa-solid fa-user-shield text-teal-main"></i> Cổng khách thuê</a></li>
-                </ul>
-            </div>
-
-            
-            <div class="d-flex align-items-center gap-4">
-                <!-- Dropdown Tài khoản -->
+            <!-- 2. GÓC PHẢI: THÔNG TIN TÀI KHOẢN & ĐĂNG XUẤT (THEO YÊU CẦU: TRANG TÒA NHÀ CHỈ HIỂN THỊ TK VÀ ĐĂNG XUẤT) -->
+            <div class="d-flex align-items-center gap-3">
                 <div class="dropdown">
-                    <div class="d-flex align-items-center gap-2 cursor-pointer" data-bs-toggle="dropdown" aria-expanded="false">
-                        <div class="rounded-circle text-white d-flex align-items-center justify-content-center fw-bold shadow-sm" style="width:40px; height:40px; background-color: var(--teal-main); border: 2px solid #ffffff;">AS</div>
+                    <div class="d-flex align-items-center gap-2 cursor-pointer" data-bs-toggle="dropdown" style="cursor: pointer;">
+                        <div class="avatar-circle">AS</div>
                         <div class="text-start d-none d-sm-block lh-sm">
-                            <div class="fw-bold text-dark" style="font-size: 0.85rem;"><?= htmlspecialchars($userFullName) ?> <i class="fa-solid fa-angle-down ms-1 text-muted fs-6"></i></div>
-                            <div class="text-muted text-capitalize" style="font-size: 0.75rem;"><?= htmlspecialchars($userRole) ?></div>
+                            <div class="fw-bold text-dark" style="font-size: 0.9rem;"><?= htmlspecialchars($_SESSION['full_name'] ?? $userFullName ?? 'Quản trị viên') ?> <i class="fa-solid fa-angle-down ms-1 text-muted fs-6"></i></div>
+                            <div class="text-muted text-capitalize" style="font-size: 0.75rem;"><?= htmlspecialchars($_SESSION['role'] ?? $userRole ?? 'admin') ?></div>
                         </div>
                     </div>
                     <ul class="dropdown-menu dropdown-menu-end shadow border-0 rounded-4 mt-2 p-2">
                         <li>
-                            <a class="dropdown-item rounded-3 py-2 fw-bold text-teal-main" href="index.php?route=tenant/portal" target="_blank">
-                                <i class="fa-solid fa-user-shield me-2 text-teal-main"></i> Cổng khách thuê
-                            </a>
-                        </li>
-                        <li>
                             <button type="button" class="dropdown-item rounded-3 py-2 fw-bold" data-bs-toggle="modal" data-bs-target="#profileModal">
-                                <i class="fa-solid fa-id-card me-2 text-teal-main"></i> Thông tin tài khoản
+                                <i class="fa-solid fa-id-card me-2 text-teal-main" style="color:#308f86;"></i> Thông tin tài khoản
                             </button>
                         </li>
                         <li>
@@ -479,12 +459,14 @@ if (!empty($filterBuilding) && $filterBuilding !== 'all' && isset($buildings[$fi
                         <i class="fa-solid fa-rotate-left me-1"></i> Hiện Tất cả <?= $totalBuildingsCount ?> Tòa
                     </a>
                 <?php endif; ?>
+                <?php if (($userRole ?? '') === 'admin'): ?>
                 <button type="button" class="btn btn-outline-teal-custom" data-bs-toggle="modal" data-bs-target="#manageAccountsModal" style="border: 2px solid var(--teal-main); color: var(--teal-main); font-weight: 800; border-radius: 50px; padding: 10px 22px; background: #ffffff; display: inline-flex; align-items: center; transition: 0.2s;">
                     <i class="fa-solid fa-users-gear me-2"></i> Quản lý Tài khoản
                 </button>
                 <button type="button" class="btn btn-teal-custom" data-bs-toggle="modal" data-bs-target="#addBuildingModal">
                     <i class="fa-solid fa-plus me-1"></i> Thêm Tòa nhà
                 </button>
+                <?php endif; ?>
             </div>
         </div>
 
@@ -557,6 +539,12 @@ if (!empty($filterBuilding) && $filterBuilding !== 'all' && isset($buildings[$fi
                             </ul>
                         </div>
                         
+                        <div class="mb-3 position-relative z-2">
+                            <a href="index.php?route=overview&building_id=<?= urlencode((string)$bId) ?>" class="btn btn-enter-overview w-100 rounded-pill py-2 fw-bold text-white shadow-sm d-flex align-items-center justify-content-center gap-2" style="background:#308f86; font-size:0.9rem; transition:0.2s;">
+                                <i class="fa-solid fa-chart-line"></i>
+                                <span>Vào Quản Lý &amp; Tổng Quan Tòa Này</span>
+                            </a>
+                        </div>
                         <h3 class="bld-title position-relative z-2"><?= htmlspecialchars($bld['name']) ?></h3>
                         <div class="bld-address position-relative z-2">
                             <i class="fa-solid fa-location-dot" style="color:var(--teal-main);"></i> <?= htmlspecialchars($bld['address']) ?>
