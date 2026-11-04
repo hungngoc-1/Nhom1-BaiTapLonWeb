@@ -330,17 +330,17 @@ $adminName = $_SESSION['full_name'] ?? 'Quản trị viên Hệ thống';
                         </div>
                         <div class="col-md-6">
                             <label class="form-label fw-bold small text-dark">Số CCCD / CMND (9-12 số) <span class="text-danger">*</span></label>
-                            <input type="text" name="cccd" class="form-control rounded-3 py-2" placeholder="VD: 037201091234" maxlength="20" required>
+                            <input type="text" name="cccd" class="form-control rounded-3 py-2" placeholder="VD: 037201091234" pattern="[0-9]{9,12}" minlength="9" maxlength="12" inputmode="numeric" oninput="this.value = this.value.replace(/[^0-9]/g, '')" title="Số CCCD / CMND phải là dãy 9 đến 12 chữ số" required>
                         </div>
 
                         <!-- Hàng 2: SĐT, Ngày sinh, Giới tính -->
                         <div class="col-md-5">
-                            <label class="form-label fw-bold small text-dark">Số điện thoại <span class="text-danger">*</span> <span class="text-teal-main fw-normal" style="font-size:0.75rem;">(Là tên tài khoản, MK: 123)</span></label>
-                            <input type="text" name="phone" class="form-control rounded-3 py-2" placeholder="VD: 0937001122" required>
+                            <label class="form-label fw-bold small text-dark">Số điện thoại <span class="text-danger">*</span> <span class="text-teal-main fw-normal" style="font-size:0.75rem;">(Tài khoản đăng nhập, MK: 123)</span></label>
+                            <input type="tel" name="phone" class="form-control rounded-3 py-2" placeholder="VD: 0937001122" pattern="0[0-9]{9}" minlength="10" maxlength="10" inputmode="numeric" oninput="this.value = this.value.replace(/[^0-9]/g, '')" title="Số điện thoại phải gồm đúng 10 chữ số (bắt đầu bằng số 0)" required>
                         </div>
                         <div class="col-md-4">
                             <label class="form-label fw-bold small text-dark">Ngày sinh</label>
-                            <input type="date" name="birthday" class="form-control rounded-3 py-2" value="VD: 2001-06-15">
+                            <input type="date" name="birthday" class="form-control rounded-3 py-2" max="<?= date('Y-m-d') ?>">
                         </div>
                         <div class="col-md-3">
                             <label class="form-label fw-bold small text-dark">Giới tính</label>
@@ -354,7 +354,7 @@ $adminName = $_SESSION['full_name'] ?? 'Quản trị viên Hệ thống';
                         <!-- Hàng 3: Email & Nghề nghiệp -->
                         <div class="col-md-6">
                             <label class="form-label fw-bold small text-dark">Email</label>
-                            <input type="email" name="email" class="form-control rounded-3 py-2" placeholder="VD: nguyendt@gmail.com">
+                            <input type="email" name="email" class="form-control rounded-3 py-2" placeholder="VD: nguyendt@gmail.com" pattern="[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}" title="Vui lòng nhập định dạng email hợp lệ (VD: ten@gmail.com)">
                         </div>
                         <div class="col-md-6">
                             <label class="form-label fw-bold small text-dark">Nghề nghiệp / Nơi công tác</label>
@@ -368,7 +368,7 @@ $adminName = $_SESSION['full_name'] ?? 'Quản trị viên Hệ thống';
                         </div>
                         <div class="col-md-4">
                             <label class="form-label fw-bold small text-dark">Liên hệ khẩn cấp</label>
-                            <input type="text" name="emergency_contact" class="form-control rounded-3 py-2" placeholder="VD: 0904000111">
+                            <input type="tel" name="emergency_contact" class="form-control rounded-3 py-2" placeholder="VD: 0904000111" pattern="0[0-9]{9}" minlength="10" maxlength="10" inputmode="numeric" oninput="this.value = this.value.replace(/[^0-9]/g, '')" title="Số liên hệ khẩn cấp phải gồm đúng 10 chữ số (bắt đầu bằng số 0)">
                         </div>
                         <div class="col-md-3">
                             <label class="form-label fw-bold small text-dark">Trạng thái</label>
@@ -425,7 +425,7 @@ $adminName = $_SESSION['full_name'] ?? 'Quản trị viên Hệ thống';
                                     </div>
                                     <div class="col-md-6">
                                         <label class="form-label small fw-bold text-dark">Số điện thoại bạn cùng phòng</label>
-                                        <input type="text" name="roommate_phone" class="form-control rounded-3 py-2" placeholder="VD: 0987654321">
+                                        <input type="tel" name="roommate_phone" class="form-control rounded-3 py-2" placeholder="VD: 0987654321" pattern="0[0-9]{9}" minlength="10" maxlength="10" inputmode="numeric" oninput="this.value = this.value.replace(/[^0-9]/g, '')" title="Số điện thoại bạn cùng phòng phải gồm đúng 10 chữ số (bắt đầu bằng số 0)">
                                     </div>
                                 </div>
                             </div>
@@ -470,17 +470,17 @@ $adminName = $_SESSION['full_name'] ?? 'Quản trị viên Hệ thống';
                             </div>
                             <div class="col-md-6">
                                 <label class="form-label fw-bold small text-dark">Số CCCD / CMND (9-12 số) <span class="text-danger">*</span></label>
-                                <input type="text" name="cccd" class="form-control rounded-3 py-2" value="<?= h($t['cccd'] ?? '037201091234') ?>" required>
+                                <input type="text" name="cccd" class="form-control rounded-3 py-2" value="<?= h($t['cccd'] ?? '') ?>" placeholder="VD: 037201091234" pattern="[0-9]{9,12}" minlength="9" maxlength="12" inputmode="numeric" oninput="this.value = this.value.replace(/[^0-9]/g, '')" title="Số CCCD / CMND phải là dãy 9 đến 12 chữ số" required>
                             </div>
 
                             <!-- Hàng 2: SĐT, Ngày sinh, Giới tính -->
                             <div class="col-md-5">
                                 <label class="form-label fw-bold small text-dark">Số điện thoại <span class="text-danger">*</span> <span class="text-teal-main fw-normal" style="font-size:0.75rem;">(Tài khoản đăng nhập, MK: 123)</span></label>
-                                <input type="text" name="phone" class="form-control rounded-3 py-2" value="<?= h($t['phone']) ?>" required>
+                                <input type="tel" name="phone" class="form-control rounded-3 py-2" value="<?= h($t['phone']) ?>" pattern="0[0-9]{9}" minlength="10" maxlength="10" inputmode="numeric" oninput="this.value = this.value.replace(/[^0-9]/g, '')" title="Số điện thoại phải gồm đúng 10 chữ số (bắt đầu bằng số 0)" required>
                             </div>
                             <div class="col-md-4">
                                 <label class="form-label fw-bold small text-dark">Ngày sinh</label>
-                                <input type="date" name="birthday" class="form-control rounded-3 py-2" value="<?= h($t['birthday'] ?? '2001-06-15') ?>">
+                                <input type="date" name="birthday" class="form-control rounded-3 py-2" value="<?= h($t['birthday'] ?? '') ?>" max="<?= date('Y-m-d') ?>">
                             </div>
                             <div class="col-md-3">
                                 <label class="form-label fw-bold small text-dark">Giới tính</label>
@@ -494,21 +494,21 @@ $adminName = $_SESSION['full_name'] ?? 'Quản trị viên Hệ thống';
                             <!-- Hàng 3: Email & Nghề nghiệp -->
                             <div class="col-md-6">
                                 <label class="form-label fw-bold small text-dark">Email</label>
-                                <input type="email" name="email" class="form-control rounded-3 py-2" value="<?= h($t['email']) ?>">
+                                <input type="email" name="email" class="form-control rounded-3 py-2" value="<?= h($t['email']) ?>" placeholder="VD: nhu.nguyen@gmail.com" pattern="[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}" title="Vui lòng nhập định dạng email hợp lệ (VD: ten@gmail.com)">
                             </div>
                             <div class="col-md-6">
                                 <label class="form-label fw-bold small text-dark">Nghề nghiệp / Nơi công tác</label>
-                                <input type="text" name="occupation" class="form-control rounded-3 py-2" value="<?= h($t['occupation'] ?? 'Nhân viên Nhân sự (HR)') ?>">
+                                <input type="text" name="occupation" class="form-control rounded-3 py-2" value="<?= h($t['occupation'] ?? '') ?>" placeholder="VD: Nhân viên Nhân sự (HR)">
                             </div>
 
                             <!-- Hàng 4: Quê quán, Liên hệ khẩn cấp, Trạng thái -->
                             <div class="col-md-5">
                                 <label class="form-label fw-bold small text-dark">Quê quán / Địa chỉ thường trú</label>
-                                <input type="text" name="hometown" class="form-control rounded-3 py-2" value="<?= h($t['hometown'] ?? 'Ninh Bình') ?>">
+                                <input type="text" name="hometown" class="form-control rounded-3 py-2" value="<?= h($t['hometown'] ?? '') ?>" placeholder="VD: Ninh Bình">
                             </div>
                             <div class="col-md-4">
                                 <label class="form-label fw-bold small text-dark">Liên hệ khẩn cấp</label>
-                                <input type="text" name="emergency_contact" class="form-control rounded-3 py-2" value="<?= h($t['emergency_contact'] ?? '0904000111') ?>">
+                                <input type="tel" name="emergency_contact" class="form-control rounded-3 py-2" value="<?= h($t['emergency_contact'] ?? '') ?>" placeholder="VD: 0904000111" pattern="0[0-9]{9}" minlength="10" maxlength="10" inputmode="numeric" oninput="this.value = this.value.replace(/[^0-9]/g, '')" title="Số liên hệ khẩn cấp phải gồm đúng 10 chữ số (bắt đầu bằng số 0)">
                             </div>
                             <div class="col-md-3">
                                 <label class="form-label fw-bold small text-dark">Trạng thái</label>
@@ -519,38 +519,32 @@ $adminName = $_SESSION['full_name'] ?? 'Quản trị viên Hệ thống';
                                 </select>
                             </div>
 
-                            <!-- Chọn phòng thuê liên kết -->
+                            <!-- Phòng thuê liên kết (Cố định, không được sửa đổi phòng ở đây) -->
                             <div class="col-12 mt-3 pt-2 border-top">
-                                <label class="form-label fw-bold small text-dark d-flex align-items-center gap-2 mb-1">
-                                    <i class="fa-solid fa-door-open text-teal-main"></i> Phòng thuê liên kết
+                                <label class="form-label fw-bold small text-dark d-flex align-items-center justify-content-between mb-1">
+                                    <span><i class="fa-solid fa-door-open text-teal-main"></i> Phòng thuê liên kết</span>
+                                    <span class="badge bg-secondary-subtle text-secondary small fw-normal">
+                                        <i class="fa-solid fa-lock me-1"></i>Cố định theo hợp đồng
+                                    </span>
                                 </label>
-                                <select name="room_id" class="form-select rounded-3 py-2" onchange="handleTenantRoomChange(this, '<?= $tId ?>')">
-                                    <option value="" data-max-occupants="1">-- Chưa xếp phòng --</option>
-                                    <?php if (!empty($allRooms)): ?>
-                                        <?php foreach ($allRooms as $r):
-                                            $isThisRoom = ($curRoomId === (int)$r['id']);
-                                            // Chỉ hiện phòng trống hoặc chính phòng khách này đang thuê
-                                            if ($r['status'] !== 'available' && !$isThisRoom) {
-                                                continue;
-                                            }
+                                <input type="hidden" name="room_id" value="<?= $curRoomId ?>">
+                                <?php 
+                                $curRoomText = 'Chưa xếp phòng';
+                                if (!empty($allRooms) && $curRoomId > 0) {
+                                    foreach ($allRooms as $r) {
+                                        if ((int)$r['id'] === $curRoomId) {
                                             $rMax = (int)($r['details']['max_occupants'] ?? 2);
-                                            $stLabel = ($r['status'] === 'available') ? 'Phòng trống' : 'Đang thuê';
-                                        ?>
-                                            <option value="<?= $r['id'] ?>" 
-                                                    data-max-occupants="<?= $rMax ?>"
-                                                    <?= $isThisRoom ? 'selected' : '' ?>>
-                                                Phòng <?= h($r['room_number']) ?> &bull; <?= number_format($r['price'], 0, ',', '.') ?> đ/tháng (Tối đa <?= $rMax ?> người) [<?= $stLabel ?>]
-                                            </option>
-                                        <?php endforeach; ?>
-                                    <?php endif; ?>
-                                </select>
+                                            $curRoomText = 'Phòng ' . $r['room_number'] . ' • ' . number_format($r['price'], 0, ',', '.') . ' đ/tháng (Tối đa ' . $rMax . ' người) [Đang thuê]';
+                                            break;
+                                        }
+                                    }
+                                }
+                                ?>
+                                <input type="text" class="form-control rounded-3 py-2 bg-light text-dark fw-semibold" value="<?= h($curRoomText) ?>" readonly style="cursor: not-allowed; border: 1px solid #cbd5e1;">
                             </div>
 
-                            <!-- Khối bạn cùng phòng -->
-                            <?php 
-                            $hasRoommate = !empty($t['roommate_name']) || !empty($t['roommate_phone']);
-                            ?>
-                            <div class="col-12 roommate-block" id="roommateBlock_<?= $tId ?>" style="display: <?= $hasRoommate ? 'block' : 'none' ?>;">
+                            <!-- Khối sửa thông tin bạn cùng phòng -->
+                            <div class="col-12 mt-2" id="roommateBlock_<?= $tId ?>">
                                 <div class="p-3 rounded-4" style="background: #f0fdfa; border: 1.5px dashed #5eead4;">
                                     <div class="fw-bold text-teal-main mb-2 small d-flex align-items-center gap-2">
                                         <i class="fa-solid fa-user-group"></i> 
@@ -562,8 +556,8 @@ $adminName = $_SESSION['full_name'] ?? 'Quản trị viên Hệ thống';
                                             <input type="text" name="roommate_name" class="form-control rounded-3 py-2" value="<?= h($t['roommate_name'] ?? '') ?>" placeholder="VD: Trần Thu Hà">
                                         </div>
                                         <div class="col-md-6">
-                                            <label class="form-label small fw-bold text-dark">Số điện thoại bạn cùng phòng</label>
-                                            <input type="text" name="roommate_phone" class="form-control rounded-3 py-2" value="<?= h($t['roommate_phone'] ?? '') ?>" placeholder="VD: 0987654321">
+                                            <label class="form-label small fw-bold text-dark">Số điện thoại bạn cùng phòng (10 số)</label>
+                                            <input type="tel" name="roommate_phone" class="form-control rounded-3 py-2" value="<?= h($t['roommate_phone'] ?? '') ?>" placeholder="VD: 0987654321" pattern="0[0-9]{9}" minlength="10" maxlength="10" inputmode="numeric" oninput="this.value = this.value.replace(/[^0-9]/g, '')" title="Số điện thoại bạn cùng phòng phải đúng 10 chữ số (bắt đầu bằng số 0)">
                                         </div>
                                     </div>
                                 </div>

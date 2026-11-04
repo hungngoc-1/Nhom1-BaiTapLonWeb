@@ -195,10 +195,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 }
 
-// Lấy dữ liệu phòng thực tế từ DB
+// Lấy dữ liệu phòng thực tế từ DB (ưu tiên phòng mới thêm lên đầu)
 $dbRooms = [];
 try {
-    $dbRooms = $conn->query("SELECT * FROM rooms ORDER BY price ASC")->fetchAll(PDO::FETCH_ASSOC);
+    $dbRooms = $conn->query("SELECT * FROM rooms ORDER BY id DESC")->fetchAll(PDO::FETCH_ASSOC);
 } catch (PDOException $e) {
     $dbRooms = [];
 }
@@ -236,13 +236,20 @@ $assignBld = ['A', 'B', 'C'];
 foreach ($dbRooms as $idx => $r) {
     $price = (float)$r['price'];
     $desc  = $r['description'] ?? '';
+
+    // Trích xuất ảnh tùy chỉnh nếu có
+    $customImg = '';
+    if (preg_match('/Ảnh:\s*([^|\s]+)/iu', $desc, $im)) {
+        $customImg = trim($im[1]);
+    }
+
     if ($price >= 3800000 || stripos($desc, 'studio') !== false || stripos($desc, '2 phòng') !== false) {
         $type = 'studio';
         $area = '35m²';
         $maxPeople = '3 - 4 người';
         $floor = 'Tầng 3';
         $highlights = ['Full nội thất cao cấp', 'Ban công thoáng', 'Máy giặt riêng', 'Bếp từ & Tủ lạnh', 'Khóa vân tay'];
-    } elseif ($price >= 3100000 || stripos($desc, 'ban công') !== false || stripos($desc, 'gác') !== false) {
+    } elseif ($price >= 3100000 || stripos($desc, 'ban công') !== false || stripos($desc, 'gác') !== false || stripos($desc, 'vip') !== false) {
         $type = 'duplex';
         $area = '26m²';
         $maxPeople = '2 - 3 người';
@@ -255,7 +262,59 @@ foreach ($dbRooms as $idx => $r) {
         $floor = 'Tầng 1';
         $highlights = ['Điều hòa 2 chiều', 'Bình nóng lạnh', 'Wifi tốc độ cao', 'WC khép kín', 'Giờ giấc tự do'];
     }
-    $bldKey = $assignBld[$idx % 3];
+
+    // Trích xuất các chi tiết cụ thể từ mô tả
+    if (preg_match('/Tầng\s*(\d+)/iu', $desc, $fm)) {
+        $floor = "Tầng " . $fm[1];
+    }
+    if (preg_match('/Diện tích:\s*([\d\.]+)\s*m/iu', $desc, $am)) {
+        $area = $am[1] . "m²";
+    }
+    if (preg_match('/Tối đa:\s*(\d+)/iu', $desc, $om)) {
+        $maxPeople = "Tối đa " . $om[1] . " người";
+    }
+
+    // Xác định chính xác Tòa nhà từ building_id hoặc từ description hoặc từ mã phòng
+    $bldKey = 'A';
+    if (!empty($r['building_id'])) {
+        $bldKey = ($r['building_id'] == 2) ? 'B' : (($r['building_id'] == 3) ? 'C' : 'A');
+    } elseif (preg_match('/Tòa:\s*Tòa\s*([ABC])/iu', $desc, $bm)) {
+        $bldKey = strtoupper($bm[1]);
+    } elseif (preg_match('/Tòa\s*([ABC])/iu', $desc, $bm)) {
+        $bldKey = strtoupper($bm[1]);
+    } elseif (preg_match('/^([ABC])/i', $r['room_number'], $bm)) {
+        $bldKey = strtoupper($bm[1]);
+    } else {
+        $bldKey = $assignBld[$idx % 3];
+    }
+
+    // Chuẩn hóa danh sách ảnh: đưa ảnh tùy chỉnh/ảnh mẫu lên vị trí đầu tiên
+    $roomImages = $galleryByType[$type] ?? $galleryByType['standard'];
+    if ($customImg !== '') {
+        if (!preg_match('/^https?:\/\//i', $customImg)) {
+            $customImg = '../' . ltrim($customImg, '/');
+        }
+        array_unshift($roomImages, $customImg);
+        $roomImages = array_values(array_unique($roomImages));
+    }
+
+    // Trích xuất tiện nghi từ mô tả nếu có
+    if (preg_match('/Tiện nghi:\s*([^|]+)/iu', $desc, $tm)) {
+        $amenitiesRaw = trim($tm[1]);
+        $amList = array_filter(array_map('trim', explode(',', $amenitiesRaw)));
+        if (!empty($amList)) {
+            $highlights = array_values($amList);
+        }
+    }
+
+    // Làm sạch hoàn toàn mô tả hiển thị cho khách:
+    // Tuyệt đối KHÔNG hiện link ảnh (Ảnh: ...) và các token kỹ thuật
+    $cleanDesc = preg_replace('/(Tòa:[^|]*\|?|Loại:[^|]*\|?|Tầng\s*\d+[^|]*\|?|Diện tích:[^|]*\|?|Tối đa:[^|]*\|?|Tiện nghi:[^|]*\|?|Dịch vụ:[^|]*\|?|Ảnh:[^|]*\|?)/iu', '', $desc);
+    $cleanDesc = trim(trim((string)$cleanDesc), " \t\n\r\0\x0B|");
+    if ($cleanDesc === '') {
+        $cleanDesc = 'Phòng khép kín sạch sẽ, cửa sổ thoáng mát, an ninh vân tay 24/7.';
+    }
+
     $allRooms[] = [
         'id'          => (int)$r['id'],
         'room_number' => $r['room_number'],
@@ -266,9 +325,9 @@ foreach ($dbRooms as $idx => $r) {
         'area'        => $area,
         'floor'       => $floor,
         'max_people'  => $maxPeople,
-        'description' => $desc ?: 'Phòng khép kín sạch sẽ, cửa sổ thoáng, an ninh vân tay 24/7.',
+        'description' => $cleanDesc,
         'highlights'  => $highlights,
-        'images'      => $galleryByType[$type],
+        'images'      => $roomImages,
     ];
 }
 
@@ -332,7 +391,11 @@ $extraShowcaseRooms = [
     ],
 ];
 
-$allRooms = array_merge($allRooms, $extraShowcaseRooms);
+$existingNumbers = array_map('strval', array_column($allRooms, 'room_number'));
+$filteredExtra = array_filter($extraShowcaseRooms, function($er) use ($existingNumbers) {
+    return !in_array((string)$er['room_number'], $existingNumbers, true);
+});
+$allRooms = array_merge($allRooms, $filteredExtra);
 
 // Đếm số phòng còn trống theo từng Tòa nhà
 $availByBld = ['A' => 0, 'B' => 0, 'C' => 0];
@@ -758,9 +821,9 @@ $guestUser = $_SESSION['guest_user'] ?? null;
                         <button type="submit" class="btn btn-sm btn-outline-danger rounded-pill fw-bold px-3">Đăng xuất</button>
                     </form>
                 <?php else: ?>
-                    <button type="button" class="btn btn-sm rounded-pill fw-bold px-3 text-white" style="background: var(--teal-main);" data-bs-toggle="modal" data-bs-target="#authModal">
-                        <i class="fa-solid fa-user-plus me-1"></i> Đăng nhập / Đăng ký
-                    </button>
+                    <a href="../index.php?route=auth/login" class="btn btn-sm rounded-pill fw-bold px-3 text-white text-decoration-none d-inline-flex align-items-center" style="background: var(--teal-main);">
+                        <i class="fa-solid fa-right-to-bracket me-1"></i> Đăng nhập
+                    </a>
                 <?php endif; ?>
 
                 <a href="../index.php?route=dashboard" class="btn btn-sm btn-outline-secondary rounded-pill fw-bold px-3">
@@ -790,9 +853,9 @@ $guestUser = $_SESSION['guest_user'] ?? null;
                 </div>
             <?php endif; ?>
 
-            <button type="button" class="btn btn-lg rounded-4 fw-bold text-white text-start px-4 py-3 shadow-sm" style="background: var(--teal-main);" data-bs-toggle="modal" data-bs-target="#authModal" data-bs-dismiss="offcanvas">
-                <i class="fa-solid fa-user-lock me-2"></i> Đăng nhập / Đăng ký Tài khoản
-            </button>
+            <a href="../index.php?route=auth/login" class="btn btn-lg rounded-4 fw-bold text-white text-start px-4 py-3 shadow-sm text-decoration-none d-flex align-items-center" style="background: var(--teal-main);">
+                <i class="fa-solid fa-right-to-bracket me-2"></i> Đăng nhập hệ thống
+            </a>
 
             <button type="button" class="btn btn-lg btn-outline-success rounded-4 fw-bold text-start px-4 py-3" data-bs-toggle="modal" data-bs-target="#mapModal" data-bs-dismiss="offcanvas">
                 <i class="fa-solid fa-map-location-dot me-2"></i> Bản đồ (Map) 3 Tòa nhà

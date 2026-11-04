@@ -251,6 +251,23 @@ class TenantModel {
         ]);
     }
 
+    
+    public function updateContractRoommate(int $tenantId, string $roommateName, string $roommatePhone = ''): void {
+        $note = "Ở cùng: {$roommateName}" . ($roommatePhone !== '' ? " ({$roommatePhone})" : '');
+        try {
+            $stmt = $this->conn->prepare("
+                UPDATE contracts 
+                SET notes = CASE 
+                    WHEN notes IS NULL OR notes = '' THEN :note 
+                    WHEN notes LIKE '%Ở cùng:%' THEN REGEXP_REPLACE(notes, 'Ở cùng:[^.]*', :note)
+                    ELSE CONCAT(notes, '. ', :note)
+                END
+                WHERE tenant_id = :tenant_id AND status = 'active'
+            ");
+            $stmt->execute([':note' => $note, ':tenant_id' => $tenantId]);
+        } catch (PDOException $e) {}
+    }
+
     public function assignRoomToTenant(int $tenantId, int $roomId, ?string $roommateName = null, ?string $roommatePhone = null): void {
         // Cập nhật thông tin phòng ưu tiên và bạn cùng phòng trong users
         $stmt = $this->conn->prepare("
