@@ -251,6 +251,20 @@ class Database {
         try {
             self::safeExec($conn, "ALTER TABLE `contracts` MODIFY COLUMN `deposit_status` ENUM('held', 'paid', 'refunded', 'forfeited') DEFAULT 'held'");
         } catch (PDOException $e) {}
+
+        // Nạp dịch vụ mẫu cho các phòng nếu bảng room_services đang trống
+        try {
+            if ((int)$conn->query("SELECT COUNT(*) FROM `room_services`")->fetchColumn() === 0) {
+                $rooms = $conn->query("SELECT id FROM `rooms`")->fetchAll(PDO::FETCH_COLUMN);
+                if (!empty($rooms)) {
+                    $ins = $conn->prepare("INSERT INTO `room_services` (room_id, service_name, unit_price, unit) VALUES (:rid, :name, :price, :unit)");
+                    foreach ($rooms as $rid) {
+                        $ins->execute([':rid' => $rid, ':name' => 'Internet / Wifi tốc độ cao', ':price' => 100000, ':unit' => 'Phòng/tháng']);
+                        $ins->execute([':rid' => $rid, ':name' => 'Vệ sinh & Rác sinh hoạt', ':price' => 50000, ':unit' => 'Phòng/tháng']);
+                    }
+                }
+            }
+        } catch (PDOException $e) {}
     }
 }
 ?>

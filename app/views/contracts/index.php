@@ -643,7 +643,13 @@ $sixMonthsEndDay = date('Y-m-d', strtotime('+6 months'));
                             <select name="room_id" id="contract_room_id" class="form-select" required onchange="onContractRoomSelect(this)">
                                 <option value="">-- Chọn phòng --</option>
                                 <?php foreach ($rooms as $r): ?>
-                                    <option value="<?= (int)$r['id'] ?>" data-price="<?= (float)$r['price'] ?>">
+                                    <option value="<?= (int)$r['id'] ?>"
+                                            data-room-name="<?= h($r['room_number']) ?>"
+                                            data-price="<?= (float)$r['price'] ?>"
+                                            data-service-fee="<?= (float)($r['total_service_fee'] ?? 0) ?>"
+                                            data-electric-rate="<?= (float)($r['electricity_rate'] ?? 3500) ?>"
+                                            data-water-rate="<?= (float)($r['water_rate'] ?? 20000) ?>"
+                                            data-services='<?= htmlspecialchars(json_encode($r['services'] ?? [], JSON_UNESCAPED_UNICODE), ENT_QUOTES, 'UTF-8') ?>'>
                                         <?= h($r['room_number']) ?> - <?= number_format((float)$r['price'], 0, ',', '.') ?> đ (<?= $r['status'] === 'available' ? 'Đang trống' : 'Đang thuê' ?>)
                                     </option>
                                 <?php endforeach; ?>
@@ -661,22 +667,37 @@ $sixMonthsEndDay = date('Y-m-d', strtotime('+6 months'));
                         </div>
 
                         <div class="col-md-3" id="duration_select_wrap">
-                            <label class="form-label small fw-bold mb-1">Thời hạn hợp đồng</label>
-                            <select name="duration_months" id="contract_duration_months" class="form-select" onchange="syncContractDates()">
-                                <option value="6" selected>6 tháng (Chuẩn)</option>
-                                <option value="12">12 tháng</option>
-                                <option value="24">24 tháng</option>
-                            </select>
+                            <label class="form-label small fw-bold mb-1">
+                                Thời hạn hợp đồng
+                                <span class="badge bg-light text-secondary border rounded-pill ms-1" style="font-size:0.7rem;"><i class="fa-solid fa-lock text-warning me-1"></i>Cố định</span>
+                            </label>
+                            <div class="input-group">
+                                <input type="text" class="form-control bg-light fw-bold text-teal-main" id="contract_duration_display" value="Cố định 6 tháng" readonly>
+                                <span class="input-group-text bg-light text-muted small" title="Hợp đồng chính thức cố định thời hạn 6 tháng"><i class="fa-solid fa-lock text-warning"></i></span>
+                            </div>
+                            <input type="hidden" name="duration_months" id="contract_duration_months" value="6">
                         </div>
 
                         <div class="col-md-3">
-                            <label class="form-label small fw-bold mb-1">Ngày kết thúc <span class="text-danger">*</span></label>
-                            <input type="date" name="end_date" id="contract_end_date" class="form-control bg-light fw-bold text-danger" value="<?= $sixMonthsEndDay ?>" required>
+                            <label class="form-label small fw-bold mb-1">
+                                Ngày kết thúc <span class="text-danger">*</span>
+                                <span class="badge bg-light text-secondary border rounded-pill ms-1" style="font-size:0.7rem;"><i class="fa-solid fa-lock text-warning me-1"></i>Tự tính</span>
+                            </label>
+                            <div class="input-group">
+                                <input type="date" name="end_date" id="contract_end_date" class="form-control bg-light fw-bold text-danger" value="<?= $sixMonthsEndDay ?>" readonly required>
+                                <span class="input-group-text bg-light text-muted small" title="Tự động tính đúng 6 tháng theo ngày bắt đầu"><i class="fa-solid fa-calendar-check text-danger"></i></span>
+                            </div>
                         </div>
 
                         <div class="col-md-4">
-                            <label class="form-label small fw-bold mb-1">Giá thuê/tháng (VNĐ) <span class="text-danger">*</span></label>
-                            <input type="number" step="50000" min="0" name="monthly_rent" id="contract_monthly_rent" class="form-control" required oninput="syncDepositAndPreview()">
+                            <label class="form-label small fw-bold mb-1">
+                                Giá thuê/tháng (VNĐ) <span class="text-danger">*</span>
+                                <span class="badge bg-light text-secondary border rounded-pill ms-1" style="font-size:0.7rem;"><i class="fa-solid fa-lock text-warning me-1"></i>Mặc định theo phòng</span>
+                            </label>
+                            <div class="input-group">
+                                <input type="number" step="50000" min="0" name="monthly_rent" id="contract_monthly_rent" class="form-control bg-light fw-bold" readonly required oninput="syncDepositAndPreview()">
+                                <span class="input-group-text bg-light text-muted small" title="Cố định theo phòng đã chỉnh sửa"><i class="fa-solid fa-lock text-warning"></i></span>
+                            </div>
                         </div>
 
                         <div class="col-md-4">
@@ -684,7 +705,10 @@ $sixMonthsEndDay = date('Y-m-d', strtotime('+6 months'));
                                 Tiền đặt cọc thực thu
                                 <span class="badge bg-teal-main text-white rounded-pill ms-1" id="deposit_percent_badge">100% cọc</span>
                             </label>
-                            <input type="number" name="deposit_amount" id="contract_deposit" class="form-control bg-light fw-bold text-teal-main" value="0" readonly>
+                            <div class="input-group">
+                                <input type="number" name="deposit_amount" id="contract_deposit" class="form-control bg-light fw-bold text-teal-main" value="0" readonly>
+                                <span class="input-group-text bg-light text-muted small"><i class="fa-solid fa-shield-halved text-teal-main"></i></span>
+                            </div>
                         </div>
 
                         <div class="col-md-4">
@@ -696,16 +720,89 @@ $sixMonthsEndDay = date('Y-m-d', strtotime('+6 months'));
                         </div>
 
                         <div class="col-md-4">
-                            <label class="form-label small fw-bold mb-1">Giá điện (đ/kWh)</label>
-                            <input type="number" name="electricity_rate" class="form-control" value="3500">
+                            <label class="form-label small fw-bold mb-1">
+                                Giá điện (đ/kWh)
+                                <span class="badge bg-light text-secondary border rounded-pill ms-1" style="font-size:0.7rem;"><i class="fa-solid fa-lock text-warning me-1"></i>Mặc định</span>
+                            </label>
+                            <div class="input-group">
+                                <input type="number" name="electricity_rate" id="contract_electricity_rate" class="form-control bg-light fw-bold text-secondary" value="3500" readonly>
+                                <span class="input-group-text bg-light text-muted small"><i class="fa-solid fa-bolt text-warning"></i></span>
+                            </div>
                         </div>
                         <div class="col-md-4">
-                            <label class="form-label small fw-bold mb-1">Giá nước (đ/khối)</label>
-                            <input type="number" name="water_rate" class="form-control" value="20000">
+                            <label class="form-label small fw-bold mb-1">
+                                Giá nước (đ/khối)
+                                <span class="badge bg-light text-secondary border rounded-pill ms-1" style="font-size:0.7rem;"><i class="fa-solid fa-lock text-warning me-1"></i>Mặc định</span>
+                            </label>
+                            <div class="input-group">
+                                <input type="number" name="water_rate" id="contract_water_rate" class="form-control bg-light fw-bold text-secondary" value="20000" readonly>
+                                <span class="input-group-text bg-light text-muted small"><i class="fa-solid fa-droplet text-primary"></i></span>
+                            </div>
                         </div>
                         <div class="col-md-4">
-                            <label class="form-label small fw-bold mb-1">Phí dịch vụ (đ/tháng)</label>
-                            <input type="number" name="service_fee" id="contract_service_fee" class="form-control" value="150000" oninput="syncDepositAndPreview()">
+                            <label class="form-label small fw-bold mb-1">
+                                Tổng phí dịch vụ (đ/tháng)
+                                <span class="badge bg-teal-subtle text-teal-main border rounded-pill ms-1" style="font-size:0.7rem;"><i class="fa-solid fa-calculator me-1"></i>Tự động tính</span>
+                            </label>
+                            <div class="input-group">
+                                <input type="number" name="service_fee" id="contract_service_fee" class="form-control bg-light fw-bold text-teal-main" value="0" readonly oninput="syncDepositAndPreview()">
+                                <span class="input-group-text bg-light text-muted small" title="Tự động tính từ các dịch vụ đã chọn bên Quản lý phòng"><i class="fa-solid fa-calculator text-teal-main"></i></span>
+                            </div>
+                        </div>
+
+                        <!-- KHU VỰC HIỂN THỊ ĐẦY ĐỦ CÁC DỊCH VỤ ĐÃ CHỌN CỦA PHÒNG & TỔNG TIỀN DỊCH VỤ -->
+                        <div class="col-12">
+                            <div class="rounded-4 p-3 shadow-xs" style="background:#f8fafc; border:1.5px solid #cbd5e1;">
+                                <div class="d-flex justify-content-between align-items-center mb-2 flex-wrap gap-2">
+                                    <div class="d-flex align-items-center gap-2">
+                                        <span class="badge rounded-pill bg-teal-main text-white px-2.5 py-1.5 fw-bold" style="font-size:0.82rem;">
+                                            <i class="fa-solid fa-layer-group me-1"></i> Dịch vụ đã chọn của phòng:
+                                        </span>
+                                        <span id="selected_room_badge" class="badge rounded-pill bg-secondary text-white px-2.5 py-1.5 small fw-bold">
+                                            Chưa chọn phòng
+                                        </span>
+                                    </div>
+                                    <div class="fw-bold d-flex align-items-center gap-2" style="color:#0f766e; font-size:0.92rem;">
+                                        <span>Tổng tiền dịch vụ:</span>
+                                        <span id="display_total_service_fee" class="badge bg-white text-teal-main fs-6 px-3 py-1.5 fw-black border border-teal shadow-xs">
+                                            0 đ / tháng
+                                        </span>
+                                    </div>
+                                </div>
+
+                                <!-- Bảng danh sách dịch vụ chi tiết -->
+                                <div class="table-responsive rounded-3 bg-white border shadow-xs mb-2">
+                                    <table class="table table-sm table-hover align-middle mb-0" style="font-size:0.86rem;">
+                                        <thead class="table-light border-bottom">
+                                            <tr>
+                                                <th class="ps-3 py-2 text-secondary" style="width: 50px;">STT</th>
+                                                <th class="py-2 text-secondary">Tên dịch vụ</th>
+                                                <th class="py-2 text-secondary text-end" style="width: 170px;">Đơn giá</th>
+                                                <th class="py-2 text-secondary text-center pe-3" style="width: 140px;">Đơn vị tính</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="room_services_list_tbody">
+                                            <tr>
+                                                <td colspan="4" class="text-center text-muted py-3">
+                                                    <i class="fa-solid fa-circle-info text-teal-main me-1"></i>
+                                                    Vui lòng chọn khách thuê hoặc phòng để xem đầy đủ danh sách dịch vụ đã chọn.
+                                                </td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+
+                                <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 pt-1">
+                                    <small class="text-muted d-flex align-items-center gap-1" style="font-size:0.78rem;">
+                                        <i class="fa-solid fa-lock text-warning"></i>
+                                        Các giá tiền để mặc định theo phòng đã chỉnh sửa và chỉ thay đổi khi bên phòng thay đổi.
+                                    </small>
+                                    <a href="index.php?route=rooms" target="_blank" class="text-decoration-none fw-bold small text-teal-main d-inline-flex align-items-center gap-1">
+                                        <span>Chỉnh sửa dịch vụ &amp; giá tiền tại trang Quản lý phòng</span>
+                                        <i class="fa-solid fa-arrow-up-right-from-square" style="font-size:0.75rem;"></i>
+                                    </a>
+                                </div>
+                            </div>
                         </div>
 
                         <!-- HỘP DỰ TÍNH THU TIỀN VÀ CỘNG VÀO DOANH THU -->
@@ -781,37 +878,157 @@ $sixMonthsEndDay = date('Y-m-d', strtotime('+6 months'));
         if (!opt) return;
 
         const assignedRoomId = opt.dataset.assignedRoomId;
+        const roomSelect = document.getElementById('contract_room_id');
         if (assignedRoomId && parseInt(assignedRoomId, 10) > 0) {
-            const roomSelect = document.getElementById('contract_room_id');
             roomSelect.value = assignedRoomId;
             onContractRoomSelect(roomSelect);
+        } else if (selectEl.value === '') {
+            roomSelect.value = '';
+            resetRoomServicesDisplay();
+            document.getElementById('contract_monthly_rent').value = '';
+            document.getElementById('contract_deposit').value = '0';
+            document.getElementById('contract_service_fee').value = '0';
+            syncDepositAndPreview();
         }
     }
 
     function onContractRoomSelect(selectEl) {
         const opt = selectEl.options[selectEl.selectedIndex];
-        if (opt && opt.dataset.price) {
-            document.getElementById('contract_monthly_rent').value = opt.dataset.price;
+        if (!opt || !opt.value) {
+            resetRoomServicesDisplay();
+            document.getElementById('contract_monthly_rent').value = '';
+            document.getElementById('contract_deposit').value = '0';
+            document.getElementById('contract_service_fee').value = '0';
             syncDepositAndPreview();
+            return;
         }
+
+        const roomName = opt.dataset.roomName || opt.text.split(' - ')[0] || '';
+        const price = parseFloat(opt.dataset.price || 0);
+        const serviceFee = parseFloat(opt.dataset.serviceFee || 0);
+        const electricRate = parseFloat(opt.dataset.electricRate || 3500);
+        const waterRate = parseFloat(opt.dataset.waterRate || 20000);
+
+        // Các giá tiền để mặc định theo phòng đã chỉnh sửa
+        document.getElementById('contract_monthly_rent').value = price;
+        document.getElementById('contract_service_fee').value = serviceFee;
+        if (document.getElementById('contract_electricity_rate')) {
+            document.getElementById('contract_electricity_rate').value = electricRate;
+        }
+        if (document.getElementById('contract_water_rate')) {
+            document.getElementById('contract_water_rate').value = waterRate;
+        }
+
+        // Đọc danh sách dịch vụ chi tiết của phòng
+        let services = [];
+        try {
+            services = JSON.parse(opt.dataset.services || '[]');
+        } catch (e) {
+            services = [];
+        }
+
+        renderRoomServicesTable(roomName, services, serviceFee);
+        syncDepositAndPreview();
+    }
+
+    function renderRoomServicesTable(roomName, services, totalFee) {
+        const badge = document.getElementById('selected_room_badge');
+        const totalDisplay = document.getElementById('display_total_service_fee');
+        const tbody = document.getElementById('room_services_list_tbody');
+
+        if (badge) {
+            badge.className = 'badge rounded-pill bg-teal-main text-white px-2.5 py-1.5 small fw-bold';
+            badge.innerHTML = `<i class="fa-solid fa-door-open me-1"></i> Phòng ${escapeHtml(roomName)}`;
+        }
+        if (totalDisplay) {
+            totalDisplay.textContent = formatVnd(totalFee) + ' / tháng';
+        }
+
+        if (!tbody) return;
+
+        if (!services || services.length === 0) {
+            tbody.innerHTML = `
+                <tr>
+                    <td colspan="4" class="text-center text-muted py-3">
+                        <i class="fa-solid fa-info-circle text-teal-main me-1"></i> Phòng này chưa có dịch vụ đăng ký riêng (Phí dịch vụ: 0 đ).
+                    </td>
+                </tr>
+            `;
+            return;
+        }
+
+        let html = '';
+        services.forEach((s, idx) => {
+            const sName = s.service_name || 'Dịch vụ';
+            const sPrice = parseFloat(s.unit_price || 0);
+            const sUnit = s.unit || 'Tháng';
+            html += `
+                <tr>
+                    <td class="ps-3 py-2 text-muted fw-bold">${idx + 1}</td>
+                    <td class="py-2 fw-semibold text-dark">
+                        <i class="fa-solid fa-circle-check text-teal-main me-1.5"></i> ${escapeHtml(sName)}
+                    </td>
+                    <td class="py-2 text-end fw-bold text-teal-main">
+                        ${formatVnd(sPrice)}
+                    </td>
+                    <td class="py-2 text-center pe-3 text-secondary">
+                        <span class="badge bg-light text-secondary border px-2 py-1 rounded-pill">${escapeHtml(sUnit)}</span>
+                    </td>
+                </tr>
+            `;
+        });
+        tbody.innerHTML = html;
+    }
+
+    function resetRoomServicesDisplay() {
+        const badge = document.getElementById('selected_room_badge');
+        const totalDisplay = document.getElementById('display_total_service_fee');
+        const tbody = document.getElementById('room_services_list_tbody');
+        if (badge) {
+            badge.className = 'badge rounded-pill bg-secondary text-white px-2.5 py-1.5 small';
+            badge.textContent = 'Chưa chọn phòng';
+        }
+        if (totalDisplay) {
+            totalDisplay.textContent = '0 đ / tháng';
+        }
+        if (tbody) {
+            tbody.innerHTML = `
+                <tr>
+                    <td colspan="4" class="text-center text-muted py-3">
+                        <i class="fa-solid fa-circle-info text-teal-main me-1"></i>
+                        Vui lòng chọn khách thuê hoặc phòng để xem đầy đủ danh sách dịch vụ đã chọn.
+                    </td>
+                </tr>
+            `;
+        }
+    }
+
+    function escapeHtml(text) {
+        const map = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' };
+        return String(text).replace(/[&<>"']/g, function(m) { return map[m]; });
     }
 
     function syncContractDates() {
         const startDateVal = document.getElementById('contract_start_date').value || new Date().toISOString().split('T')[0];
         const isHd1 = document.getElementById('radio_hd1').checked;
         const start = new Date(startDateVal);
+        const durationDisplay = document.getElementById('contract_duration_display');
+        const durationMonths = document.getElementById('contract_duration_months');
 
         if (isHd1) {
-            // HĐ 1: Đúng 5 ngày
+            // HĐ 1: Đặt cọc giữ chỗ 5 ngày
             const end = new Date(start);
             end.setDate(end.getDate() + 5);
             document.getElementById('contract_end_date').value = end.toISOString().split('T')[0];
+            if (durationDisplay) durationDisplay.value = '5 ngày (Giữ chỗ)';
+            if (durationMonths) durationMonths.value = '0';
         } else {
-            // HĐ 2: 6 tháng (hoặc thời hạn chọn)
-            const months = parseInt(document.getElementById('contract_duration_months')?.value || '6', 10);
+            // HĐ 2: Cố định đúng 6 tháng
             const end = new Date(start);
-            end.setMonth(end.getMonth() + months);
+            end.setMonth(end.getMonth() + 6);
             document.getElementById('contract_end_date').value = end.toISOString().split('T')[0];
+            if (durationDisplay) durationDisplay.value = 'Cố định 6 tháng';
+            if (durationMonths) durationMonths.value = '6';
         }
 
         previewMoveInCalculation();
@@ -844,12 +1061,13 @@ $sixMonthsEndDay = date('Y-m-d', strtotime('+6 months'));
             box.innerHTML = `
                 <i class="fa-solid fa-clock text-warning me-1"></i>
                 <strong>HỢP ĐỒNG 1: ĐẶT CỌC GIỮ CHỖ (HIỆU LỰC 5 NGÀY)</strong><br>
-                • Số tiền khách đóng: <strong>${formatVnd(deposit)}</strong> (50% tiền cọc).<br>
-                • Thời hạn giữ chỗ: <strong>5 ngày</strong> (từ ngày bắt đầu). Quá 5 ngày hợp đồng sẽ <strong>tự động hủy</strong> và lưu vào lịch sử theo quy định.
+                • Số tiền khách đóng: <strong>${formatVnd(deposit)}</strong> (50% tiền cọc giữ phòng).<br>
+                • Thời hạn giữ chỗ: <strong>5 ngày</strong> (từ ngày bắt đầu). Quá 5 ngày hợp đồng sẽ <strong>tự động hủy</strong> và lưu vào lịch sử theo quy định.<br>
+                • Phí dịch vụ: <strong>${formatVnd(service)}/tháng</strong> (thu khi vào ở chính thức theo HĐ 2).
             `;
         } else {
             const deposit = rent;
-            const totalFirstMonth = deposit + rent;
+            const totalFirstMonth = deposit + rent + service;
             box.style.background = '#f0fdfa';
             box.style.borderColor = '#99f6e4';
             box.style.color = '#0f766e';
@@ -858,7 +1076,8 @@ $sixMonthsEndDay = date('Y-m-d', strtotime('+6 months'));
                 <strong>HỢP ĐỒNG 2: THUÊ CHÍNH THỨC (HIỆU LỰC 6 THÁNG)</strong><br>
                 • Tiền cọc 100%: <strong>${formatVnd(deposit)}</strong> (= 01 tháng tiền phòng, cộng vào Doanh thu cọc).<br>
                 • <strong class="text-success">Thu trước 01 tháng tiền phòng:</strong> <strong>${formatVnd(rent)}</strong> (Tự động tạo hóa đơn ĐÃ THANH TOÁN &amp; cộng vào Doanh thu thực thu).<br>
-                &rarr; <strong>Tổng số tiền thu khi ký HĐ 2:</strong> <span class="fs-6 text-danger fw-black">${formatVnd(totalFirstMonth)}</span>.
+                • Phí dịch vụ đi kèm: <strong>${formatVnd(service)}/tháng</strong> (tính theo các dịch vụ đã chọn của phòng).<br>
+                &rarr; <strong>Tổng số tiền thu khi ký HĐ 2:</strong> <span class="fs-6 text-danger fw-black">${formatVnd(totalFirstMonth)}</span> (Tiền phòng + Tiền cọc + Phí dịch vụ).
             `;
         }
     }
@@ -891,6 +1110,12 @@ $sixMonthsEndDay = date('Y-m-d', strtotime('+6 months'));
         document.getElementById('contract_parent_id').value = '';
         selectContractTypeRadio('official_lease');
         syncContractDates();
+        const roomSel = document.getElementById('contract_room_id');
+        if (roomSel && roomSel.value) {
+            onContractRoomSelect(roomSel);
+        } else {
+            resetRoomServicesDisplay();
+        }
     }
 
     function openTerminateModal(id, code, room, endDate, deposit) {

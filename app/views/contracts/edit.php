@@ -140,9 +140,16 @@ $cType = $contract['contract_type'] ?? 'official_lease';
 
                     <div class="col-md-6">
                         <label class="form-label small fw-bold">Phòng trọ <span class="text-danger">*</span></label>
-                        <select class="form-select" name="room_id" required onchange="onEditRoomSelect(this)">
+                        <select class="form-select" name="room_id" id="edit_room_id" required onchange="onEditRoomSelect(this)">
                             <?php foreach ($rooms as $r): ?>
-                                <option value="<?= (int)$r['id'] ?>" data-price="<?= (float)$r['price'] ?>" <?= $r['id'] == $contract['room_id'] ? 'selected' : '' ?>>
+                                <option value="<?= (int)$r['id'] ?>"
+                                        data-room-name="<?= h($r['room_number']) ?>"
+                                        data-price="<?= (float)$r['price'] ?>"
+                                        data-service-fee="<?= (float)($r['total_service_fee'] ?? 0) ?>"
+                                        data-electric-rate="<?= (float)($r['electricity_rate'] ?? 3500) ?>"
+                                        data-water-rate="<?= (float)($r['water_rate'] ?? 20000) ?>"
+                                        data-services='<?= htmlspecialchars(json_encode($r['services'] ?? [], JSON_UNESCAPED_UNICODE), ENT_QUOTES, 'UTF-8') ?>'
+                                        <?= $r['id'] == $contract['room_id'] ? 'selected' : '' ?>>
                                     <?= h($r['room_number']) ?> - <?= number_format((float)$r['price'], 0, ',', '.') ?> đ (<?= $r['status'] === 'available' ? 'Đang trống' : 'Đang thuê' ?>)
                                 </option>
                             <?php endforeach; ?>
@@ -177,8 +184,14 @@ $cType = $contract['contract_type'] ?? 'official_lease';
 
                 <div class="row g-3 mb-3">
                     <div class="col-md-4">
-                        <label class="form-label small fw-bold">Giá thuê/tháng (VNĐ) <span class="text-danger">*</span></label>
-                        <input type="number" min="0" step="50000" class="form-control" id="edit_monthly_rent" name="monthly_rent" value="<?= (float)$monthlyRent ?>" required oninput="calcDeposit()">
+                        <label class="form-label small fw-bold">
+                            Giá thuê/tháng (VNĐ) <span class="text-danger">*</span>
+                            <span class="badge bg-light text-secondary border rounded-pill ms-1" style="font-size:0.7rem;"><i class="fa-solid fa-lock text-warning me-1"></i>Mặc định theo phòng</span>
+                        </label>
+                        <div class="input-group">
+                            <input type="number" min="0" step="50000" class="form-control bg-light fw-bold" id="edit_monthly_rent" name="monthly_rent" value="<?= (float)$monthlyRent ?>" readonly required oninput="calcDeposit()">
+                            <span class="input-group-text bg-light text-muted small"><i class="fa-solid fa-lock text-warning"></i></span>
+                        </div>
                     </div>
                     <div class="col-md-4">
                         <label class="form-label small fw-bold">
@@ -186,7 +199,7 @@ $cType = $contract['contract_type'] ?? 'official_lease';
                             <span class="badge bg-teal-main text-white rounded-pill ms-1" id="edit_dep_percent_badge"><?= (int)($contract['deposit_paid_percent'] ?? ($cType === 'deposit_hold' ? 50 : 100)) ?>%</span>
                         </label>
                         <input type="hidden" name="deposit_paid_percent" id="edit_deposit_paid_percent" value="<?= (int)($contract['deposit_paid_percent'] ?? ($cType === 'deposit_hold' ? 50 : 100)) ?>">
-                        <input type="number" min="0" class="form-control bg-light fw-bold text-teal-main" id="edit_deposit" name="deposit_amount" value="<?= (float)$contract['deposit_amount'] ?>">
+                        <input type="number" min="0" class="form-control bg-light fw-bold text-teal-main" id="edit_deposit" name="deposit_amount" value="<?= (float)$contract['deposit_amount'] ?>" readonly>
                     </div>
                     <div class="col-md-4">
                         <label class="form-label small fw-bold">Hình thức ký</label>
@@ -199,16 +212,83 @@ $cType = $contract['contract_type'] ?? 'official_lease';
 
                 <div class="row g-3 mb-3">
                     <div class="col-md-4">
-                        <label class="form-label small fw-bold">Giá điện (đ/kWh)</label>
-                        <input type="number" class="form-control" name="electricity_rate" value="<?= (float)($contract['electricity_rate'] ?? 3500) ?>">
+                        <label class="form-label small fw-bold">
+                            Giá điện (đ/kWh)
+                            <span class="badge bg-light text-secondary border rounded-pill ms-1" style="font-size:0.7rem;"><i class="fa-solid fa-lock text-warning me-1"></i>Mặc định</span>
+                        </label>
+                        <div class="input-group">
+                            <input type="number" class="form-control bg-light fw-bold text-secondary" id="edit_electricity_rate" name="electricity_rate" value="<?= (float)($contract['electricity_rate'] ?? 3500) ?>" readonly>
+                            <span class="input-group-text bg-light text-muted small"><i class="fa-solid fa-bolt text-warning"></i></span>
+                        </div>
                     </div>
                     <div class="col-md-4">
-                        <label class="form-label small fw-bold">Giá nước (đ/khối)</label>
-                        <input type="number" class="form-control" name="water_rate" value="<?= (float)($contract['water_rate'] ?? 20000) ?>">
+                        <label class="form-label small fw-bold">
+                            Giá nước (đ/khối)
+                            <span class="badge bg-light text-secondary border rounded-pill ms-1" style="font-size:0.7rem;"><i class="fa-solid fa-lock text-warning me-1"></i>Mặc định</span>
+                        </label>
+                        <div class="input-group">
+                            <input type="number" class="form-control bg-light fw-bold text-secondary" id="edit_water_rate" name="water_rate" value="<?= (float)($contract['water_rate'] ?? 20000) ?>" readonly>
+                            <span class="input-group-text bg-light text-muted small"><i class="fa-solid fa-droplet text-primary"></i></span>
+                        </div>
                     </div>
                     <div class="col-md-4">
-                        <label class="form-label small fw-bold">Phí dịch vụ (đ/tháng)</label>
-                        <input type="number" class="form-control" name="service_fee" value="<?= (float)($contract['service_fee'] ?? 150000) ?>">
+                        <label class="form-label small fw-bold">
+                            Phí dịch vụ (đ/tháng)
+                            <span class="badge bg-teal-subtle text-teal-main border rounded-pill ms-1" style="font-size:0.7rem;"><i class="fa-solid fa-calculator me-1"></i>Tự động tính</span>
+                        </label>
+                        <div class="input-group">
+                            <input type="number" class="form-control bg-light fw-bold text-teal-main" id="edit_service_fee" name="service_fee" value="<?= (float)($contract['service_fee'] ?? 150000) ?>" readonly>
+                            <span class="input-group-text bg-light text-muted small" title="Tự động tính từ dịch vụ phòng"><i class="fa-solid fa-calculator text-teal-main"></i></span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- BẢNG HIỂN THỊ DỊCH VỤ CỦA PHÒNG -->
+                <div class="row g-3 mb-3">
+                    <div class="col-12">
+                        <div class="rounded-4 p-3 shadow-xs" style="background:#f8fafc; border:1.5px solid #cbd5e1;">
+                            <div class="d-flex justify-content-between align-items-center mb-2 flex-wrap gap-2">
+                                <div class="d-flex align-items-center gap-2">
+                                    <span class="badge rounded-pill bg-teal-main text-white px-2.5 py-1.5 fw-bold" style="font-size:0.82rem;">
+                                        <i class="fa-solid fa-layer-group me-1"></i> Dịch vụ đã chọn của phòng:
+                                    </span>
+                                    <span id="edit_room_badge" class="badge rounded-pill bg-teal-main text-white px-2.5 py-1.5 small fw-bold">
+                                        Phòng <?= h($contract['room_number'] ?? '') ?>
+                                    </span>
+                                </div>
+                                <div class="fw-bold d-flex align-items-center gap-2" style="color:#0f766e; font-size:0.92rem;">
+                                    <span>Tổng tiền dịch vụ:</span>
+                                    <span id="edit_display_total_service_fee" class="badge bg-white text-teal-main fs-6 px-3 py-1.5 fw-black border border-teal shadow-xs">
+                                        <?= number_format((float)($contract['service_fee'] ?? 150000), 0, ',', '.') ?> đ / tháng
+                                    </span>
+                                </div>
+                            </div>
+                            <div class="table-responsive rounded-3 bg-white border shadow-xs mb-2">
+                                <table class="table table-sm table-hover align-middle mb-0" style="font-size:0.86rem;">
+                                    <thead class="table-light border-bottom">
+                                        <tr>
+                                            <th class="ps-3 py-2 text-secondary" style="width: 50px;">STT</th>
+                                            <th class="py-2 text-secondary">Tên dịch vụ</th>
+                                            <th class="py-2 text-secondary text-end" style="width: 170px;">Đơn giá</th>
+                                            <th class="py-2 text-secondary text-center pe-3" style="width: 140px;">Đơn vị tính</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="edit_room_services_list_tbody">
+                                        <!-- Render qua JS khi chọn phòng -->
+                                    </tbody>
+                                </table>
+                            </div>
+                            <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 pt-1">
+                                <small class="text-muted d-flex align-items-center gap-1" style="font-size:0.78rem;">
+                                    <i class="fa-solid fa-lock text-warning"></i>
+                                    Các giá tiền để mặc định theo phòng đã chỉnh sửa và chỉ thay đổi khi bên phòng thay đổi.
+                                </small>
+                                <a href="index.php?route=rooms" target="_blank" class="text-decoration-none fw-bold small text-teal-main d-inline-flex align-items-center gap-1">
+                                    <span>Chỉnh sửa dịch vụ &amp; giá tiền tại trang Quản lý phòng</span>
+                                    <i class="fa-solid fa-arrow-up-right-from-square" style="font-size:0.75rem;"></i>
+                                </a>
+                            </div>
+                        </div>
                     </div>
                 </div>
 
@@ -229,11 +309,84 @@ $cType = $contract['contract_type'] ?? 'official_lease';
     <script>
     function onEditRoomSelect(sel) {
         const opt = sel.options[sel.selectedIndex];
-        if (opt && opt.dataset.price) {
-            document.getElementById('edit_monthly_rent').value = opt.dataset.price;
-            calcDeposit();
+        if (!opt || !opt.value) return;
+
+        const roomName = opt.dataset.roomName || opt.text.split(' - ')[0] || '';
+        const price = parseFloat(opt.dataset.price || 0);
+        const serviceFee = parseFloat(opt.dataset.serviceFee || 0);
+        const electricRate = parseFloat(opt.dataset.electricRate || 3500);
+        const waterRate = parseFloat(opt.dataset.waterRate || 20000);
+
+        document.getElementById('edit_monthly_rent').value = price;
+        document.getElementById('edit_service_fee').value = serviceFee;
+        if (document.getElementById('edit_electricity_rate')) {
+            document.getElementById('edit_electricity_rate').value = electricRate;
         }
+        if (document.getElementById('edit_water_rate')) {
+            document.getElementById('edit_water_rate').value = waterRate;
+        }
+
+        let services = [];
+        try {
+            services = JSON.parse(opt.dataset.services || '[]');
+        } catch (e) {
+            services = [];
+        }
+
+        renderEditRoomServices(roomName, services, serviceFee);
+        calcDeposit();
     }
+
+    function renderEditRoomServices(roomName, services, totalFee) {
+        const badge = document.getElementById('edit_room_badge');
+        const totalDisplay = document.getElementById('edit_display_total_service_fee');
+        const tbody = document.getElementById('edit_room_services_list_tbody');
+
+        if (badge) {
+            badge.textContent = 'Phòng ' + roomName;
+        }
+        if (totalDisplay) {
+            totalDisplay.textContent = formatVnd(totalFee) + ' / tháng';
+        }
+        if (!tbody) return;
+
+        if (!services || services.length === 0) {
+            tbody.innerHTML = `
+                <tr>
+                    <td colspan="4" class="text-center text-muted py-3">
+                        <i class="fa-solid fa-circle-info text-teal-main me-1"></i> Phòng này chưa có dịch vụ đăng ký riêng (Phí dịch vụ: 0 đ).
+                    </td>
+                </tr>
+            `;
+            return;
+        }
+
+        let html = '';
+        services.forEach((s, idx) => {
+            html += `
+                <tr>
+                    <td class="ps-3 py-2 text-muted fw-bold">${idx + 1}</td>
+                    <td class="py-2 fw-semibold text-dark">
+                        <i class="fa-solid fa-circle-check text-teal-main me-1.5"></i> ${s.service_name}
+                    </td>
+                    <td class="py-2 text-end fw-bold text-teal-main">
+                        ${formatVnd(parseFloat(s.unit_price || 0))}
+                    </td>
+                    <td class="py-2 text-center pe-3 text-secondary">
+                        <span class="badge bg-light text-secondary border px-2 py-1 rounded-pill">${s.unit || 'Tháng'}</span>
+                    </td>
+                </tr>
+            `;
+        });
+        tbody.innerHTML = html;
+    }
+
+    window.addEventListener('DOMContentLoaded', () => {
+        const sel = document.getElementById('edit_room_id');
+        if (sel) {
+            onEditRoomSelect(sel);
+        }
+    });
 
     function onEditTypeChange() {
         const type = document.getElementById('edit_contract_type').value;

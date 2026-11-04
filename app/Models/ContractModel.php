@@ -283,15 +283,93 @@ class ContractModel {
         return $row ?: null;
     }
 
+    public function getRoomServices(int $roomId): array {
+        try {
+            $stmt = $this->conn->prepare("SELECT service_name, unit_price, unit FROM room_services WHERE room_id = :room_id ORDER BY id ASC");
+            $stmt->execute([':room_id' => $roomId]);
+            $svcs = $stmt->fetchAll(PDO::FETCH_ASSOC);
+            if (!empty($svcs)) {
+                return $svcs;
+            }
+        } catch (PDOException $e) {}
+
+        // Kiểm tra trong description của phòng nếu có chuỗi "Dịch vụ: ..."
+        try {
+            $stmtR = $this->conn->prepare("SELECT description FROM rooms WHERE id = :id");
+            $stmtR->execute([':id' => $roomId]);
+            $desc = (string)$stmtR->fetchColumn();
+            if (preg_match('/Dịch vụ:\s*([^|]+)/iu', $desc, $m)) {
+                $rawList = explode(',', $m[1]);
+                $parsed = [];
+                foreach ($rawList as $item) {
+                    $item = trim($item);
+                    if (preg_match('/^(.*?)\s*\(([\d\.]+)\s*đ?\s*\/?\s*([^)]*)\)$/u', $item, $sm)) {
+                        $parsed[] = [
+                            'service_name' => trim($sm[1]),
+                            'unit_price'   => (float)str_replace('.', '', $sm[2]),
+                            'unit'         => trim($sm[3]) ?: 'Tháng',
+                        ];
+                    } elseif ($item !== '') {
+                        $parsed[] = [
+                            'service_name' => $item,
+                            'unit_price'   => 50000,
+                            'unit'         => 'Tháng',
+                        ];
+                    }
+                }
+                if (!empty($parsed)) {
+                    return $parsed;
+                }
+            }
+        } catch (PDOException $e) {}
+
+        // Nếu phòng chưa được cấu hình dịch vụ riêng lẻ: lấy các dịch vụ cơ bản từ bảng services
+        try {
+            $std = $this->conn->query("
+                SELECT service_name, unit_price, unit 
+                FROM services 
+                WHERE is_active = 1 
+                  AND service_name NOT LIKE '%điện%' 
+                  AND service_name NOT LIKE '%nước%'
+                  AND id IN (3, 4, 5)
+                ORDER BY id ASC
+            ")->fetchAll(PDO::FETCH_ASSOC);
+            if (!empty($std)) {
+                return $std;
+            }
+        } catch (PDOException $e) {}
+
+        return [
+            ['service_name' => 'Internet / Wifi tốc độ cao', 'unit_price' => 100000, 'unit' => 'Phòng'],
+            ['service_name' => 'Vệ sinh & Rác sinh hoạt', 'unit_price' => 50000, 'unit' => 'Phòng'],
+        ];
+    }
+
     public function getRooms() {
-                require_once __DIR__ . '/ReportModel.php';
+        require_once __DIR__ . '/ReportModel.php';
         $mgr = ReportModel::getManagerBuildingInfo();
         if ($mgr) {
             $st = $this->conn->prepare("SELECT id, room_number, price, status, description FROM rooms WHERE building_id = :bId OR room_number LIKE :pfx ORDER BY room_number");
             $st->execute([':bId' => $mgr['id'], ':pfx' => $mgr['prefix'] . '%']);
-            return $st->fetchAll(PDO::FETCH_ASSOC);
+            $rooms = $st->fetchAll(PDO::FETCH_ASSOC);
+        } else {
+            $rooms = $this->conn->query("SELECT id, room_number, price, status, description FROM rooms ORDER BY room_number")->fetchAll(PDO::FETCH_ASSOC);
         }
-        return $this->conn->query("SELECT id, room_number, price, status, description FROM rooms ORDER BY room_number")->fetchAll(PDO::FETCH_ASSOC);
+
+        foreach ($rooms as &$r) {
+            $rServices = $this->getRoomServices((int)$r['id']);
+            $r['services'] = $rServices;
+            $totalServiceFee = 0;
+            foreach ($rServices as $s) {
+                $totalServiceFee += (float)($s['unit_price'] ?? 0);
+            }
+            $r['total_service_fee'] = $totalServiceFee;
+            $r['electricity_rate'] = 3500;
+            $r['water_rate'] = 20000;
+        }
+        unset($r);
+
+        return $rooms;
     }
 
     /**
