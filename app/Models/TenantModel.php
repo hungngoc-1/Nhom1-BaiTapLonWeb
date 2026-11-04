@@ -87,6 +87,94 @@ class TenantModel {
         ]);
     }
 
+    public function createTenantFull(
+        string $fullName,
+        string $cccd,
+        string $phone,
+        ?string $birthday,
+        string $gender,
+        string $email,
+        string $occupation,
+        string $hometown,
+        string $emergencyContact,
+        string $status,
+        ?string $roommateName = null,
+        ?string $roommatePhone = null
+    ): int {
+        $username = $phone;
+        $hashedPassword = password_hash('123', PASSWORD_DEFAULT);
+
+        // Kiểm tra xem số điện thoại / username đã tồn tại chưa
+        $stmt = $this->conn->prepare("SELECT id FROM users WHERE phone = :phone OR username = :username LIMIT 1");
+        $stmt->execute([':phone' => $phone, ':username' => $username]);
+        $existing = $stmt->fetch(PDO::FETCH_ASSOC);
+
+        if ($existing) {
+            $userId = (int)$existing['id'];
+            $sql = "UPDATE users SET 
+                        full_name = :full_name,
+                        cccd = :cccd,
+                        phone = :phone,
+                        birthday = :birthday,
+                        gender = :gender,
+                        email = :email,
+                        occupation = :occupation,
+                        hometown = :hometown,
+                        emergency_contact = :emergency_contact,
+                        status = :status,
+                        roommate_name = :roommate_name,
+                        roommate_phone = :roommate_phone,
+                        role = 'tenant'
+                    WHERE id = :id";
+            $uStmt = $this->conn->prepare($sql);
+            $uStmt->execute([
+                ':full_name'         => $fullName,
+                ':cccd'              => $cccd,
+                ':phone'             => $phone,
+                ':birthday'          => $birthday,
+                ':gender'            => $gender,
+                ':email'             => $email,
+                ':occupation'        => $occupation,
+                ':hometown'          => $hometown,
+                ':emergency_contact' => $emergencyContact,
+                ':status'            => $status,
+                ':roommate_name'     => $roommateName,
+                ':roommate_phone'    => $roommatePhone,
+                ':id'                => $userId,
+            ]);
+            return $userId;
+        }
+
+        $sql = "INSERT INTO users (
+                    username, password, full_name, cccd, phone, birthday, 
+                    gender, email, occupation, hometown, emergency_contact, 
+                    status, roommate_name, roommate_phone, role
+                ) VALUES (
+                    :username, :password, :full_name, :cccd, :phone, :birthday,
+                    :gender, :email, :occupation, :hometown, :emergency_contact,
+                    :status, :roommate_name, :roommate_phone, 'tenant'
+                )";
+        $stmt = $this->conn->prepare($sql);
+        $stmt->execute([
+            ':username'          => $username,
+            ':password'          => $hashedPassword,
+            ':full_name'         => $fullName,
+            ':cccd'              => $cccd,
+            ':phone'             => $phone,
+            ':birthday'          => $birthday,
+            ':gender'            => $gender,
+            ':email'             => $email,
+            ':occupation'        => $occupation,
+            ':hometown'          => $hometown,
+            ':emergency_contact' => $emergencyContact,
+            ':status'            => $status,
+            ':roommate_name'     => $roommateName,
+            ':roommate_phone'    => $roommatePhone,
+        ]);
+
+        return (int)$this->conn->lastInsertId();
+    }
+
     public function updateTenant(int $id, string $fullName, string $phone, string $email): bool {
         $sql = "UPDATE users SET full_name = :full_name, phone = :phone, email = :email WHERE id = :id AND role = 'tenant'";
         $stmt = $this->conn->prepare($sql);
@@ -95,6 +183,120 @@ class TenantModel {
             ':phone'     => $phone,
             ':email'     => $email,
             ':id'        => $id,
+        ]);
+    }
+
+    public function updateTenantFull(
+        int $id,
+        string $fullName,
+        string $cccd,
+        string $phone,
+        ?string $birthday,
+        string $gender,
+        string $email,
+        string $occupation,
+        string $hometown,
+        string $emergencyContact,
+        string $status,
+        ?string $roommateName = null,
+        ?string $roommatePhone = null
+    ): bool {
+        $sql = "UPDATE users SET 
+                    full_name = :full_name,
+                    cccd = :cccd,
+                    phone = :phone,
+                    birthday = :birthday,
+                    gender = :gender,
+                    email = :email,
+                    occupation = :occupation,
+                    hometown = :hometown,
+                    emergency_contact = :emergency_contact,
+                    status = :status,
+                    roommate_name = :roommate_name,
+                    roommate_phone = :roommate_phone
+                WHERE id = :id AND role = 'tenant'";
+        $stmt = $this->conn->prepare($sql);
+        return $stmt->execute([
+            ':full_name'         => $fullName,
+            ':cccd'              => $cccd,
+            ':phone'             => $phone,
+            ':birthday'          => $birthday,
+            ':gender'            => $gender,
+            ':email'             => $email,
+            ':occupation'        => $occupation,
+            ':hometown'          => $hometown,
+            ':emergency_contact' => $emergencyContact,
+            ':status'            => $status,
+            ':roommate_name'     => $roommateName,
+            ':roommate_phone'    => $roommatePhone,
+            ':id'                => $id,
+        ]);
+    }
+
+    public function assignRoomToTenant(int $tenantId, int $roomId, ?string $roommateName = null, ?string $roommatePhone = null): void {
+        // Cập nhật thông tin phòng ưu tiên và bạn cùng phòng trong users
+        $stmt = $this->conn->prepare("
+            UPDATE users SET 
+                preferred_room_id = :room_id,
+                roommate_name = COALESCE(:roommate_name, roommate_name),
+                roommate_phone = COALESCE(:roommate_phone, roommate_phone)
+            WHERE id = :tenant_id
+        ");
+        $stmt->execute([
+            ':room_id'        => $roomId,
+            ':roommate_name'  => $roommateName,
+            ':roommate_phone' => $roommatePhone,
+            ':tenant_id'      => $tenantId,
+        ]);
+
+        // Đổi trạng thái phòng thành 'rented'
+        $stmt = $this->conn->prepare("UPDATE rooms SET status = 'rented' WHERE id = :room_id");
+        $stmt->execute([':room_id' => $roomId]);
+
+        // Lấy thông tin phòng để ghi vào hợp đồng
+        $rStmt = $this->conn->prepare("SELECT room_number, price FROM rooms WHERE id = :room_id");
+        $rStmt->execute([':room_id' => $roomId]);
+        $room = $rStmt->fetch(PDO::FETCH_ASSOC);
+        $roomPrice = $room ? (float)$room['price'] : 0.0;
+        $roomNumber = $room ? $room['room_number'] : (string)$roomId;
+
+        // Chấm dứt các hợp đồng đang active trước đó của phòng này và của khách này
+        $stmt = $this->conn->prepare("UPDATE contracts SET status = 'terminated' WHERE room_id = :room_id AND status = 'active'");
+        $stmt->execute([':room_id' => $roomId]);
+
+        $stmt = $this->conn->prepare("UPDATE contracts SET status = 'terminated' WHERE tenant_id = :tenant_id AND status = 'active'");
+        $stmt->execute([':tenant_id' => $tenantId]);
+
+        // Tạo hợp đồng mới
+        $contractCode = 'HD-' . date('Y') . '-' . strtoupper(str_replace(' ', '', (string)$roomNumber));
+        $startDate = date('Y-m-d');
+        $endDate = date('Y-m-d', strtotime('+1 year'));
+
+        $note = "Hợp đồng thuê phòng {$roomNumber}";
+        if ($roommateName) {
+            $note .= ". Ở cùng: {$roommateName}" . ($roommatePhone ? " ({$roommatePhone})" : '');
+        }
+
+        $cSql = "INSERT INTO contracts (
+                    contract_code, contract_type, room_id, tenant_id, start_date, end_date,
+                    deposit_amount, deposit_date, deposit_paid_percent, deposit_status,
+                    monthly_rent, status, notes
+                 ) VALUES (
+                    :code, 'official_lease', :room_id, :tenant_id, :start_date, :end_date,
+                    :deposit, :deposit_date, 100, 'paid',
+                    :rent, 'active', :notes
+                 )";
+        $cStmt = $this->conn->prepare($cSql);
+        $cStmt->execute([
+            ':code'         => $contractCode,
+            ':room_id'      => $roomId,
+            ':tenant_id'    => $tenantId,
+            ':start_date'   => $startDate,
+            ':end_date'     => $endDate,
+            ':deposit'      => $roomPrice,
+            ':deposit_date' => $startDate,
+            ':rent'         => $roomPrice,
+            ':notes'        => $note,
         ]);
     }
 
