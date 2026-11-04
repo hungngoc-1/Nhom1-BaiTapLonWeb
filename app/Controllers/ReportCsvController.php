@@ -50,6 +50,8 @@ class ReportCsvController {
             'maintenance_rooms' => 0,
             'occupancy_rate'    => 0,
             'tenant_count'      => 0,
+            'renewed_count'     => 0,
+            'renewal_rate'      => 0,
             'deposit_held'      => 0,
             'total_invoiced'    => 0,
             'paid_amount'       => 0,
@@ -93,6 +95,19 @@ class ReportCsvController {
             ");
             $stmtTenants->execute([':bId' => $bId, ':pfx' => $bPrefix . '%']);
             $tenantCount = (int)$stmtTenants->fetchColumn();
+
+            // Số hợp đồng đã gia hạn (tái ký)
+            $stmtRenewed = $this->db->prepare("
+                SELECT COUNT(*)
+                FROM contracts c
+                JOIN rooms r ON r.id = c.room_id
+                WHERE (r.building_id = :bId OR r.room_number LIKE :pfx)
+                  AND c.status = 'active'
+                  AND c.renewal_status = 'renewed'
+            ");
+            $stmtRenewed->execute([':bId' => $bId, ':pfx' => $bPrefix . '%']);
+            $renewedCount = (int)$stmtRenewed->fetchColumn();
+            $renewalRate = $tenantCount > 0 ? round(($renewedCount / $tenantCount) * 100, 1) : 0;
 
             // Tiền cọc đang giữ
             $stmtDeposit = $this->db->prepare("
@@ -139,6 +154,8 @@ class ReportCsvController {
                 'maintenance_rooms' => $maintR,
                 'occupancy_rate'    => $occRate,
                 'tenant_count'      => $tenantCount,
+                'renewed_count'     => $renewedCount,
+                'renewal_rate'      => $renewalRate,
                 'deposit_held'      => $depositHeld,
                 'total_invoices'    => $totalInv,
                 'total_invoiced'    => $invoiced,
@@ -155,6 +172,7 @@ class ReportCsvController {
             $systemSummary['available_rooms']   += $availR;
             $systemSummary['maintenance_rooms'] += $maintR;
             $systemSummary['tenant_count']      += $tenantCount;
+            $systemSummary['renewed_count']     += $renewedCount;
             $systemSummary['deposit_held']      += $depositHeld;
             $systemSummary['total_invoiced']    += $invoiced;
             $systemSummary['paid_amount']       += $paid;
@@ -169,6 +187,9 @@ class ReportCsvController {
         }
         if ($systemSummary['total_invoiced'] > 0) {
             $systemSummary['collection_rate'] = round(($systemSummary['paid_amount'] / $systemSummary['total_invoiced']) * 100, 1);
+        }
+        if ($systemSummary['tenant_count'] > 0) {
+            $systemSummary['renewal_rate'] = round(($systemSummary['renewed_count'] / $systemSummary['tenant_count']) * 100, 1);
         }
 
         // 4. LẤY DỮ LIỆU TAB 1: DANH SÁCH HÓA ĐƠN CHI TIẾT (KÈM BỘ LỌC)
@@ -324,11 +345,13 @@ class ReportCsvController {
                 u.roommate_phone,
                 c.id AS contract_id,
                 c.contract_code,
+                c.renewal_status,
                 c.start_date,
                 c.end_date,
                 c.monthly_rent,
                 c.deposit_amount,
                 r.room_number,
+                r.building_id,
                 b.name AS building_name,
                 DATEDIFF(c.end_date, CURDATE()) AS days_left
             FROM users u
@@ -401,6 +424,8 @@ class ReportCsvController {
         fputcsv($out, ['Số phòng đang bảo trì', $systemSummary['maintenance_rooms'], 'Phòng', 'Đang sửa chữa định kỳ']);
         fputcsv($out, ['Tỷ lệ lấp đầy hệ thống', $systemSummary['occupancy_rate'] . '%', '%', 'Hiệu suất khai thác phòng']);
         fputcsv($out, ['Tổng số khách cư trú', $systemSummary['tenant_count'], 'Người', 'Số khách thuê chính thức']);
+        fputcsv($out, ['Hợp đồng đã tái ký / gia hạn', $systemSummary['renewed_count'], 'Hợp đồng', 'Khách ở lâu năm gia hạn HĐ']);
+        fputcsv($out, ['Tỷ lệ gia hạn hợp đồng', $systemSummary['renewal_rate'] . '%', '%', 'Số HĐ gia hạn / Tổng khách thuê']);
         fputcsv($out, ['Tổng tiền đặt cọc đang giữ', number_format($systemSummary['deposit_held'], 0, ',', '.') . ' đ', 'VNĐ', 'Tiền bảo đảm hợp đồng']);
         fputcsv($out, ['Tổng tiền lập hóa đơn phát sinh', number_format($systemSummary['total_invoiced'], 0, ',', '.') . ' đ', 'VNĐ', 'Tổng ' . $systemSummary['total_invoices'] . ' hóa đơn']);
         fputcsv($out, ['Thực thu (Doanh thu đã thu)', number_format($systemSummary['paid_amount'], 0, ',', '.') . ' đ', 'VNĐ', 'Đã thanh toán (' . $systemSummary['paid_count'] . ' hóa đơn)']);
@@ -420,6 +445,8 @@ class ReportCsvController {
             'Bảo Trì',
             'Tỷ Lệ Lấp Đầy (%)',
             'Khách Ở',
+            'Tái Ký / Gia Hạn (HĐ)',
+            'Tỷ Lệ Gia Hạn (%)',
             'Tiền Cọc Đang Giữ (VNĐ)',
             'Tổng Hóa Đơn (VNĐ)',
             'Thực Thu / Doanh Thu (VNĐ)',
@@ -436,6 +463,8 @@ class ReportCsvController {
                 $m['maintenance_rooms'],
                 $m['occupancy_rate'] . '%',
                 $m['tenant_count'],
+                $m['renewed_count'],
+                $m['renewal_rate'] . '%',
                 number_format($m['deposit_held'], 0, '', ''),
                 number_format($m['total_invoiced'], 0, '', ''),
                 number_format($m['paid_amount'], 0, '', ''),
@@ -453,6 +482,8 @@ class ReportCsvController {
             $systemSummary['maintenance_rooms'],
             $systemSummary['occupancy_rate'] . '%',
             $systemSummary['tenant_count'],
+            $systemSummary['renewed_count'],
+            $systemSummary['renewal_rate'] . '%',
             number_format($systemSummary['deposit_held'], 0, '', ''),
             number_format($systemSummary['total_invoiced'], 0, '', ''),
             number_format($systemSummary['paid_amount'], 0, '', ''),
@@ -572,6 +603,7 @@ class ReportCsvController {
             'Số Phòng',
             'Tòa Nhà',
             'Mã Hợp Đồng',
+            'Tình Trạng Tái Ký',
             'Ngày Bắt Đầu',
             'Ngày Hết Hạn',
             'Số Ngày Còn Lại',
@@ -582,6 +614,7 @@ class ReportCsvController {
 
         $tIdx = 1;
         foreach ($tenantRows as $tn) {
+            $isRenewed = ($tn['renewal_status'] ?? '') === 'renewed';
             fputcsv($out, [
                 $tIdx++,
                 $tn['full_name'],
@@ -591,6 +624,7 @@ class ReportCsvController {
                 $tn['room_number'],
                 $tn['building_name'] ?? '',
                 $tn['contract_code'],
+                $isRenewed ? 'Đã gia hạn (Tái ký)' : 'Hợp đồng ban đầu',
                 date('d/m/Y', strtotime($tn['start_date'])),
                 date('d/m/Y', strtotime($tn['end_date'])),
                 $tn['days_left'],

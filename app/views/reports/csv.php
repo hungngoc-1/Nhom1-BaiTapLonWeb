@@ -28,6 +28,7 @@ foreach ($roomRows as $rm) {
 // Tính các chỉ số cho Tab 3 (Khách thuê & Hợp đồng)
 $tab3TotalTenants = count($tenantRows);
 $tab3ExpiringSoon = 0;
+$tab3RenewedCount = 0;
 $tab3TotalRent = 0;
 $tab3TotalDeposit = 0;
 foreach ($tenantRows as $tn) {
@@ -36,7 +37,11 @@ foreach ($tenantRows as $tn) {
     if ((int)$tn['days_left'] <= 30) {
         $tab3ExpiringSoon++;
     }
+    if (($tn['renewal_status'] ?? '') === 'renewed') {
+        $tab3RenewedCount++;
+    }
 }
+$tab3RenewalRate = $tab3TotalTenants > 0 ? round(($tab3RenewedCount / $tab3TotalTenants) * 100, 1) : 0;
 ?>
 <!DOCTYPE html>
 <html lang="vi">
@@ -51,6 +56,7 @@ foreach ($tenantRows as $tn) {
         :root {
             --teal-main: #308f86;
             --teal-hover: #25756d;
+            --purple-main: #8b5cf6;
             --bg-page: #f8fafc;
         }
 
@@ -71,6 +77,7 @@ foreach ($tenantRows as $tn) {
         }
 
         .text-teal-main { color: var(--teal-main) !important; }
+        .text-purple { color: var(--purple-main) !important; }
         .cursor-pointer { cursor: pointer; }
 
         /* Navbar */
@@ -118,7 +125,7 @@ foreach ($tenantRows as $tn) {
             background: #ffffff;
             border-radius: 22px;
             border: 3px solid #ffffff;
-            padding: 20px 24px;
+            padding: 20px 22px;
             box-shadow: 0 10px 25px rgba(0, 0, 0, 0.05);
             transition: transform 0.25s ease;
             position: relative;
@@ -126,8 +133,8 @@ foreach ($tenantRows as $tn) {
             height: 100%;
         }
         .stat-card:hover { transform: translateY(-4px); box-shadow: 0 15px 35px rgba(0, 0, 0, 0.08); }
-        .stat-title { font-size: 0.78rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px; }
-        .stat-num { font-size: 2rem; font-weight: 900; line-height: 1.1; }
+        .stat-title { font-size: 0.75rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px; }
+        .stat-num { font-size: 1.85rem; font-weight: 900; line-height: 1.1; }
 
         /* Box & Table */
         .section-box {
@@ -296,7 +303,7 @@ foreach ($tenantRows as $tn) {
                 <div>
                     <h3 class="fw-bold mb-1" style="font-size: 1.45rem; color: #0f172a;"><?= htmlspecialchars($pageTitle) ?></h3>
                     <div class="text-muted" style="font-size: 0.85rem; font-weight: 600;">
-                        Quản trị tối cao: Đối soát toàn diện doanh thu, công nợ, hạn thanh toán, hiện trạng 60 phòng và hợp đồng khách thuê trên cả 3 tòa nhà.
+                        Quản trị tối cao: Đối soát toàn diện doanh thu, công nợ, tỷ lệ lấp đầy, tỷ lệ gia hạn hợp đồng và khách thuê trên cả 3 tòa nhà.
                     </div>
                 </div>
             </div>
@@ -321,41 +328,50 @@ foreach ($tenantRows as $tn) {
             </div>
         </div>
 
-        <!-- 4 Stats Cards -->
+        <!-- 5 Stats Cards (Bao gồm Tỷ lệ gia hạn hợp đồng) -->
         <div class="row g-3 mb-4">
             <!-- 1. Thực Thu (Doanh Thu) -->
-            <div class="col-12 col-sm-6 col-xl-3">
+            <div class="col-12 col-sm-6 col-xl">
                 <div class="stat-card" style="border-left: 5px solid #10b981;">
                     <div class="stat-title" style="color: #10b981;"><i class="fa-solid fa-circle-check me-1"></i> THỰC THU (DOANH THU)</div>
                     <div class="stat-num text-dark mt-2"><?= number_format($systemSummary['paid_amount'], 0, ',', '.') ?> <span class="fs-6 text-muted">đ</span></div>
-                    <div class="small text-muted mt-1 fw-bold"><?= $systemSummary['paid_count'] ?> / <?= $systemSummary['total_invoices'] ?> hóa đơn đã thanh toán</div>
+                    <div class="small text-muted mt-1 fw-bold"><?= $systemSummary['paid_count'] ?> / <?= $systemSummary['total_invoices'] ?> hóa đơn đã thu</div>
                 </div>
             </div>
 
             <!-- 2. Công Nợ (Chưa Thu) -->
-            <div class="col-12 col-sm-6 col-xl-3">
+            <div class="col-12 col-sm-6 col-xl">
                 <div class="stat-card" style="border-left: 5px solid #ef4444;">
                     <div class="stat-title text-danger"><i class="fa-solid fa-triangle-exclamation me-1"></i> CÔNG NỢ (CHƯA THU)</div>
                     <div class="stat-num text-dark mt-2"><?= number_format($systemSummary['unpaid_amount'], 0, ',', '.') ?> <span class="fs-6 text-muted">đ</span></div>
-                    <div class="small text-muted mt-1 fw-bold"><?= $systemSummary['unpaid_count'] ?> hóa đơn còn nợ (Tỷ lệ thu: <?= $systemSummary['collection_rate'] ?>%)</div>
+                    <div class="small text-muted mt-1 fw-bold"><?= $systemSummary['unpaid_count'] ?> hóa đơn (Thu hồi: <?= $systemSummary['collection_rate'] ?>%)</div>
                 </div>
             </div>
 
             <!-- 3. Tỷ Lệ Lấp Đầy -->
-            <div class="col-12 col-sm-6 col-xl-3">
+            <div class="col-12 col-sm-6 col-xl">
                 <div class="stat-card" style="border-left: 5px solid #308f86;">
                     <div class="stat-title text-teal-main"><i class="fa-solid fa-door-open me-1"></i> TỶ LỆ LẤP ĐẦY</div>
                     <div class="stat-num text-dark mt-2"><?= $systemSummary['occupancy_rate'] ?> <span class="fs-6 text-muted">%</span></div>
-                    <div class="small text-muted mt-1 fw-bold"><?= $systemSummary['rented_rooms'] ?> / <?= $systemSummary['total_rooms'] ?> phòng đang cho thuê</div>
+                    <div class="small text-muted mt-1 fw-bold"><?= $systemSummary['rented_rooms'] ?> / <?= $systemSummary['total_rooms'] ?> phòng đã thuê</div>
                 </div>
             </div>
 
-            <!-- 4. Tiền Cọc Đang Giữ -->
-            <div class="col-12 col-sm-6 col-xl-3">
+            <!-- 4. TỶ LỆ GIA HẠN HỢP ĐỒNG (MỚI) -->
+            <div class="col-12 col-sm-6 col-xl">
+                <div class="stat-card" style="border-left: 5px solid #8b5cf6;">
+                    <div class="stat-title" style="color: #8b5cf6;"><i class="fa-solid fa-repeat me-1"></i> TỶ LỆ GIA HẠN HĐ</div>
+                    <div class="stat-num text-dark mt-2"><?= $systemSummary['renewal_rate'] ?> <span class="fs-6 text-muted">%</span></div>
+                    <div class="small text-muted mt-1 fw-bold"><?= $systemSummary['renewed_count'] ?> / <?= $systemSummary['tenant_count'] ?> HĐ đã tái ký</div>
+                </div>
+            </div>
+
+            <!-- 5. Tiền Cọc Đang Giữ -->
+            <div class="col-12 col-sm-6 col-xl">
                 <div class="stat-card" style="border-left: 5px solid #0284c7;">
                     <div class="stat-title" style="color: #0284c7;"><i class="fa-solid fa-shield-halved me-1"></i> TIỀN CỌC ĐANG GIỮ</div>
                     <div class="stat-num text-dark mt-2"><?= number_format($systemSummary['deposit_held'], 0, ',', '.') ?> <span class="fs-6 text-muted">đ</span></div>
-                    <div class="small text-muted mt-1 fw-bold"><?= $systemSummary['tenant_count'] ?> khách thuê có hợp đồng hiệu lực</div>
+                    <div class="small text-muted mt-1 fw-bold"><?= $systemSummary['tenant_count'] ?> khách thuê có hợp đồng</div>
                 </div>
             </div>
         </div>
@@ -367,7 +383,7 @@ foreach ($tenantRows as $tn) {
                     <h5 class="fw-bold text-dark mb-0" style="font-weight: 800;">
                         <i class="fa-solid fa-table-cells-large text-teal-main me-2"></i> Ma Trận So Sánh Toàn Diện 3 Tòa Nhà
                     </h5>
-                    <div class="text-muted small">Đối chiếu tổng thể cơ cấu phòng, khách thuê, dòng tiền thực thu và công nợ giữa từng tòa nhà</div>
+                    <div class="text-muted small">Đối chiếu tổng thể cơ cấu phòng, tỷ lệ lấp đầy, tỷ lệ gia hạn hợp đồng, thực thu và công nợ giữa từng tòa nhà</div>
                 </div>
                 <span class="badge bg-light text-secondary border px-3 py-2 rounded-pill fw-bold">
                     <i class="fa-solid fa-building text-teal-main me-1"></i> Cả 3 Tòa (Sunrise, Emerald, Horizon)
@@ -378,18 +394,19 @@ foreach ($tenantRows as $tn) {
                 <table class="table matrix-table align-middle text-center mb-0 border rounded-4 overflow-hidden">
                     <thead>
                         <tr>
-                            <th class="text-start" style="min-width: 220px;">Tòa Nhà</th>
+                            <th class="text-start" style="min-width: 200px;">Tòa Nhà</th>
                             <th>Tổng Phòng</th>
                             <th>Đang Thuê</th>
                             <th>Phòng Trống</th>
                             <th>Bảo Trì</th>
                             <th>Lấp Đầy</th>
                             <th>Khách Ở</th>
+                            <th class="text-center" style="color: #c084fc;">Tái Ký / Gia Hạn</th>
                             <th class="text-end">Tiền Cọc Giữ</th>
                             <th class="text-end">Tổng Hóa Đơn</th>
                             <th class="text-end">Thực Thu (VNĐ)</th>
                             <th class="text-end">Công Nợ (VNĐ)</th>
-                            <th class="text-center">Tỷ Lệ Thu Hồi</th>
+                            <th class="text-center">Thu Hồi Nợ</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -416,6 +433,11 @@ foreach ($tenantRows as $tn) {
                                 </td>
                                 <td class="fw-bold text-teal-main"><?= $m['occupancy_rate'] ?>%</td>
                                 <td class="fw-bold text-dark"><?= $m['tenant_count'] ?> người</td>
+                                <td class="text-center fw-bold" style="color: #7c3aed;">
+                                    <span class="badge bg-purple-subtle text-purple border border-purple-subtle rounded-pill px-2">
+                                        <?= $m['renewed_count'] ?> HĐ (<?= $m['renewal_rate'] ?>%)
+                                    </span>
+                                </td>
                                 <td class="text-end fw-bold" style="color: #0284c7;"><?= number_format($m['deposit_held'], 0, ',', '.') ?> đ</td>
                                 <td class="text-end fw-bold text-dark"><?= number_format($m['total_invoiced'], 0, ',', '.') ?> đ</td>
                                 <td class="text-end fw-bold text-success"><?= number_format($m['paid_amount'], 0, ',', '.') ?> đ</td>
@@ -434,6 +456,11 @@ foreach ($tenantRows as $tn) {
                             <td><span class="badge bg-secondary rounded-pill px-3 py-1"><?= $systemSummary['maintenance_rooms'] ?></span></td>
                             <td class="fw-bold text-teal-main fs-6"><?= $systemSummary['occupancy_rate'] ?>%</td>
                             <td class="fw-bold text-dark"><?= $systemSummary['tenant_count'] ?> người</td>
+                            <td class="text-center fw-black" style="color: #7c3aed;">
+                                <span class="badge bg-purple-subtle text-purple border border-purple-subtle rounded-pill px-3 py-1 fs-6">
+                                    <?= $systemSummary['renewed_count'] ?> HĐ (<?= $systemSummary['renewal_rate'] ?>%)
+                                </span>
+                            </td>
                             <td class="text-end fw-bold" style="color: #0284c7;"><?= number_format($systemSummary['deposit_held'], 0, ',', '.') ?> đ</td>
                             <td class="text-end fw-bold text-dark"><?= number_format($systemSummary['total_invoiced'], 0, ',', '.') ?> đ</td>
                             <td class="text-end fw-bold text-success fs-6"><?= number_format($systemSummary['paid_amount'], 0, ',', '.') ?> đ</td>
@@ -744,7 +771,6 @@ foreach ($tenantRows as $tn) {
                                     $isMaint  = ($rm['status'] === 'maintenance');
                                     $bldName  = $rm['building_name'] ?? ('Tòa ' . substr($rm['room_number'], 0, 1));
                                     $depAmt   = (float)($rm['deposit_amount'] ?? 0);
-                                    // Trích xuất tầng từ số phòng
                                     $floorNum = 'Tầng ' . (preg_match('/^[A-Z](\d)/i', $rm['room_number'], $fm) ? $fm[1] : '1');
                                 ?>
                                     <tr class="room-row" 
@@ -839,6 +865,10 @@ foreach ($tenantRows as $tn) {
                         <div class="mini-kpi-pill text-success border-success-subtle bg-success-subtle">
                             <i class="fa-solid fa-file-contract"></i> Hợp đồng hiệu lực: <strong><?= $tab3TotalTenants ?></strong>
                         </div>
+                        <!-- TỶ LỆ GIA HẠN HỢP ĐỒNG -->
+                        <div class="mini-kpi-pill border-purple-subtle bg-purple-subtle" style="color: #7c3aed; background: #faf5ff; border: 1.5px solid #d8b4fe;">
+                            <i class="fa-solid fa-repeat me-1"></i> Tỷ lệ gia hạn HĐ: <strong style="color: #7c3aed;"><?= $tab3RenewalRate ?>%</strong> (<?= $tab3RenewedCount ?> HĐ tái ký)
+                        </div>
                         <?php if ($tab3ExpiringSoon > 0): ?>
                             <div class="mini-kpi-pill text-warning border-warning-subtle bg-warning-subtle">
                                 <i class="fa-solid fa-clock"></i> Sắp hết hạn (≤ 30 ngày): <strong><?= $tab3ExpiringSoon ?></strong>
@@ -855,7 +885,7 @@ foreach ($tenantRows as $tn) {
                     <!-- BỘ LỌC TÌM KIẾM TRỰC TIẾP TAB 3 -->
                     <div class="p-3 bg-light rounded-4 mb-3 no-print border">
                         <div class="row g-2 align-items-end">
-                            <div class="col-12 col-md-4">
+                            <div class="col-12 col-md-3">
                                 <label class="form-label small fw-bold text-muted mb-1"><i class="fa-solid fa-building text-teal-main me-1"></i> Tòa nhà</label>
                                 <select id="filterTenantBuilding" class="form-select rounded-3">
                                     <option value="all">Tất cả 3 tòa nhà</option>
@@ -864,7 +894,7 @@ foreach ($tenantRows as $tn) {
                                     <option value="Tòa C">Tòa C - StayMate Horizon</option>
                                 </select>
                             </div>
-                            <div class="col-12 col-md-4">
+                            <div class="col-12 col-md-3">
                                 <label class="form-label small fw-bold text-muted mb-1"><i class="fa-solid fa-clock text-teal-main me-1"></i> Thời hạn hợp đồng</label>
                                 <select id="filterTenantExpiry" class="form-select rounded-3">
                                     <option value="all">Tất cả thời hạn</option>
@@ -872,7 +902,15 @@ foreach ($tenantRows as $tn) {
                                     <option value="long_term">Còn hạn dài (> 30 ngày)</option>
                                 </select>
                             </div>
-                            <div class="col-12 col-md-4">
+                            <div class="col-12 col-md-3">
+                                <label class="form-label small fw-bold text-muted mb-1"><i class="fa-solid fa-repeat text-purple me-1"></i> Tình trạng gia hạn</label>
+                                <select id="filterTenantRenewal" class="form-select rounded-3">
+                                    <option value="all">Tất cả hợp đồng</option>
+                                    <option value="renewed">Đã gia hạn (Tái ký)</option>
+                                    <option value="initial">Hợp đồng ban đầu</option>
+                                </select>
+                            </div>
+                            <div class="col-12 col-md-3">
                                 <label class="form-label small fw-bold text-muted mb-1"><i class="fa-solid fa-magnifying-glass text-teal-main me-1"></i> Tìm kiếm khách thuê</label>
                                 <div class="input-group">
                                     <input type="text" id="searchTenantKeyword" class="form-control rounded-start-3" placeholder="Tên khách, SĐT, CCCD, phòng...">
@@ -896,6 +934,7 @@ foreach ($tenantRows as $tn) {
                                     <th>Phòng</th>
                                     <th>Tòa Nhà</th>
                                     <th>Mã Hợp Đồng</th>
+                                    <th class="text-center">Tình Trạng Tái Ký</th>
                                     <th>Thời Hạn HĐ</th>
                                     <th class="text-center">Thời Gian Còn Lại</th>
                                     <th class="text-end">Tiền Thuê/Tháng</th>
@@ -909,10 +948,12 @@ foreach ($tenantRows as $tn) {
                                 foreach ($tenantRows as $tn): 
                                     $daysLeft = (int)($tn['days_left'] ?? 0);
                                     $tBldName = $tn['building_name'] ?? ('Tòa ' . substr($tn['room_number'], 0, 1));
+                                    $isRenewed = ($tn['renewal_status'] ?? '') === 'renewed';
                                 ?>
                                     <tr class="tenant-row"
                                         data-building="<?= htmlspecialchars($tBldName) ?>"
                                         data-expiry="<?= $daysLeft <= 30 ? 'expiring_soon' : 'long_term' ?>"
+                                        data-renewal="<?= $isRenewed ? 'renewed' : 'initial' ?>"
                                         data-keyword="<?= strtolower($tn['full_name'] . ' ' . $tn['phone'] . ' ' . ($tn['cccd'] ?? '') . ' ' . $tn['room_number'] . ' ' . $tn['contract_code']) ?>">
                                         <td class="text-center text-muted fw-bold tenant-index"><?= $tStt++ ?></td>
                                         <td>
@@ -927,6 +968,18 @@ foreach ($tenantRows as $tn) {
                                             <a href="index.php?route=contracts" class="fw-bold text-teal-main text-decoration-none">
                                                 <?= htmlspecialchars($tn['contract_code']) ?>
                                             </a>
+                                        </td>
+                                        <!-- TÌNH TRẠNG TÁI KÝ -->
+                                        <td class="text-center">
+                                            <?php if ($isRenewed): ?>
+                                                <span class="badge rounded-pill px-2 py-1 fw-bold" style="background-color: #f3e8ff; color: #7c3aed; border: 1px solid #d8b4fe;">
+                                                    <i class="fa-solid fa-repeat me-1"></i> Đã gia hạn
+                                                </span>
+                                            <?php else: ?>
+                                                <span class="badge bg-light text-secondary border rounded-pill px-2 py-1">
+                                                    HĐ ban đầu
+                                                </span>
+                                            <?php endif; ?>
                                         </td>
                                         <td class="small">
                                             <div>Từ: <?= date('d/m/Y', strtotime($tn['start_date'])) ?></div>
@@ -959,7 +1012,9 @@ foreach ($tenantRows as $tn) {
                             <tfoot class="table-light border-top-2 fw-bold">
                                 <tr>
                                     <td colspan="6" class="text-uppercase text-center py-3">TỔNG CỘNG 52 KHÁCH THUÊ</td>
-                                    <td colspan="3" class="text-center py-3 text-teal-main"><?= $tab3TotalTenants ?> HĐ hiệu lực (<?= $tab3ExpiringSoon ?> HĐ sắp hết hạn)</td>
+                                    <td colspan="4" class="text-center py-3 text-teal-main">
+                                        <?= $tab3TotalTenants ?> HĐ hiệu lực (<strong class="text-purple"><?= $tab3RenewedCount ?> tái ký - <?= $tab3RenewalRate ?>%</strong>, <?= $tab3ExpiringSoon ?> sắp hết hạn)
+                                    </td>
                                     <td class="text-end py-3 text-dark fs-6"><?= number_format($tab3TotalRent, 0, ',', '.') ?> đ</td>
                                     <td class="text-end py-3 text-primary fs-6"><?= number_format($tab3TotalDeposit, 0, ',', '.') ?> đ</td>
                                     <td></td>
@@ -1141,19 +1196,22 @@ foreach ($tenantRows as $tn) {
         function applyTenantFilter() {
             const bldVal = document.getElementById('filterTenantBuilding').value;
             const expVal = document.getElementById('filterTenantExpiry').value;
+            const renVal = document.getElementById('filterTenantRenewal').value;
             const kw = document.getElementById('searchTenantKeyword').value.trim().toLowerCase();
 
             let visibleIdx = 1;
             document.querySelectorAll('#tenantsReportTable tbody .tenant-row').forEach(function(row) {
                 const rowBld = row.getAttribute('data-building') || '';
                 const rowExp = row.getAttribute('data-expiry') || '';
+                const rowRen = row.getAttribute('data-renewal') || '';
                 const rowKw = row.getAttribute('data-keyword') || '';
 
                 const matchBld = (bldVal === 'all' || rowBld.indexOf(bldVal) !== -1);
                 const matchExp = (expVal === 'all' || rowExp === expVal);
+                const matchRen = (renVal === 'all' || rowRen === renVal);
                 const matchKw = (kw === '' || rowKw.indexOf(kw) !== -1);
 
-                if (matchBld && matchExp && matchKw) {
+                if (matchBld && matchExp && matchRen && matchKw) {
                     row.style.display = '';
                     row.querySelector('.tenant-index').textContent = visibleIdx++;
                 } else {
@@ -1164,10 +1222,12 @@ foreach ($tenantRows as $tn) {
 
         document.getElementById('filterTenantBuilding').addEventListener('change', applyTenantFilter);
         document.getElementById('filterTenantExpiry').addEventListener('change', applyTenantFilter);
+        document.getElementById('filterTenantRenewal').addEventListener('change', applyTenantFilter);
         document.getElementById('searchTenantKeyword').addEventListener('input', applyTenantFilter);
         document.getElementById('btnResetTenantFilter').addEventListener('click', function() {
             document.getElementById('filterTenantBuilding').value = 'all';
             document.getElementById('filterTenantExpiry').value = 'all';
+            document.getElementById('filterTenantRenewal').value = 'all';
             document.getElementById('searchTenantKeyword').value = '';
             applyTenantFilter();
         });
