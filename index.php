@@ -106,7 +106,7 @@ if ($isLoggedIn && $currentUserRole === 'tenant') {
 // PHÂN QUYỀN QUẢN LÝ (role === 'manager' hoặc 'landlord'):
 // Quản lý được vào trang Tòa nhà (dashboard) và các trang nghiệp vụ, nhưng TUYỆT ĐỐI KHÔNG ĐƯỢC vào trang Tài khoản (accounts, users)
 if ($isLoggedIn && in_array($currentUserRole, ['manager', 'landlord'], true)) {
-    if (in_array($route, ['accounts', 'users', 'reports_csv', 'reports/csv'], true)) {
+    if (in_array($route, ['accounts', 'users'], true)) {
         $_SESSION['flash_error'] = "Tài khoản Quản lý không có quyền truy cập trang Quản lý Tài khoản!";
         header("Location: index.php?route=overview");
         exit;

@@ -166,6 +166,8 @@ $adminName = $_SESSION['full_name'] ?? 'Quản trị viên Hệ thống';
                 <li class="nav-item"><a class="nav-link" href="index.php?route=invoices"><i class="fa-solid fa-file-invoice-dollar"></i> Hóa đơn</a></li>
                 <?php if (($_SESSION['role'] ?? '') === 'admin'): ?>
                     <li class="nav-item"><a class="nav-link" href="index.php?route=accounts"><i class="fa-solid fa-user-gear"></i> Tài khoản</a></li>
+                <?php endif; ?>
+                <?php if (in_array(($_SESSION['role'] ?? ''), ['admin', 'manager', 'landlord'], true)): ?>
                     <li class="nav-item"><a class="nav-link" href="index.php?route=reports_csv"><i class="fa-solid fa-chart-pie"></i> Báo cáo</a></li>
                 <?php endif; ?>
                 <li class="nav-item"><a class="nav-link" href="index.php?route=showcase" target="_blank"><i class="fa-regular fa-eye"></i> Xem phòng khách</a></li>
@@ -305,12 +307,34 @@ $adminName = $_SESSION['full_name'] ?? 'Quản trị viên Hệ thống';
                                                 &bull; <a href="index.php?route=contracts/detail&id=<?= (int)$t['contract_id'] ?>" class="text-teal-main fw-bold text-decoration-none">Xem HĐ</a>
                                             </div>
                                         <?php else: ?>
-                                            <span class="badge rounded-pill px-2 py-1 bg-light text-muted border">Chưa gắn phòng</span>
+                                            <?php if (!empty($t['pref_room_number'])): ?>
+                                                <div>
+                                                    <span class="badge rounded-pill px-2.5 py-1 text-primary-emphasis bg-primary-subtle border border-primary-subtle fw-semibold">
+                                                        <i class="fa-solid fa-door-open me-1"></i> Dự kiến: P.<?= h($t['pref_room_number']) ?>
+                                                    </span>
+                                                </div>
+                                                <div class="mt-1">
+                                                    <a href="index.php?route=contracts&tenant_id=<?= $tId ?>&room_id=<?= (int)$t['preferred_room_id'] ?>" class="btn btn-sm btn-outline-teal rounded-pill px-2.5 py-1 fw-bold text-decoration-none shadow-sm" style="font-size: 0.76rem;">
+                                                        <i class="fa-solid fa-file-circle-plus me-1"></i> Lập hợp đồng
+                                                    </a>
+                                                </div>
+                                            <?php else: ?>
+                                                <div>
+                                                    <span class="badge rounded-pill px-2 py-1 bg-light text-muted border">Chưa gắn phòng</span>
+                                                </div>
+                                                <div class="mt-1">
+                                                    <a href="index.php?route=contracts&tenant_id=<?= $tId ?>" class="btn btn-sm btn-light border rounded-pill px-2.5 py-1 fw-bold text-teal-main text-decoration-none shadow-sm" style="font-size: 0.76rem;">
+                                                        <i class="fa-solid fa-file-circle-plus me-1"></i> Lập hợp đồng
+                                                    </a>
+                                                </div>
+                                            <?php endif; ?>
                                         <?php endif; ?>
                                     </td>
                                     <td>
-                                        <?php if ($tStatus === 'Đang thuê' || $isStaying): ?>
+                                        <?php if ($isStaying): ?>
                                             <span class="badge rounded-pill px-3 py-2" style="background:#dcfce7;color:#15803d;font-weight:800;">● Đang thuê</span>
+                                        <?php elseif (!empty($t['preferred_room_id'])): ?>
+                                            <span class="badge rounded-pill px-3 py-2" style="background:#fef9c3;color:#854d0e;font-weight:800;">Chờ lập HĐ</span>
                                         <?php elseif ($tStatus === 'Chờ nhận phòng'): ?>
                                             <span class="badge rounded-pill px-3 py-2" style="background:#fef9c3;color:#854d0e;font-weight:800;">Chờ nhận phòng</span>
                                         <?php else: ?>
@@ -624,6 +648,9 @@ $adminName = $_SESSION['full_name'] ?? 'Quản trị viên Hệ thống';
                                     <option value="" disabled>-- Hiện không có phòng trống --</option>
                                 <?php endif; ?>
                             </select>
+                            <div class="form-text small text-muted mt-1">
+                                <i class="fa-solid fa-circle-info text-teal-main me-1"></i> <strong>Lưu ý:</strong> Khi thêm khách thuê, hệ thống <em>không tự động sinh hợp đồng</em>. Sau khi tạo hồ sơ, hãy vào trang <strong>Hợp đồng &gt; Lập Hợp Đồng mới</strong> để chính thức tạo hợp đồng và bàn giao phòng.
+                            </div>
                         </div>
 
                         <!-- Khối thông tin bạn cùng phòng: Tự động hiển thị khi phòng tối đa >= 2 người -->
