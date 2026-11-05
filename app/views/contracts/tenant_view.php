@@ -237,31 +237,6 @@ if (!function_exists('h')) {
                             </div>
                         </div>
 
-                        <!-- Hộp thông tin tích hợp dành cho bạn phân quyền -->
-                        <div class="api-info-box mt-4">
-                            <div class="d-flex justify-content-between align-items-center mb-2">
-                                <strong class="text-teal-main small text-uppercase">
-                                    <i class="fa-solid fa-link me-1"></i> Thông số tích hợp Phân quyền Khách thuê:
-                                </strong>
-                                <span class="badge bg-white text-muted border">REST API Ready</span>
-                            </div>
-                            <div class="row g-2 small">
-                                <div class="col-sm-6">
-                                    <span class="text-muted">Mã Khách Thuê (Tenant ID):</span>
-                                    <strong class="text-dark bg-white px-2 py-0.5 rounded border"><?= (int)$contract['tenant_id'] ?></strong>
-                                </div>
-                                <div class="col-sm-6">
-                                    <span class="text-muted">Mã Hợp Đồng (Contract ID):</span>
-                                    <strong class="text-dark bg-white px-2 py-0.5 rounded border"><?= (int)$contract['id'] ?></strong>
-                                </div>
-                                <div class="col-12 mt-2">
-                                    <span class="text-muted d-block">API JSON lấy dữ liệu trực tiếp:</span>
-                                    <code class="d-block bg-white p-2 rounded border mt-1 user-select-all">
-                                        index.php?route=api/tenant/contract&tenant_id=<?= (int)$contract['tenant_id'] ?>
-                                    </code>
-                                </div>
-                            </div>
-                        </div>
 
                     </div>
                 </div>

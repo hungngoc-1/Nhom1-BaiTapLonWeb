@@ -120,10 +120,17 @@
                     <td class="text-end no-print">
                         <div class="d-inline-flex align-items-center gap-1">
                             <a class="btn-icon-circle btn-icon-view" title="Xem chi tiết & In hóa đơn" href="index.php?route=invoices/detail&id=<?= (int)$inv['id'] ?>"><i class="fa-solid fa-eye"></i></a>
-                            <button type="button" class="btn-icon-circle btn-icon-edit" title="Chỉnh sửa thông tin hóa đơn"
-                                    onclick="openEditInvoiceModal(<?= (int)$inv['id'] ?>, <?= h(json_encode($inv['code'])) ?>, <?= h(json_encode($inv['room_number'])) ?>, <?= h(json_encode($inv['tenant_name'] ?? '')) ?>, '<?= $inv['due_date'] ?>', '<?= $inv['status'] ?>', <?= h(json_encode($inv['payment_note'] ?? '')) ?>, '<?= h($inv['payment_method'] ?? '') ?>')">
-                                <i class="fa-solid fa-pen"></i>
-                            </button>
+                            <?php if ($inv['status'] === 'paid'): ?>
+                                <button type="button" class="btn-icon-circle btn-icon-edit opacity-50" title="Hóa đơn đã thu tiền - Không thể chỉnh sửa"
+                                        onclick="alert('Từ chối chỉnh sửa: Hóa đơn đã thanh toán không được phép sửa đổi!'); return false;" style="cursor:not-allowed;">
+                                    <i class="fa-solid fa-lock text-muted"></i>
+                                </button>
+                            <?php else: ?>
+                                <button type="button" class="btn-icon-circle btn-icon-edit" title="Chỉnh sửa thông tin hóa đơn"
+                                        onclick="openEditInvoiceModal(<?= (int)$inv['id'] ?>, <?= h(json_encode($inv['code'])) ?>, <?= h(json_encode($inv['room_number'])) ?>, <?= h(json_encode($inv['tenant_name'] ?? '')) ?>, '<?= $inv['due_date'] ?>', '<?= $inv['status'] ?>', <?= h(json_encode($inv['payment_note'] ?? '')) ?>, '<?= h($inv['payment_method'] ?? '') ?>')">
+                                    <i class="fa-solid fa-pen"></i>
+                                </button>
+                            <?php endif; ?>
                             <?php if ($inv['status'] === 'unpaid'): ?>
                                 <button type="button" class="btn-icon-circle btn-icon-pay" title="Xác nhận thu tiền"
                                     onclick="openPayModal(<?= (int)$inv['id'] ?>, <?= h(json_encode($inv['code'])) ?>, <?= h(json_encode($inv['room_number'])) ?>, <?= h(json_encode($inv['tenant_name'] ?? '')) ?>, <?= (float)$inv['total_amount'] ?>)"><i class="fa-solid fa-money-bill-wave"></i></button>

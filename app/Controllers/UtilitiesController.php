@@ -60,9 +60,9 @@ class UtilitiesController {
             require_once __DIR__ . '/../Models/ReportModel.php';
             $mgr = ReportModel::getManagerBuildingInfo();
             if ($mgr) {
-                $sql .= " AND (r.building_id = :mgrBId OR r.room_number LIKE :mgrPfx) ";
-                $params[':mgrBId'] = $mgr['id'];
-                $params[':mgrPfx'] = $mgr['prefix'] . '%';
+                $sql .= " AND (r.building_id = ? OR r.room_number LIKE ?) ";
+                $params[] = $mgr['id'];
+                $params[] = $mgr['prefix'] . '%';
             }
 
             if ($keyword !== '') {

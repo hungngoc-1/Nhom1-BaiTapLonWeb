@@ -273,6 +273,14 @@ switch ($route) {
         break;
 
     // --- PHÂN HỆ HÓA ĐƠN ---
+    case 'api/invoices/preview':
+        (new InvoiceController())->previewApi();
+        break;
+
+    case 'invoices/create-manual':
+        (new InvoiceController())->createManual();
+        break;
+
     case 'invoices':
         (new InvoiceController())->index();
         break;
@@ -360,11 +368,13 @@ switch ($route) {
 // ==========================================
 // HÀM TẠO GIAO DIỆN TẠM CHO CÁC TRANG MENU KHÁC
 // ==========================================
+if (!function_exists('showPlaceholder')) {
 function showPlaceholder($title) {
     echo '<div style="padding: 60px; font-family: sans-serif; text-align: center; background: #F0F7F6; height: 100vh; box-sizing: border-box;">
             <h1 style="color: #12746B; margin-bottom: 15px;">' . htmlspecialchars($title) . '</h1>
             <p style="color: #7F8C8D; margin-bottom: 30px;">Giao diện trang này đang được xây dựng...</p>
             <a href="index.php?route=dashboard" style="display: inline-block; background: #12746B; color: white; padding: 12px 24px; border-radius: 12px; text-decoration: none; font-weight: bold; box-shadow: 0 4px 10px rgba(18,116,107,0.2);">← Quay lại trang Tổng quan</a>
           </div>';
+}
 }
 ?>

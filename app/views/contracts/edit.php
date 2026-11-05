@@ -9,6 +9,11 @@ if (!function_exists('h')) {
 $monthlyRent = (float)($contract['monthly_rent'] ?? $contract['room_price'] ?? $contract['deposit_amount']);
 $depositDate = !empty($contract['deposit_date']) ? $contract['deposit_date'] : $contract['start_date'];
 $cType = $contract['contract_type'] ?? 'official_lease';
+if (($contract['status'] ?? '') === 'terminated' || ($contract['status'] ?? '') === 'expired') {
+    $_SESSION['flash_error'] = 'Hợp đồng đã thanh lý không thể chỉnh sửa, chỉ được xem chi tiết!';
+    header('Location: index.php?route=contracts/detail&id=' . (int)$contract['id']);
+    exit;
+}
 ?>
 <!DOCTYPE html>
 <html lang="vi">
@@ -222,10 +227,8 @@ $cType = $contract['contract_type'] ?? 'official_lease';
                     </div>
                     <div class="col-md-4">
                         <label class="form-label small fw-bold">Hình thức ký</label>
-                        <select class="form-select" name="signature_type">
-                            <option value="paper" <?= ($contract['signature_type'] ?? '') === 'paper' ? 'selected' : '' ?>>Hợp đồng Ký giấy (A4)</option>
-                            <option value="online" <?= ($contract['signature_type'] ?? 'online') === 'online' ? 'selected' : '' ?>>Hợp đồng Điện tử (Online)</option>
-                        </select>
+                        <input type="text" class="form-control bg-light fw-bold text-secondary" value="Ký Giấy A4 (Có Scan)" readonly>
+                        <input type="hidden" name="signature_type" value="paper">
                     </div>
                 </div>
 
