@@ -236,6 +236,8 @@ $sixMonthsEndDay = date('Y-m-d', strtotime('+6 months'));
                     <li class="nav-item"><a class="nav-link" href="index.php?route=invoices"><i class="fa-solid fa-file-invoice-dollar"></i> Hóa đơn</a></li>
                     <?php if (($_SESSION['role'] ?? '') === 'admin'): ?>
                     <li class="nav-item"><a class="nav-link" href="index.php?route=accounts"><i class="fa-solid fa-user-gear"></i> Tài khoản</a></li>
+                <?php endif; ?>
+                <?php if (in_array(($_SESSION['role'] ?? ''), ['admin', 'manager', 'landlord'], true)): ?>
                     <li class="nav-item"><a class="nav-link" href="index.php?route=reports_csv"><i class="fa-solid fa-chart-pie"></i> Báo cáo</a></li>
                 <?php endif; ?>
                     <li class="nav-item"><a class="nav-link" href="index.php?route=showcase" target="_blank"><i class="fa-regular fa-eye"></i> Xem phòng khách</a></li>

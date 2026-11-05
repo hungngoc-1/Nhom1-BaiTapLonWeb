@@ -51,7 +51,8 @@ class TenantModel {
                        c.end_date,
                        c.deposit_amount,
                        r.room_number,
-                       r.price AS room_price
+                       r.price AS room_price,
+                       pr.room_number AS pref_room_number
                 FROM users u
                 LEFT JOIN contracts c ON c.id = (
                     SELECT c2.id FROM contracts c2
@@ -59,6 +60,7 @@ class TenantModel {
                     ORDER BY c2.id DESC LIMIT 1
                 )
                 LEFT JOIN rooms r ON r.id = c.room_id
+                LEFT JOIN rooms pr ON pr.id = u.preferred_room_id
                 WHERE u.role = 'tenant'";
 
         $params = [];
@@ -271,7 +273,7 @@ class TenantModel {
     }
 
     public function assignRoomToTenant(int $tenantId, int $roomId, ?string $roommateName = null, ?string $roommatePhone = null): void {
-        // Cập nhật thông tin phòng ưu tiên và bạn cùng phòng trong users
+        // Cập nhật thông tin phòng mong muốn / ưu tiên và bạn cùng phòng trong users (KHÔNG tự nhảy hợp đồng)
         $stmt = $this->conn->prepare("
             UPDATE users SET 
                 preferred_room_id = :room_id,
@@ -284,56 +286,6 @@ class TenantModel {
             ':roommate_name'  => $roommateName,
             ':roommate_phone' => $roommatePhone,
             ':tenant_id'      => $tenantId,
-        ]);
-
-        // Đổi trạng thái phòng thành 'rented'
-        $stmt = $this->conn->prepare("UPDATE rooms SET status = 'rented' WHERE id = :room_id");
-        $stmt->execute([':room_id' => $roomId]);
-
-        // Lấy thông tin phòng để ghi vào hợp đồng
-        $rStmt = $this->conn->prepare("SELECT room_number, price FROM rooms WHERE id = :room_id");
-        $rStmt->execute([':room_id' => $roomId]);
-        $room = $rStmt->fetch(PDO::FETCH_ASSOC);
-        $roomPrice = $room ? (float)$room['price'] : 0.0;
-        $roomNumber = $room ? $room['room_number'] : (string)$roomId;
-
-        // Chấm dứt các hợp đồng đang active trước đó của phòng này và của khách này
-        $stmt = $this->conn->prepare("UPDATE contracts SET status = 'terminated' WHERE room_id = :room_id AND status = 'active'");
-        $stmt->execute([':room_id' => $roomId]);
-
-        $stmt = $this->conn->prepare("UPDATE contracts SET status = 'terminated' WHERE tenant_id = :tenant_id AND status = 'active'");
-        $stmt->execute([':tenant_id' => $tenantId]);
-
-        // Tạo hợp đồng mới
-        $contractCode = 'HD-' . date('Y') . '-' . strtoupper(str_replace(' ', '', (string)$roomNumber));
-        $startDate = date('Y-m-d');
-        $endDate = date('Y-m-d', strtotime('+1 year'));
-
-        $note = "Hợp đồng thuê phòng {$roomNumber}";
-        if ($roommateName) {
-            $note .= ". Ở cùng: {$roommateName}" . ($roommatePhone ? " ({$roommatePhone})" : '');
-        }
-
-        $cSql = "INSERT INTO contracts (
-                    contract_code, contract_type, room_id, tenant_id, start_date, end_date,
-                    deposit_amount, deposit_date, deposit_paid_percent, deposit_status,
-                    monthly_rent, status, notes
-                 ) VALUES (
-                    :code, 'official_lease', :room_id, :tenant_id, :start_date, :end_date,
-                    :deposit, :deposit_date, 100, 'paid',
-                    :rent, 'active', :notes
-                 )";
-        $cStmt = $this->conn->prepare($cSql);
-        $cStmt->execute([
-            ':code'         => $contractCode,
-            ':room_id'      => $roomId,
-            ':tenant_id'    => $tenantId,
-            ':start_date'   => $startDate,
-            ':end_date'     => $endDate,
-            ':deposit'      => $roomPrice,
-            ':deposit_date' => $startDate,
-            ':rent'         => $roomPrice,
-            ':notes'        => $note,
         ]);
     }
 

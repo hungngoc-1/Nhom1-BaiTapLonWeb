@@ -1,5 +1,6 @@
 <?php
 require_once __DIR__ . '/../Config/Database.php';
+require_once __DIR__ . '/../Models/ReportModel.php';
 
 class ReportCsvController {
     private PDO $db;
@@ -12,36 +13,72 @@ class ReportCsvController {
     }
 
     /**
-     * Phân quyền nghiêm ngặt: CHỈ CÓ QUẢN TRỊ VIÊN (ADMIN) MỚI ĐƯỢC XEM BÁO CÁO NÀY
+     * Phân quyền: Cả Admin và Quản lý tòa nhà (Manager) đều được xem báo cáo.
+     * Admin xem toàn bộ 3 tòa, Quản lý chỉ xem tòa nhà mình phụ trách.
      */
-    private function checkAdminAuth(): void {
+    private function checkAuth(): void {
         $role = $_SESSION['role'] ?? '';
-        if ($role !== 'admin') {
-            $_SESSION['flash_error'] = 'Chỉ Quản trị viên (Admin) mới có quyền truy cập Báo cáo Doanh thu & Công nợ!';
+        if (!in_array($role, ['admin', 'manager', 'landlord'], true)) {
+            $_SESSION['flash_error'] = 'Bạn không có quyền truy cập Báo cáo Doanh thu & Công nợ!';
             header('Location: index.php?route=overview');
             exit;
         }
     }
 
     /**
-     * Trang xem báo cáo tổng thể, ma trận 3 tòa nhà, chi tiết 3 tab và xuất CSV
+     * Trang xem báo cáo tổng thể, chỉ số hoạt động tòa nhà, chi tiết 3 tab và xuất CSV
      */
     public function index(): void {
-        $this->checkAdminAuth();
+        $this->checkAuth();
 
-        $buildingId = trim($_GET['building_id'] ?? 'all');
+        $userRole = $_SESSION['role'] ?? 'admin';
+        $isAdmin  = ($userRole === 'admin');
+
+        // Lấy thông tin tòa nhà nếu người đăng nhập là Quản lý
+        $mgrInfo = ReportModel::getManagerBuildingInfo();
+        $isManager = (!$isAdmin && $mgrInfo !== null);
+        $managerBuilding = $isManager ? $mgrInfo : null;
+
+        if ($isManager) {
+            $buildingId = (string)$mgrInfo['prefix']; // 'A', 'B' hoặc 'C'
+            $mgrBId     = (int)$mgrInfo['id'];
+            $mgrPrefix  = (string)$mgrInfo['prefix'];
+        } else {
+            $buildingId = trim($_GET['building_id'] ?? 'all');
+            $mgrBId     = 0;
+            $mgrPrefix  = '';
+        }
+
         $monthYear  = trim($_GET['month_year'] ?? 'all');
         $status     = trim($_GET['status'] ?? 'all');
         $keyword    = trim($_GET['keyword'] ?? '');
         $export     = trim($_GET['export'] ?? '');
 
-        // 1. Danh sách 3 tòa nhà
-        $buildings = $this->db->query("SELECT id, name, address FROM buildings ORDER BY id ASC")->fetchAll(PDO::FETCH_ASSOC);
+        // 1. Danh sách tòa nhà: Admin xem cả 3 tòa, Manager chỉ xem tòa mình quản lý
+        if ($isManager) {
+            $stmtB = $this->db->prepare("SELECT id, name, address FROM buildings WHERE id = :bid");
+            $stmtB->execute([':bid' => $mgrBId]);
+            $buildings = $stmtB->fetchAll(PDO::FETCH_ASSOC);
+        } else {
+            $buildings = $this->db->query("SELECT id, name, address FROM buildings ORDER BY id ASC")->fetchAll(PDO::FETCH_ASSOC);
+        }
 
         // 2. Danh sách kỳ thu (tháng-năm)
-        $periods = $this->db->query("SELECT DISTINCT month_year FROM invoices ORDER BY month_year DESC")->fetchAll(PDO::FETCH_COLUMN);
+        if ($isManager) {
+            $stmtP = $this->db->prepare("
+                SELECT DISTINCT i.month_year 
+                FROM invoices i
+                JOIN rooms r ON r.id = i.room_id
+                WHERE r.building_id = :bid OR r.room_number LIKE :pfx
+                ORDER BY i.month_year DESC
+            ");
+            $stmtP->execute([':bid' => $mgrBId, ':pfx' => $mgrPrefix . '%']);
+            $periods = $stmtP->fetchAll(PDO::FETCH_COLUMN);
+        } else {
+            $periods = $this->db->query("SELECT DISTINCT month_year FROM invoices ORDER BY month_year DESC")->fetchAll(PDO::FETCH_COLUMN);
+        }
 
-        // 3. TÍNH TOÁN BẢNG MA TRẬN SO SÁNH 3 TÒA NHÀ & TOÀN HỆ THỐNG
+        // 3. TÍNH TOÁN BẢNG MA TRẬN SO SÁNH / CHỈ SỐ HOẠT ĐỘNG
         $matrix = [];
         $systemSummary = [
             'total_rooms'       => 0,
@@ -166,7 +203,7 @@ class ReportCsvController {
                 'collection_rate'   => $collRate
             ];
 
-            // Tích lũy toàn hệ thống
+            // Tích lũy toàn hệ thống / tòa nhà phụ trách
             $systemSummary['total_rooms']       += $totalR;
             $systemSummary['rented_rooms']      += $rentedR;
             $systemSummary['available_rooms']   += $availR;
@@ -192,7 +229,7 @@ class ReportCsvController {
             $systemSummary['renewal_rate'] = round(($systemSummary['renewed_count'] / $systemSummary['tenant_count']) * 100, 1);
         }
 
-        // 4. LẤY DỮ LIỆU TAB 1: DANH SÁCH HÓA ĐƠN CHI TIẾT (KÈM BỘ LỌC)
+        // 4. LẤY DỮ LIỆU TAB 1: DANH SÁCH HÓA ĐƠN CHI TIẾT
         $sqlInvoices = "
             SELECT 
                 i.id,
@@ -223,27 +260,37 @@ class ReportCsvController {
         ";
         $invParams = [];
 
-        if ($buildingId !== 'all' && $buildingId !== '') {
-            $prefix = strtoupper($buildingId);
-            $sqlInvoices .= " AND (r.building_id = :bId OR r.room_number LIKE :pfx)";
-            $bIdNum = $prefix === 'A' ? 1 : ($prefix === 'B' ? 2 : ($prefix === 'C' ? 3 : (int)$buildingId));
-            $invParams[':bId'] = $bIdNum;
-            $invParams[':pfx'] = $prefix . '%';
+        // Ràng buộc nghiêm ngặt với Quản lý
+        if ($isManager) {
+            $sqlInvoices .= " AND (r.building_id = :mgrBId OR r.room_number LIKE :mgrPfx)";
+            $invParams[':mgrBId'] = $mgrBId;
+            $invParams[':mgrPfx'] = $mgrPrefix . '%';
         }
 
-        if ($monthYear !== 'all' && $monthYear !== '') {
-            $sqlInvoices .= " AND i.month_year = :period";
-            $invParams[':period'] = $monthYear;
-        }
+        // Nếu người dùng nhấn Xuất CSV thì áp dụng lọc SQL để tải file đúng tiêu chí
+        if ($export === 'csv') {
+            if (!$isManager && $buildingId !== 'all' && $buildingId !== '') {
+                $prefix = strtoupper($buildingId);
+                $sqlInvoices .= " AND (r.building_id = :bId OR r.room_number LIKE :pfx)";
+                $bIdNum = $prefix === 'A' ? 1 : ($prefix === 'B' ? 2 : ($prefix === 'C' ? 3 : (int)$buildingId));
+                $invParams[':bId'] = $bIdNum;
+                $invParams[':pfx'] = $prefix . '%';
+            }
 
-        if ($status === 'paid' || $status === 'unpaid') {
-            $sqlInvoices .= " AND i.status = :status";
-            $invParams[':status'] = $status;
-        }
+            if ($monthYear !== 'all' && $monthYear !== '') {
+                $sqlInvoices .= " AND i.month_year = :period";
+                $invParams[':period'] = $monthYear;
+            }
 
-        if ($keyword !== '') {
-            $sqlInvoices .= " AND (r.room_number LIKE :kw OR u.full_name LIKE :kw OR u.phone LIKE :kw OR CONCAT('HD-', i.id) LIKE :kw)";
-            $invParams[':kw'] = '%' . $keyword . '%';
+            if ($status === 'paid' || $status === 'unpaid') {
+                $sqlInvoices .= " AND i.status = :status";
+                $invParams[':status'] = $status;
+            }
+
+            if ($keyword !== '') {
+                $sqlInvoices .= " AND (r.room_number LIKE :kw OR u.full_name LIKE :kw OR u.phone LIKE :kw OR CONCAT('HD-', i.id) LIKE :kw)";
+                $invParams[':kw'] = '%' . $keyword . '%';
+            }
         }
 
         $sqlInvoices .= " ORDER BY r.room_number ASC, i.id DESC";
@@ -255,24 +302,15 @@ class ReportCsvController {
         $filterSummary = [
             'total_invoices' => count($invoiceRows),
             'total_amount'   => 0,
-            'paid_amount'     => 0,
-            'unpaid_amount'   => 0,
-            'paid_count'      => 0,
-            'unpaid_count'    => 0,
-            'room_total'      => 0,
-            'utility_total'   => 0
+            'paid_amount'    => 0,
+            'unpaid_amount'  => 0,
+            'paid_count'     => 0,
+            'unpaid_count'   => 0,
+            'room_total'     => 0,
+            'utility_total'  => 0,
         ];
 
         foreach ($invoiceRows as &$ir) {
-            // Đảm bảo hạn thanh toán hợp lệ (ngày 10 tháng kế tiếp của kỳ)
-            if (empty($ir['due_date'])) {
-                if (preg_match('/^(\d{2})-(\d{4})$/', $ir['month_year'], $m)) {
-                    $ir['due_date'] = date('Y-m-d', strtotime("{$m[2]}-{$m[1]}-01 +1 month +9 days"));
-                } else {
-                    $ir['due_date'] = date('Y-m-d');
-                }
-            }
-
             $amt = (float)$ir['total_amount'];
             $roomAmt = (float)$ir['room_price'];
             $elAmt = (float)$ir['electric_amount'];
@@ -302,7 +340,7 @@ class ReportCsvController {
         }
         unset($ir);
 
-        // 5. LẤY DỮ LIỆU TAB 2: HIỆN TRẠNG 60 PHÒNG & TIỀN CỌC GIỮ CHỖ
+        // 5. LẤY DỮ LIỆU TAB 2: HIỆN TRẠNG PHÒNG & TIỀN CỌC GIỮ CHỖ
         $sqlRooms = "
             SELECT 
                 r.id,
@@ -329,9 +367,17 @@ class ReportCsvController {
                 ORDER BY c2.id DESC LIMIT 1
             )
             LEFT JOIN users u ON u.id = c.tenant_id
-            ORDER BY r.room_number ASC
         ";
-        $roomRows = $this->db->query($sqlRooms)->fetchAll(PDO::FETCH_ASSOC);
+        if ($isManager) {
+            $sqlRooms .= " WHERE (r.building_id = :mgrBId OR r.room_number LIKE :mgrPfx)";
+            $sqlRooms .= " ORDER BY r.room_number ASC";
+            $stmtRooms = $this->db->prepare($sqlRooms);
+            $stmtRooms->execute([':mgrBId' => $mgrBId, ':mgrPfx' => $mgrPrefix . '%']);
+            $roomRows = $stmtRooms->fetchAll(PDO::FETCH_ASSOC);
+        } else {
+            $sqlRooms .= " ORDER BY r.room_number ASC";
+            $roomRows = $this->db->query($sqlRooms)->fetchAll(PDO::FETCH_ASSOC);
+        }
 
         // 6. LẤY DỮ LIỆU TAB 3: KHÁCH THUÊ & HỢP ĐỒNG CƯ TRÚ (ACTIVE)
         $sqlTenants = "
@@ -358,20 +404,27 @@ class ReportCsvController {
             JOIN contracts c ON c.tenant_id = u.id AND c.status = 'active'
             JOIN rooms r ON r.id = c.room_id
             LEFT JOIN buildings b ON b.id = r.building_id
-            ORDER BY r.room_number ASC
         ";
-        $tenantRows = $this->db->query($sqlTenants)->fetchAll(PDO::FETCH_ASSOC);
+        if ($isManager) {
+            $sqlTenants .= " WHERE (r.building_id = :mgrBId OR r.room_number LIKE :mgrPfx)";
+            $sqlTenants .= " ORDER BY r.room_number ASC";
+            $stmtTenants = $this->db->prepare($sqlTenants);
+            $stmtTenants->execute([':mgrBId' => $mgrBId, ':mgrPfx' => $mgrPrefix . '%']);
+            $tenantRows = $stmtTenants->fetchAll(PDO::FETCH_ASSOC);
+        } else {
+            $sqlTenants .= " ORDER BY r.room_number ASC";
+            $tenantRows = $this->db->query($sqlTenants)->fetchAll(PDO::FETCH_ASSOC);
+        }
 
         // 7. XỬ LÝ XUẤT CSV NẾU CÓ THAM SỐ EXPORT
         if ($export === 'csv') {
-            $this->exportMasterCsv($matrix, $systemSummary, $invoiceRows, $filterSummary, $roomRows, $tenantRows, $buildingId, $monthYear);
+            $this->exportMasterCsv($matrix, $systemSummary, $invoiceRows, $filterSummary, $roomRows, $tenantRows, $buildingId, $monthYear, $isManager, $managerBuilding);
             return;
         }
 
-        $userRole     = $_SESSION['role'] ?? 'admin';
-        $userFullName = $_SESSION['full_name'] ?? 'Quản trị viên Hệ thống';
+        $userFullName = $_SESSION['full_name'] ?? ($isManager ? ('Quản lý ' . $managerBuilding['name']) : 'Quản trị viên Hệ thống');
         $brandHome    = 'index.php?route=dashboard';
-        $pageTitle    = 'Báo Cáo Doanh Thu & Công Nợ';
+        $pageTitle    = $isManager ? ('Báo Cáo Doanh Thu, Công Nợ & Tổng Quan - ' . $managerBuilding['name']) : 'Báo Cáo Doanh Thu, Công Nợ & Tổng Quan Hệ Thống';
 
         require_once __DIR__ . '/../views/reports/csv.php';
     }
@@ -387,10 +440,16 @@ class ReportCsvController {
         array $roomRows,
         array $tenantRows,
         string $buildingId,
-        string $monthYear
+        string $monthYear,
+        bool $isManager = false,
+        ?array $managerBuilding = null
     ): void {
         $timestamp = date('Ymd_His');
-        $filename = "Bao_Cao_Doanh_Thu_StayMate_" . ($buildingId !== 'all' ? "Toa{$buildingId}_" : "ToanHeThong_") . $timestamp . ".csv";
+        if ($isManager && $managerBuilding) {
+            $filename = "Bao_Cao_StayMate_" . $managerBuilding['prefix'] . "_" . $timestamp . ".csv";
+        } else {
+            $filename = "Bao_Cao_Doanh_Thu_StayMate_" . ($buildingId !== 'all' ? "Toa{$buildingId}_" : "ToanHeThong_") . $timestamp . ".csv";
+        }
 
         header('Content-Type: text/csv; charset=utf-8');
         header('Content-Disposition: attachment; filename="' . $filename . '"');
@@ -405,10 +464,20 @@ class ReportCsvController {
         // ==========================================
         // MỤC 1: TIÊU ĐỀ BÁO CÁO & THÔNG TIN CHUNG
         // ==========================================
-        fputcsv($out, ['HỆ THỐNG QUẢN LÝ NHÀ TRỌ STAYMATE - BÁO CÁO DOANH THU & CÔNG NỢ TOÀN HỆ THỐNG']);
-        fputcsv($out, ['Thời gian xuất:', date('d/m/Y H:i:s'), 'Người xuất:', $_SESSION['full_name'] ?? 'Quản Trị Viên (Admin)']);
+        $reportTitle = $isManager && $managerBuilding 
+            ? ('HỆ THỐNG QUẢN LÝ NHÀ TRỌ STAYMATE - BÁO CÁO HOẠT ĐỘNG ' . mb_strtoupper($managerBuilding['name'], 'UTF-8'))
+            : 'HỆ THỐNG QUẢN LÝ NHÀ TRỌ STAYMATE - BÁO CÁO DOANH THU & CÔNG NỢ TOÀN HỆ THỐNG';
+
+        $scopeText = $isManager && $managerBuilding 
+            ? ($managerBuilding['name'] . ' (Tòa phân công quản lý)')
+            : ($buildingId === 'all' ? 'Toàn bộ 3 tòa nhà (Tòa A, B, C)' : ('Tòa ' . $buildingId));
+
+        $userLabel = $_SESSION['full_name'] ?? ($isManager ? 'Quản Lý Tòa Nhà' : 'Quản Trị Viên (Admin)');
+
+        fputcsv($out, [$reportTitle]);
+        fputcsv($out, ['Thời gian xuất:', date('d/m/Y H:i:s'), 'Người xuất:', $userLabel]);
         fputcsv($out, [
-            'Phạm vi hiển thị:', $buildingId === 'all' ? 'Toàn bộ 3 tòa nhà (Tòa A, B, C)' : ('Tòa ' . $buildingId),
+            'Phạm vi hiển thị:', $scopeText,
             'Kỳ lọc hóa đơn:', $monthYear === 'all' ? 'Tất cả các kỳ' : ('Kỳ ' . $monthYear)
         ]);
         fputcsv($out, []);
@@ -416,13 +485,17 @@ class ReportCsvController {
         // ==========================================
         // MỤC 2: CHỈ SỐ TỔNG QUAN TÀI CHÍNH & VẬN HÀNH
         // ==========================================
-        fputcsv($out, ['=== 1. CHỈ SỐ TỔNG QUAN HỆ THỐNG (TOÀN BỘ 3 TÒA NHÀ) ===']);
+        $overviewHeading = $isManager && $managerBuilding 
+            ? ('=== 1. CHỈ SỐ TỔNG QUAN ' . mb_strtoupper($managerBuilding['name'], 'UTF-8') . ' ===')
+            : '=== 1. CHỈ SỐ TỔNG QUAN HỆ THỐNG (TOÀN BỘ 3 TÒA NHÀ) ===';
+
+        fputcsv($out, [$overviewHeading]);
         fputcsv($out, ['Chỉ Tiêu', 'Giá Trị', 'Đơn Vị Tính', 'Ghi Chú']);
-        fputcsv($out, ['Tổng số phòng', $systemSummary['total_rooms'], 'Phòng', 'Cả 3 tòa nhà (Sunrise, Emerald, Horizon)']);
+        fputcsv($out, ['Tổng số phòng', $systemSummary['total_rooms'], 'Phòng', $scopeText]);
         fputcsv($out, ['Số phòng đang cho thuê', $systemSummary['rented_rooms'], 'Phòng', 'Có hợp đồng thuê hiệu lực']);
         fputcsv($out, ['Số phòng trống sẵn sàng', $systemSummary['available_rooms'], 'Phòng', 'Có thể dọn vào ở ngay']);
         fputcsv($out, ['Số phòng đang bảo trì', $systemSummary['maintenance_rooms'], 'Phòng', 'Đang sửa chữa định kỳ']);
-        fputcsv($out, ['Tỷ lệ lấp đầy hệ thống', $systemSummary['occupancy_rate'] . '%', '%', 'Hiệu suất khai thác phòng']);
+        fputcsv($out, ['Tỷ lệ lấp đầy', $systemSummary['occupancy_rate'] . '%', '%', 'Hiệu suất khai thác phòng']);
         fputcsv($out, ['Tổng số khách cư trú', $systemSummary['tenant_count'], 'Người', 'Số khách thuê chính thức']);
         fputcsv($out, ['Hợp đồng đã tái ký / gia hạn', $systemSummary['renewed_count'], 'Hợp đồng', 'Khách ở lâu năm gia hạn HĐ']);
         fputcsv($out, ['Tỷ lệ gia hạn hợp đồng', $systemSummary['renewal_rate'] . '%', '%', 'Số HĐ gia hạn / Tổng khách thuê']);
@@ -434,9 +507,13 @@ class ReportCsvController {
         fputcsv($out, []);
 
         // ==========================================
-        // MỤC 3: BẢNG MA TRẬN SO SÁNH 3 TÒA NHÀ
+        // MỤC 3: BẢNG CHỈ SỐ HOẠT ĐỘNG / MA TRẬN
         // ==========================================
-        fputcsv($out, ['=== 2. MA TRẬN SO SÁNH HIỆU QUẢ 3 TÒA NHÀ ===']);
+        $matrixHeading = $isManager && $managerBuilding 
+            ? ('=== 2. CHỈ SỐ HOẠT ĐỘNG & HIỆU SUẤT ' . mb_strtoupper($managerBuilding['name'], 'UTF-8') . ' ===')
+            : '=== 2. MA TRẬN SO SÁNH HIỆU QUẢ 3 TÒA NHÀ ===';
+
+        fputcsv($out, [$matrixHeading]);
         fputcsv($out, [
             'Tòa Nhà',
             'Tổng Phòng',
@@ -445,57 +522,58 @@ class ReportCsvController {
             'Bảo Trì',
             'Tỷ Lệ Lấp Đầy (%)',
             'Khách Ở',
-            'Tái Ký / Gia Hạn (HĐ)',
+            'HĐ Tái Ký (Gia hạn)',
             'Tỷ Lệ Gia Hạn (%)',
-            'Tiền Cọc Đang Giữ (VNĐ)',
-            'Tổng Hóa Đơn (VNĐ)',
-            'Thực Thu / Doanh Thu (VNĐ)',
-            'Công Nợ Chưa Thu (VNĐ)',
+            'Tiền Cọc Giữ (VNĐ)',
+            'Hóa Đơn Phát Sinh (VNĐ)',
+            'Thực Thu (VNĐ)',
+            'Công Nợ Còn Lại (VNĐ)',
             'Tỷ Lệ Thu Hồi (%)'
         ]);
 
-        foreach ($matrix as $m) {
+        foreach ($matrix as $row) {
             fputcsv($out, [
-                $m['name'],
-                $m['total_rooms'],
-                $m['rented_rooms'],
-                $m['available_rooms'],
-                $m['maintenance_rooms'],
-                $m['occupancy_rate'] . '%',
-                $m['tenant_count'],
-                $m['renewed_count'],
-                $m['renewal_rate'] . '%',
-                number_format($m['deposit_held'], 0, '', ''),
-                number_format($m['total_invoiced'], 0, '', ''),
-                number_format($m['paid_amount'], 0, '', ''),
-                number_format($m['unpaid_amount'], 0, '', ''),
-                $m['collection_rate'] . '%'
+                $row['name'],
+                $row['total_rooms'],
+                $row['rented_rooms'],
+                $row['available_rooms'],
+                $row['maintenance_rooms'],
+                $row['occupancy_rate'] . '%',
+                $row['tenant_count'],
+                $row['renewed_count'],
+                $row['renewal_rate'] . '%',
+                number_format($row['deposit_held'], 0, ',', '.') . ' đ',
+                number_format($row['total_invoiced'], 0, ',', '.') . ' đ',
+                number_format($row['paid_amount'], 0, ',', '.') . ' đ',
+                number_format($row['unpaid_amount'], 0, ',', '.') . ' đ',
+                $row['collection_rate'] . '%'
             ]);
         }
 
-        // Dòng tổng cộng ma trận
-        fputcsv($out, [
-            'TOÀN HỆ THỐNG (TỔNG CỘNG)',
-            $systemSummary['total_rooms'],
-            $systemSummary['rented_rooms'],
-            $systemSummary['available_rooms'],
-            $systemSummary['maintenance_rooms'],
-            $systemSummary['occupancy_rate'] . '%',
-            $systemSummary['tenant_count'],
-            $systemSummary['renewed_count'],
-            $systemSummary['renewal_rate'] . '%',
-            number_format($systemSummary['deposit_held'], 0, '', ''),
-            number_format($systemSummary['total_invoiced'], 0, '', ''),
-            number_format($systemSummary['paid_amount'], 0, '', ''),
-            number_format($systemSummary['unpaid_amount'], 0, '', ''),
-            $systemSummary['collection_rate'] . '%'
-        ]);
+        if (!$isManager) {
+            fputcsv($out, [
+                'TOÀN HỆ THỐNG (TỔNG HỢP)',
+                $systemSummary['total_rooms'],
+                $systemSummary['rented_rooms'],
+                $systemSummary['available_rooms'],
+                $systemSummary['maintenance_rooms'],
+                $systemSummary['occupancy_rate'] . '%',
+                $systemSummary['tenant_count'],
+                $systemSummary['renewed_count'],
+                $systemSummary['renewal_rate'] . '%',
+                number_format($systemSummary['deposit_held'], 0, ',', '.') . ' đ',
+                number_format($systemSummary['total_invoiced'], 0, ',', '.') . ' đ',
+                number_format($systemSummary['paid_amount'], 0, ',', '.') . ' đ',
+                number_format($systemSummary['unpaid_amount'], 0, ',', '.') . ' đ',
+                $systemSummary['collection_rate'] . '%'
+            ]);
+        }
         fputcsv($out, []);
 
         // ==========================================
-        // MỤC 4: BẢNG KÊ CHI TIẾT HÓA ĐƠN & CÔNG NỢ
+        // MỤC 4: CHI TIẾT DOANH THU & CÔNG NỢ HÓA ĐƠN
         // ==========================================
-        fputcsv($out, ['=== 3. BẢNG KÊ CHI TIẾT HÓA ĐƠN DOANH THU & CÔNG NỢ ===']);
+        fputcsv($out, ['=== 3. CHI TIẾT DOANH THU & CÔNG NỢ TỪNG HÓA ĐƠN ===']);
         fputcsv($out, [
             'STT',
             'Mã Hóa Đơn',
@@ -503,97 +581,118 @@ class ReportCsvController {
             'Số Phòng',
             'Khách Thuê',
             'Số Điện Thoại',
-            'Kỳ Thu',
-            'Tiền Phòng (VNĐ)',
-            'Điện Nước & DV (VNĐ)',
-            'Tổng Tiền HĐ (VNĐ)',
-            'Đã Thu / Thực Thu (VNĐ)',
-            'Còn Nợ / Công Nợ (VNĐ)',
+            'Kỳ Hóa Đơn',
+            'Tiền Phòng',
+            'Điện Nước & DV',
+            'Tổng Hóa Đơn',
+            'Đã Thu (Doanh Thu)',
+            'Còn Nợ (Công Nợ)',
             'Trạng Thái',
-            'Phương Thức',
             'Hạn Thanh Toán / Ngày Thu'
         ]);
 
-        $idx = 1;
-        foreach ($invoiceRows as $r) {
-            $isPaid = $r['status'] === 'paid';
-            $paidAmt = $isPaid ? (float)$r['total_amount'] : 0;
-            $debtAmt = !$isPaid ? (float)$r['total_amount'] : 0;
+        $stt = 1;
+        foreach ($invoiceRows as $inv) {
+            $isPaid = ($inv['status'] === 'paid');
+            $totAmt = (float)$inv['total_amount'];
+            $roomAmt = (float)($inv['computed_room'] ?? 0);
+            $utilAmt = (float)($inv['computed_util'] ?? 0);
+            $paidAmt = $isPaid ? $totAmt : 0;
+            $unpaidAmt = $isPaid ? 0 : $totAmt;
 
-            $payTime = '';
-            if ($isPaid && !empty($r['paid_at'])) {
-                $payTime = 'Đã thu: ' . date('d/m/Y', strtotime($r['paid_at']));
-            } elseif (!$isPaid) {
-                $payTime = 'Hạn TT: ' . date('d/m/Y', strtotime($r['due_date']));
-            } else {
-                $payTime = 'Đã thu: ' . date('d/m/Y', strtotime($r['created_at']));
+            $dateNote = '';
+            if ($isPaid && !empty($inv['paid_at'])) {
+                $dateNote = 'Đã thu: ' . date('d/m/Y', strtotime($inv['paid_at']));
+            } elseif (!$isPaid && !empty($inv['due_date'])) {
+                $dateNote = 'Hạn: ' . date('d/m/Y', strtotime($inv['due_date']));
             }
 
             fputcsv($out, [
-                $idx++,
-                'HD-' . str_pad((string)$r['id'], 4, '0', STR_PAD_LEFT),
-                $r['building_name'] ?? ('Tòa ' . substr($r['room_number'], 0, 1)),
-                $r['room_number'],
-                $r['tenant_name'] ?? 'Khách vãng lai',
-                $r['tenant_phone'] ?? '',
-                $r['month_year'],
-                number_format((float)$r['computed_room'], 0, '', ''),
-                number_format((float)$r['computed_util'], 0, '', ''),
-                number_format((float)$r['total_amount'], 0, '', ''),
-                number_format($paidAmt, 0, '', ''),
-                number_format($debtAmt, 0, '', ''),
-                $isPaid ? 'Đã thu (Doanh thu)' : 'Chưa thu (Công nợ)',
-                $r['payment_method'] ?? ($isPaid ? 'Chuyển khoản' : ''),
-                $payTime
+                $stt++,
+                'HD-' . str_pad((string)$inv['id'], 4, '0', STR_PAD_LEFT),
+                $inv['building_name'] ?? ('Tòa ' . substr($inv['room_number'], 0, 1)),
+                $inv['room_number'],
+                $inv['tenant_name'] ?? 'Chưa cập nhật',
+                $inv['tenant_phone'] ?? '',
+                $inv['month_year'],
+                number_format($roomAmt, 0, ',', '.') . ' đ',
+                number_format($utilAmt, 0, ',', '.') . ' đ',
+                number_format($totAmt, 0, ',', '.') . ' đ',
+                number_format($paidAmt, 0, ',', '.') . ' đ',
+                number_format($unpaidAmt, 0, ',', '.') . ' đ',
+                $isPaid ? 'Đã thu' : 'Chưa thu',
+                $dateNote
             ]);
         }
         fputcsv($out, []);
 
         // ==========================================
-        // MỤC 5: BẢNG KÊ HIỆN TRẠNG 60 PHÒNG & TIỀN CỌC
+        // MỤC 5: HIỆN TRẠNG PHÒNG & TIỀN CỌC GIỮ CHỖ
         // ==========================================
-        fputcsv($out, ['=== 4. BẢNG KÊ HIỆN TRẠNG 60 PHÒNG & TIỀN CỌC GIỮ CHỖ ===']);
+        $roomHeading = $isManager && $managerBuilding 
+            ? ('=== 4. HIỆN TRẠNG PHÒNG & TIỀN CỌC ' . mb_strtoupper($managerBuilding['name'], 'UTF-8') . ' ===')
+            : '=== 4. HIỆN TRẠNG PHÒNG & TIỀN CỌC TOÀN HỆ THỐNG ===';
+
+        fputcsv($out, [$roomHeading]);
         fputcsv($out, [
             'STT',
             'Số Phòng',
             'Tòa Nhà',
-            'Giá Thuê Niêm Yết (VNĐ)',
+            'Giá Thuê Niêm Yết',
             'Trạng Thái Phòng',
-            'Khách Đang Ở / Giữ Chỗ',
-            'SĐT Khách',
+            'Khách Đang Thuê',
+            'Số Điện Thoại',
             'Mã Hợp Đồng',
-            'Tiền Cọc Đang Giữ (VNĐ)',
-            'Trạng Thái Cọc'
+            'Loại HĐ',
+            'Tiền Cọc Đang Giữ',
+            'Trạng Thái Cọc',
+            'Thời Hạn Thuê'
         ]);
 
         $rIdx = 1;
-        foreach ($roomRows as $rm) {
-            $stText = 'Phòng trống';
-            if ($rm['status'] === 'rented') {
-                $stText = 'Đang cho thuê';
-            } elseif ($rm['status'] === 'maintenance') {
-                $stText = 'Đang bảo trì/sửa chữa';
+        foreach ($roomRows as $r) {
+            $statusLabel = 'Trống';
+            if ($r['status'] === 'rented') {
+                $statusLabel = 'Đang thuê';
+            } elseif ($r['status'] === 'maintenance') {
+                $statusLabel = 'Bảo trì';
+            }
+
+            $cTypeLabel = '-';
+            if (!empty($r['contract_type'])) {
+                $cTypeLabel = ($r['contract_type'] === 'deposit_hold') ? 'Cọc giữ chỗ 5N' : 'Chính thức';
+            }
+
+            $dateRange = '-';
+            if (!empty($r['start_date']) && !empty($r['end_date'])) {
+                $dateRange = date('d/m/Y', strtotime($r['start_date'])) . ' - ' . date('d/m/Y', strtotime($r['end_date']));
             }
 
             fputcsv($out, [
                 $rIdx++,
-                $rm['room_number'],
-                $rm['building_name'] ?? ('Tòa ' . substr($rm['room_number'], 0, 1)),
-                number_format((float)$rm['price'], 0, '', ''),
-                $stText,
-                $rm['tenant_name'] ?? '-',
-                $rm['tenant_phone'] ?? '-',
-                $rm['contract_code'] ?? '-',
-                number_format((float)($rm['deposit_amount'] ?? 0), 0, '', ''),
-                !empty($rm['deposit_status']) ? ($rm['deposit_status'] === 'held' ? 'Đang giữ' : $rm['deposit_status']) : '-'
+                $r['room_number'],
+                $r['building_name'] ?? ('Tòa ' . substr($r['room_number'], 0, 1)),
+                number_format((float)$r['price'], 0, ',', '.') . ' đ',
+                $statusLabel,
+                $r['tenant_name'] ?? '-',
+                $r['tenant_phone'] ?? '-',
+                $r['contract_code'] ?? '-',
+                $cTypeLabel,
+                !empty($r['deposit_amount']) ? number_format((float)$r['deposit_amount'], 0, ',', '.') . ' đ' : '0 đ',
+                $r['deposit_status'] ?? '-',
+                $dateRange
             ]);
         }
         fputcsv($out, []);
 
         // ==========================================
-        // MỤC 6: BẢNG KÊ KHÁCH THUÊ & HỢP ĐỒNG CƯ TRÚ
+        // MỤC 6: DANH SÁCH KHÁCH THUÊ & HỢP ĐỒNG CƯ TRÚ
         // ==========================================
-        fputcsv($out, ['=== 5. DANH SÁCH KHÁCH THUÊ & HỢP ĐỒNG CƯ TRÚ ===']);
+        $tenantHeading = $isManager && $managerBuilding 
+            ? ('=== 5. DANH SÁCH KHÁCH THUÊ & HỢP ĐỒNG ' . mb_strtoupper($managerBuilding['name'], 'UTF-8') . ' ===')
+            : '=== 5. DANH SÁCH KHÁCH THUÊ & HỢP ĐỒNG CƯ TRÚ ===';
+
+        fputcsv($out, [$tenantHeading]);
         fputcsv($out, [
             'STT',
             'Khách Thuê',
@@ -604,17 +703,20 @@ class ReportCsvController {
             'Tòa Nhà',
             'Mã Hợp Đồng',
             'Tình Trạng Tái Ký',
-            'Ngày Bắt Đầu',
-            'Ngày Hết Hạn',
-            'Số Ngày Còn Lại',
-            'Giá Thuê (VNĐ)',
-            'Tiền Cọc (VNĐ)',
+            'Thời Hạn HĐ',
+            'Thời Gian Còn Lại (Ngày)',
+            'Tiền Thuê / Tháng',
+            'Tiền Cọc Giữ',
             'Người Ở Ghép'
         ]);
 
         $tIdx = 1;
         foreach ($tenantRows as $tn) {
             $isRenewed = ($tn['renewal_status'] ?? '') === 'renewed';
+            $roommateInfo = !empty($tn['roommate_name']) 
+                ? ($tn['roommate_name'] . (!empty($tn['roommate_phone']) ? " ({$tn['roommate_phone']})" : ''))
+                : 'Ở 1 mình';
+
             fputcsv($out, [
                 $tIdx++,
                 $tn['full_name'],
@@ -622,15 +724,14 @@ class ReportCsvController {
                 $tn['cccd'] ?? '-',
                 $tn['email'] ?? '-',
                 $tn['room_number'],
-                $tn['building_name'] ?? '',
+                $tn['building_name'] ?? ('Tòa ' . substr($tn['room_number'], 0, 1)),
                 $tn['contract_code'],
                 $isRenewed ? 'Đã gia hạn (Tái ký)' : 'Hợp đồng ban đầu',
-                date('d/m/Y', strtotime($tn['start_date'])),
-                date('d/m/Y', strtotime($tn['end_date'])),
-                $tn['days_left'],
-                number_format((float)$tn['monthly_rent'], 0, '', ''),
-                number_format((float)$tn['deposit_amount'], 0, '', ''),
-                $tn['roommate_name'] ?? 'Ở 1 mình'
+                date('d/m/Y', strtotime($tn['start_date'])) . ' - ' . date('d/m/Y', strtotime($tn['end_date'])),
+                (int)$tn['days_left'] . ' ngày',
+                number_format((float)$tn['monthly_rent'], 0, ',', '.') . ' đ',
+                number_format((float)$tn['deposit_amount'], 0, ',', '.') . ' đ',
+                $roommateInfo
             ]);
         }
 

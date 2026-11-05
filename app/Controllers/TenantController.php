@@ -78,7 +78,7 @@ class TenantController {
 
                         if ($roomId > 0) {
                             $this->model->assignRoomToTenant($newTenantId, $roomId, $roommateName, $roommatePhone);
-                            $_SESSION['tenant_flash_success'] = "Đã thêm khách thuê '{$fullName}' và gán vào phòng thành công! Tài khoản đăng nhập: {$phone} (Mật khẩu: 123)";
+                            $_SESSION['tenant_flash_success'] = "Đã thêm khách thuê '{$fullName}' thành công! Hồ sơ đã lưu phòng dự kiến (chưa tạo hợp đồng). Vui lòng vào trang Hợp đồng để thao tác lập hợp đồng khi bàn giao phòng.";
                         } else {
                             $_SESSION['tenant_flash_success'] = "Đã thêm khách thuê '{$fullName}' thành công! Tài khoản đăng nhập: {$phone} (Mật khẩu: 123)";
                         }

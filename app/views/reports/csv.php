@@ -8,7 +8,11 @@ $userEmail    = $_SESSION['email'] ?? 'admin@staymate.vn';
 $userPhone    = $_SESSION['phone'] ?? '0901234567';
 
 $brandHome = 'index.php?route=dashboard';
-$pageTitle = 'Báo Cáo Doanh Thu, Công Nợ & Tổng Quan Hệ Thống';
+if (empty($pageTitle)) {
+    $pageTitle = !empty($isManager) && !empty($managerBuilding)
+        ? ('Báo Cáo Doanh Thu, Công Nợ & Tổng Quan - ' . $managerBuilding['name'])
+        : 'Báo Cáo Doanh Thu, Công Nợ & Tổng Quan Hệ Thống';
+}
 
 // Tính các chỉ số cho Tab 2 (Phòng ốc & Cọc)
 $tab2TotalRooms = count($roomRows);
@@ -217,10 +221,57 @@ $tab3RenewalRate = $tab3TotalTenants > 0 ? round(($tab3RenewedCount / $tab3Total
             gap: 6px;
         }
 
+        /* Khung cuộn bảng gọn gàng & Cố định tiêu đề (Sticky Header & Sticky Footer) */
+        .table-scroll-container {
+            max-height: 520px;
+            overflow-y: auto;
+            overflow-x: auto;
+            border-radius: 18px;
+            border: 1.5px solid #e2e8f0;
+            background: #ffffff;
+            position: relative;
+        }
+
+        .table-scroll-container::-webkit-scrollbar {
+            width: 7px;
+            height: 7px;
+        }
+        .table-scroll-container::-webkit-scrollbar-track {
+            background: #f8fafc;
+            border-radius: 10px;
+        }
+        .table-scroll-container::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 10px;
+        }
+        .table-scroll-container::-webkit-scrollbar-thumb:hover {
+            background: var(--teal-main);
+        }
+
+        /* Giữ cố định hàng tiêu đề khi cuộn xuống */
+        .table-scroll-container thead th {
+            position: sticky;
+            top: 0;
+            z-index: 5;
+            background-color: #f0fdfa !important;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+        }
+
+        /* Giữ cố định hàng tổng kết chân trang khi cuộn */
+        .table-scroll-container tfoot td,
+        .table-scroll-container tfoot th {
+            position: sticky;
+            bottom: 0;
+            z-index: 4;
+            background-color: #f8fafc !important;
+            box-shadow: 0 -2px 4px rgba(0, 0, 0, 0.05);
+        }
+
         @media print {
             .no-print, .navbar, .btn, .filter-box, .filter-tab-container { display: none !important; }
             .section-box, .welcome-banner { box-shadow: none !important; border: none !important; padding: 0 !important; }
             .tab-pane { display: block !important; opacity: 1 !important; visibility: visible !important; margin-bottom: 30px; }
+            .table-scroll-container { max-height: none !important; overflow: visible !important; border: none !important; }
             body { background: #fff !important; background-image: none !important; }
         }
     </style>
@@ -246,10 +297,14 @@ $tab3RenewalRate = $tab3TotalTenants > 0 ? round(($tab3RenewedCount / $tab3Total
 
                 <div class="dropdown">
                     <div class="d-flex align-items-center gap-2" style="cursor: pointer;" data-bs-toggle="dropdown">
-                        <div class="avatar-circle">AD</div>
+                        <?php
+                            $roleName = !empty($isManager) ? ('Quản lý ' . htmlspecialchars($managerBuilding['name'])) : 'Quản trị viên (Admin)';
+                            $avatarText = !empty($isManager) ? 'AS' : 'AD';
+                        ?>
+                        <div class="avatar-circle"><?= $avatarText ?></div>
                         <div class="text-start d-none d-sm-block lh-sm">
                             <div class="fw-bold text-dark" style="font-size: 0.9rem;"><?= htmlspecialchars($userFullName) ?> <i class="fa-solid fa-angle-down ms-1 text-muted fs-6"></i></div>
-                            <div class="text-muted text-capitalize" style="font-size: 0.75rem;">Quản trị viên (Admin)</div>
+                            <div class="text-muted text-capitalize" style="font-size: 0.75rem;"><?= $roleName ?></div>
                         </div>
                     </div>
                     <ul class="dropdown-menu dropdown-menu-end shadow border-0 rounded-4 mt-2 p-2">
@@ -282,7 +337,9 @@ $tab3RenewalRate = $tab3TotalTenants > 0 ? round(($tab3RenewedCount / $tab3Total
                     <li class="nav-item"><a class="nav-link" href="index.php?route=contracts"><i class="fa-solid fa-file-signature"></i> Hợp đồng</a></li>
                     <li class="nav-item"><a class="nav-link" href="index.php?route=utilities"><i class="fa-solid fa-bolt"></i> Điện Nước</a></li>
                     <li class="nav-item"><a class="nav-link" href="index.php?route=invoices"><i class="fa-solid fa-file-invoice-dollar"></i> Hóa đơn</a></li>
+                    <?php if (($_SESSION['role'] ?? '') === 'admin'): ?>
                     <li class="nav-item"><a class="nav-link" href="index.php?route=accounts"><i class="fa-solid fa-user-gear"></i> Tài khoản</a></li>
+                <?php endif; ?>
                     <li class="nav-item"><a class="nav-link active" href="index.php?route=reports_csv"><i class="fa-solid fa-chart-pie"></i> Báo cáo</a></li>
                     <li class="nav-item"><a class="nav-link" href="index.php?route=showcase" target="_blank"><i class="fa-regular fa-eye"></i> Xem phòng khách</a></li>
                     <li class="nav-item"><a class="nav-link" href="index.php?route=tenant/portal" target="_blank"><i class="fa-solid fa-user-shield text-teal-main"></i> Cổng khách thuê</a></li>
@@ -303,7 +360,11 @@ $tab3RenewalRate = $tab3TotalTenants > 0 ? round(($tab3RenewedCount / $tab3Total
                 <div>
                     <h3 class="fw-bold mb-1" style="font-size: 1.45rem; color: #0f172a;"><?= htmlspecialchars($pageTitle) ?></h3>
                     <div class="text-muted" style="font-size: 0.85rem; font-weight: 600;">
-                        Quản trị tối cao: Đối soát toàn diện doanh thu, công nợ, tỷ lệ lấp đầy, tỷ lệ gia hạn hợp đồng và khách thuê trên cả 3 tòa nhà.
+                        <?php if (!empty($isManager) && !empty($managerBuilding)): ?>
+                            <i class="fa-solid fa-user-shield text-teal-main me-1"></i> Phân quyền Quản lý: Đối soát doanh thu, công nợ, hiện trạng phòng và khách thuê thuộc <strong><?= htmlspecialchars($managerBuilding['name']) ?></strong>.
+                        <?php else: ?>
+                            Quản trị tối cao: Đối soát toàn diện doanh thu, công nợ, tỷ lệ lấp đầy, tỷ lệ gia hạn hợp đồng và khách thuê trên cả 3 tòa nhà.
+                        <?php endif; ?>
                     </div>
                 </div>
             </div>
@@ -353,7 +414,7 @@ $tab3RenewalRate = $tab3TotalTenants > 0 ? round(($tab3RenewedCount / $tab3Total
                 <div class="stat-card" style="border-left: 5px solid #308f86;">
                     <div class="stat-title text-teal-main"><i class="fa-solid fa-door-open me-1"></i> TỶ LỆ LẤP ĐẦY</div>
                     <div class="stat-num text-dark mt-2"><?= $systemSummary['occupancy_rate'] ?> <span class="fs-6 text-muted">%</span></div>
-                    <div class="small text-muted mt-1 fw-bold"><?= $systemSummary['rented_rooms'] ?> / <?= $systemSummary['total_rooms'] ?> phòng đã thuê</div>
+                    <div class="small text-muted mt-1 fw-bold"><?= $systemSummary['rented_rooms'] ?> / <?= $systemSummary['total_rooms'] ?> phòng <?= !empty($isManager) ? 'tòa ' . htmlspecialchars($managerBuilding['prefix']) : 'đã thuê' ?></div>
                 </div>
             </div>
 
@@ -381,13 +442,29 @@ $tab3RenewalRate = $tab3TotalTenants > 0 ? round(($tab3RenewedCount / $tab3Total
             <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
                 <div>
                     <h5 class="fw-bold text-dark mb-0" style="font-weight: 800;">
-                        <i class="fa-solid fa-table-cells-large text-teal-main me-2"></i> Ma Trận So Sánh Toàn Diện 3 Tòa Nhà
+                        <?php if (!empty($isManager) && !empty($managerBuilding)): ?>
+                            <i class="fa-solid fa-building text-teal-main me-2"></i> Chỉ Số Hoạt Động &amp; Hiệu Suất Tòa Nhà
+                        <?php else: ?>
+                            <i class="fa-solid fa-table-cells-large text-teal-main me-2"></i> Ma Trận So Sánh Toàn Diện 3 Tòa Nhà
+                        <?php endif; ?>
                     </h5>
-                    <div class="text-muted small">Đối chiếu tổng thể cơ cấu phòng, tỷ lệ lấp đầy, tỷ lệ gia hạn hợp đồng, thực thu và công nợ giữa từng tòa nhà</div>
+                    <div class="text-muted small">
+                        <?php if (!empty($isManager) && !empty($managerBuilding)): ?>
+                            Đối chiếu chi tiết cơ cấu phòng, tỷ lệ lấp đầy, tỷ lệ gia hạn hợp đồng, thực thu và công nợ của <?= htmlspecialchars($managerBuilding['name']) ?>
+                        <?php else: ?>
+                            Đối chiếu tổng thể cơ cấu phòng, tỷ lệ lấp đầy, tỷ lệ gia hạn hợp đồng, thực thu và công nợ giữa từng tòa nhà
+                        <?php endif; ?>
+                    </div>
                 </div>
-                <span class="badge bg-light text-secondary border px-3 py-2 rounded-pill fw-bold">
-                    <i class="fa-solid fa-building text-teal-main me-1"></i> Cả 3 Tòa (Sunrise, Emerald, Horizon)
-                </span>
+                <?php if (!empty($isManager) && !empty($managerBuilding)): ?>
+                    <span class="badge bg-teal-subtle text-teal-main border border-teal-subtle px-3 py-2 rounded-pill fw-bold">
+                        <i class="fa-solid fa-user-shield me-1"></i> <?= htmlspecialchars($managerBuilding['name']) ?> (Tòa bạn phụ trách)
+                    </span>
+                <?php else: ?>
+                    <span class="badge bg-light text-secondary border px-3 py-2 rounded-pill fw-bold">
+                        <i class="fa-solid fa-building text-teal-main me-1"></i> Cả 3 Tòa (Sunrise, Emerald, Horizon)
+                    </span>
+                <?php endif; ?>
             </div>
 
             <div class="table-responsive">
@@ -445,10 +522,11 @@ $tab3RenewalRate = $tab3TotalTenants > 0 ? round(($tab3RenewedCount / $tab3Total
                                 <td class="text-center fw-bold text-teal-main"><?= $m['collection_rate'] ?>%</td>
                             </tr>
                         <?php endforeach; ?>
-                        <!-- DÒNG TỔNG CỘNG HỆ THỐNG -->
+                        <!-- DÒNG TỔNG CỘNG HỆ THỐNG (CHỈ HIỂN THỊ CHO ADMIN KHI CÓ NHIỀU TÒA) -->
+                        <?php if (empty($isManager)): ?>
                         <tr class="total-row">
                             <td class="text-start text-uppercase text-dark" style="font-weight: 900;">
-                                <i class="fa-solid fa-network-wired text-teal-main me-2"></i> TOÀN HỆ THỐNG (TỔNG CỘNG)
+                                <i class="fa-solid fa-calculator text-teal-main me-2"></i> TOÀN HỆ THỐNG (TỔNG CỘNG)
                             </td>
                             <td><span class="badge bg-dark rounded-pill px-3 py-1"><?= $systemSummary['total_rooms'] ?></span></td>
                             <td><span class="badge bg-success rounded-pill px-3 py-1 fw-bold"><?= $systemSummary['rented_rooms'] ?></span></td>
@@ -467,6 +545,7 @@ $tab3RenewalRate = $tab3TotalTenants > 0 ? round(($tab3RenewedCount / $tab3Total
                             <td class="text-end fw-bold text-danger fs-6"><?= number_format($systemSummary['unpaid_amount'], 0, ',', '.') ?> đ</td>
                             <td class="text-center fw-bold text-teal-main fs-6"><?= $systemSummary['collection_rate'] ?>%</td>
                         </tr>
+                        <?php endif; ?>
                     </tbody>
                 </table>
             </div>
@@ -474,16 +553,16 @@ $tab3RenewalRate = $tab3TotalTenants > 0 ? round(($tab3RenewedCount / $tab3Total
 
         <!-- KHU VỰC CÁC TAB CHI TIẾT (3 TABS BÁO CÁO TOÀN DIỆN) -->
         <div class="section-box">
-            <!-- TAB BUTTONS -->
-            <div class="d-flex align-items-center gap-2 mb-4 filter-tab-container flex-wrap no-print">
+            <!-- 3 TAB BUTTONS -->
+            <div class="d-flex align-items-center gap-2 filter-tab-container flex-wrap mb-4 no-print">
                 <button type="button" class="filter-tab active" data-tab-target="tabInvoices">
-                    <i class="fa-solid fa-file-invoice-dollar"></i> 1. Doanh Thu & Công Nợ (<?= count($invoiceRows) ?>)
+                    <i class="fa-solid fa-file-invoice-dollar"></i> 1. Doanh Thu & Công Nợ (<span id="countTabInvoices"><?= count($invoiceRows) ?></span>)
                 </button>
                 <button type="button" class="filter-tab" data-tab-target="tabRooms">
-                    <i class="fa-solid fa-bed"></i> 2. Hiện Trạng Phòng & Tiền Cọc (<?= count($roomRows) ?>)
+                    <i class="fa-solid fa-bed"></i> 2. Hiện Trạng Phòng & Tiền Cọc (<span id="countTabRooms"><?= count($roomRows) ?></span>)
                 </button>
                 <button type="button" class="filter-tab" data-tab-target="tabTenants">
-                    <i class="fa-solid fa-users"></i> 3. Khách Thuê & Hợp Đồng (<?= count($tenantRows) ?>)
+                    <i class="fa-solid fa-users"></i> 3. Khách Thuê & Hợp Đồng (<span id="countTabTenants"><?= count($tenantRows) ?></span>)
                 </button>
             </div>
 
@@ -493,14 +572,38 @@ $tab3RenewalRate = $tab3TotalTenants > 0 ? round(($tab3RenewedCount / $tab3Total
                 <!-- TAB 1: DOANH THU & CÔNG NỢ CHI TIẾT -->
                 <!-- ============================================================== -->
                 <div class="tab-pane fade show active" id="tabInvoices" role="tabpanel" style="display: block;">
-                    <!-- BỘ LỌC TÌM KIẾM HÓA ĐƠN -->
+                    <!-- BỘ LỌC TÌM KIẾM HÓA ĐƠN TRỰC TIẾP (LIVE FILTER) -->
                     <div class="p-3 bg-light rounded-4 mb-3 no-print border">
-                        <form method="GET" action="index.php" class="row g-2 align-items-end">
-                            <input type="hidden" name="route" value="reports_csv">
-                            
+                        <form id="formInvoiceFilter" class="row g-2 align-items-end" onsubmit="return false;">
+                            <?php if (!empty($isManager) && !empty($managerBuilding)): ?>
+                            <input type="hidden" id="filterInvoiceBuilding" name="building_id" value="<?= htmlspecialchars($managerBuilding['prefix']) ?>">
+                            <div class="col-12 col-md-3">
+                                <label class="form-label small fw-bold text-muted mb-1"><i class="fa-solid fa-calendar-days text-teal-main me-1"></i> Kỳ hóa đơn</label>
+                                <select id="filterInvoicePeriod" name="month_year" class="form-select rounded-3">
+                                    <option value="all" <?= $monthYear === 'all' ? 'selected' : '' ?>>Tất cả các kỳ</option>
+                                    <?php foreach ($periods as $p): ?>
+                                        <option value="<?= htmlspecialchars($p) ?>" <?= $monthYear === $p ? 'selected' : '' ?>>Kỳ <?= htmlspecialchars($p) ?></option>
+                                    <?php endforeach; ?>
+                                </select>
+                            </div>
+
+                            <div class="col-12 col-md-3">
+                                <label class="form-label small fw-bold text-muted mb-1"><i class="fa-solid fa-filter text-teal-main me-1"></i> Trạng thái</label>
+                                <select id="filterInvoiceStatus" name="status" class="form-select rounded-3">
+                                    <option value="all" <?= $status === 'all' ? 'selected' : '' ?>>Tất cả trạng thái</option>
+                                    <option value="paid" <?= $status === 'paid' ? 'selected' : '' ?>>Đã thu (Doanh thu)</option>
+                                    <option value="unpaid" <?= $status === 'unpaid' ? 'selected' : '' ?>>Chưa thu (Công nợ)</option>
+                                </select>
+                            </div>
+
+                            <div class="col-12 col-md-4">
+                                <label class="form-label small fw-bold text-muted mb-1"><i class="fa-solid fa-magnifying-glass text-teal-main me-1"></i> Từ khóa</label>
+                                <input type="text" id="searchInvoiceKeyword" name="keyword" class="form-control rounded-3" placeholder="Số phòng, tên khách, SĐT, mã HĐ..." value="<?= htmlspecialchars($keyword) ?>">
+                            </div>
+                            <?php else: ?>
                             <div class="col-12 col-md-3">
                                 <label class="form-label small fw-bold text-muted mb-1"><i class="fa-solid fa-building text-teal-main me-1"></i> Tòa nhà</label>
-                                <select name="building_id" class="form-select rounded-3">
+                                <select id="filterInvoiceBuilding" name="building_id" class="form-select rounded-3">
                                     <option value="all" <?= $buildingId === 'all' ? 'selected' : '' ?>>Tất cả 3 tòa nhà</option>
                                     <option value="A" <?= $buildingId === 'A' ? 'selected' : '' ?>>Tòa A - StayMate Sunrise</option>
                                     <option value="B" <?= $buildingId === 'B' ? 'selected' : '' ?>>Tòa B - StayMate Emerald</option>
@@ -510,7 +613,7 @@ $tab3RenewalRate = $tab3TotalTenants > 0 ? round(($tab3RenewedCount / $tab3Total
 
                             <div class="col-12 col-md-2">
                                 <label class="form-label small fw-bold text-muted mb-1"><i class="fa-solid fa-calendar-days text-teal-main me-1"></i> Kỳ hóa đơn</label>
-                                <select name="month_year" class="form-select rounded-3">
+                                <select id="filterInvoicePeriod" name="month_year" class="form-select rounded-3">
                                     <option value="all" <?= $monthYear === 'all' ? 'selected' : '' ?>>Tất cả các kỳ</option>
                                     <?php foreach ($periods as $p): ?>
                                         <option value="<?= htmlspecialchars($p) ?>" <?= $monthYear === $p ? 'selected' : '' ?>>Kỳ <?= htmlspecialchars($p) ?></option>
@@ -520,7 +623,7 @@ $tab3RenewalRate = $tab3TotalTenants > 0 ? round(($tab3RenewedCount / $tab3Total
 
                             <div class="col-12 col-md-2">
                                 <label class="form-label small fw-bold text-muted mb-1"><i class="fa-solid fa-filter text-teal-main me-1"></i> Trạng thái</label>
-                                <select name="status" class="form-select rounded-3">
+                                <select id="filterInvoiceStatus" name="status" class="form-select rounded-3">
                                     <option value="all" <?= $status === 'all' ? 'selected' : '' ?>>Tất cả trạng thái</option>
                                     <option value="paid" <?= $status === 'paid' ? 'selected' : '' ?>>Đã thu (Doanh thu)</option>
                                     <option value="unpaid" <?= $status === 'unpaid' ? 'selected' : '' ?>>Chưa thu (Công nợ)</option>
@@ -529,29 +632,33 @@ $tab3RenewalRate = $tab3TotalTenants > 0 ? round(($tab3RenewedCount / $tab3Total
 
                             <div class="col-12 col-md-3">
                                 <label class="form-label small fw-bold text-muted mb-1"><i class="fa-solid fa-magnifying-glass text-teal-main me-1"></i> Từ khóa</label>
-                                <input type="text" name="keyword" class="form-control rounded-3" placeholder="Số phòng, tên khách, SĐT..." value="<?= htmlspecialchars($keyword) ?>">
+                                <input type="text" id="searchInvoiceKeyword" name="keyword" class="form-control rounded-3" placeholder="Số phòng, tên khách, SĐT, mã HĐ..." value="<?= htmlspecialchars($keyword) ?>">
                             </div>
+                            <?php endif; ?>
 
                             <div class="col-12 col-md-2 d-flex gap-2">
-                                <button type="submit" class="btn btn-teal-custom w-100 justify-content-center">
+                                <button type="button" id="btnSubmitInvoiceFilter" class="btn btn-teal-custom w-100 justify-content-center">
                                     <i class="fa-solid fa-filter"></i> Lọc
                                 </button>
-                                <a href="index.php?route=reports_csv" class="btn btn-outline-secondary rounded-3 px-3" title="Đặt lại bộ lọc">
+                                <button type="button" id="btnResetInvoiceFilter" class="btn btn-outline-secondary rounded-3 px-3" title="Đặt lại bộ lọc hóa đơn">
                                     <i class="fa-solid fa-rotate-left"></i>
-                                </a>
+                                </button>
                             </div>
                         </form>
                     </div>
 
-                    <div class="d-flex justify-content-between align-items-center mb-3">
+                    <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
                         <div class="small text-muted">
                             <i class="fa-solid fa-circle-info text-teal-main me-1"></i> Bấm vào <strong>Mã HĐ</strong> để xem trực tiếp chỉ số điện, nước và đơn giá dịch vụ của từng hóa đơn.
+                        </div>
+                        <div class="small text-muted fw-bold">
+                            <i class="fa-solid fa-arrows-up-down text-teal-main me-1"></i> Cuộn bảng để xem toàn bộ danh sách (Cố định tiêu đề & tổng cộng)
                         </div>
                     </div>
 
                     <!-- BẢNG HÓA ĐƠN -->
-                    <div class="table-responsive">
-                        <table class="table table-hover table-custom align-middle border rounded-4 overflow-hidden">
+                    <div class="table-responsive table-scroll-container shadow-sm mb-3">
+                        <table class="table table-hover table-custom align-middle mb-0" id="invoicesReportTable">
                             <thead>
                                 <tr>
                                     <th class="text-center" style="width: 50px;">STT</th>
@@ -570,14 +677,13 @@ $tab3RenewalRate = $tab3TotalTenants > 0 ? round(($tab3RenewedCount / $tab3Total
                                 </tr>
                             </thead>
                             <tbody>
-                                <?php if (empty($invoiceRows)): ?>
-                                    <tr>
-                                        <td colspan="13" class="text-center py-5 text-muted">
-                                            <i class="fa-solid fa-inbox fs-2 mb-2 d-block text-secondary"></i>
-                                            Không có hóa đơn nào phù hợp với bộ lọc hiện tại.
-                                        </td>
-                                    </tr>
-                                <?php else: ?>
+                                <tr id="invEmptyRow" style="display: <?= empty($invoiceRows) ? '' : 'none' ?>;">
+                                    <td colspan="13" class="text-center py-5 text-muted">
+                                        <i class="fa-solid fa-inbox fs-2 mb-2 d-block text-secondary"></i>
+                                        Không có hóa đơn nào phù hợp với bộ lọc hiện tại.
+                                    </td>
+                                </tr>
+                                <?php if (!empty($invoiceRows)): ?>
                                     <?php 
                                     $idx = 1;
                                     foreach ($invoiceRows as $r): 
@@ -588,16 +694,28 @@ $tab3RenewalRate = $tab3TotalTenants > 0 ? round(($tab3RenewedCount / $tab3Total
                                         $serviceTotal = (float)$r['computed_util'];
                                         $dueDate = $r['due_date'];
                                         $isOverdue = !$isPaid && ($dueDate < date('Y-m-d'));
+                                        $bldName = $r['building_name'] ?? ('Tòa ' . substr($r['room_number'], 0, 1));
+                                        $bldCode = substr($r['room_number'], 0, 1);
                                     ?>
-                                        <tr>
-                                            <td class="text-center text-muted fw-bold"><?= $idx++ ?></td>
+                                        <tr class="invoice-row"
+                                            data-building="<?= htmlspecialchars($bldName) ?>"
+                                            data-building-code="<?= htmlspecialchars($bldCode) ?>"
+                                            data-month="<?= htmlspecialchars($r['month_year']) ?>"
+                                            data-status="<?= $r['status'] ?>"
+                                            data-amount="<?= (float)$r['total_amount'] ?>"
+                                            data-room-price="<?= (float)$roomPrice ?>"
+                                            data-util-price="<?= (float)$serviceTotal ?>"
+                                            data-paid="<?= $paid ?>"
+                                            data-debt="<?= $debt ?>"
+                                            data-keyword="<?= strtolower($r['room_number'] . ' ' . ($r['tenant_name'] ?? '') . ' ' . ($r['tenant_phone'] ?? '') . ' hd-' . str_pad((string)$r['id'], 4, '0', STR_PAD_LEFT) . ' ' . $bldName) ?>">
+                                            <td class="text-center text-muted fw-bold inv-stt"><?= $idx++ ?></td>
                                             <td>
                                                 <a href="index.php?route=invoices/detail&id=<?= $r['id'] ?>" target="_blank" class="invoice-link" title="Xem chi tiết tiền phòng, điện nước & dịch vụ">
                                                     HD-<?= str_pad((string)$r['id'], 4, '0', STR_PAD_LEFT) ?>
                                                     <i class="fa-solid fa-arrow-up-right-from-square" style="font-size: 0.72rem;"></i>
                                                 </a>
                                             </td>
-                                            <td><?= htmlspecialchars($r['building_name'] ?? ('Tòa ' . substr($r['room_number'], 0, 1))) ?></td>
+                                            <td><?= htmlspecialchars($bldName) ?></td>
                                             <td><span class="badge bg-dark rounded-pill px-3 py-1"><?= htmlspecialchars($r['room_number']) ?></span></td>
                                             <td>
                                                 <div class="fw-bold text-dark"><?= htmlspecialchars($r['tenant_name'] ?? 'Khách vãng lai') ?></div>
@@ -663,15 +781,15 @@ $tab3RenewalRate = $tab3TotalTenants > 0 ? round(($tab3RenewedCount / $tab3Total
                                     <?php endforeach; ?>
                                 <?php endif; ?>
                             </tbody>
-                            <tfoot class="table-light border-top-2 fw-bold">
+                            <tfoot class="table-light border-top-2 fw-bold" id="invoicesTableFoot">
                                 <tr>
-                                    <td colspan="6" class="text-uppercase text-center py-3">TỔNG CỘNG THEO BỘ LỌC</td>
-                                    <td class="text-end py-3 text-dark"><?= number_format($filterSummary['room_total'], 0, ',', '.') ?> đ</td>
-                                    <td class="text-end py-3 text-dark"><?= number_format($filterSummary['utility_total'], 0, ',', '.') ?> đ</td>
-                                    <td class="text-end py-3 text-dark fs-6"><?= number_format($filterSummary['total_amount'], 0, ',', '.') ?> đ</td>
-                                    <td class="text-end py-3 text-success fs-6"><?= number_format($filterSummary['paid_amount'], 0, ',', '.') ?> đ</td>
-                                    <td class="text-end py-3 text-danger fs-6"><?= number_format($filterSummary['unpaid_amount'], 0, ',', '.') ?> đ</td>
-                                    <td class="text-center py-3 text-teal-main"><?= $filterSummary['paid_count'] ?> đã thu / <?= $filterSummary['unpaid_count'] ?> nợ</td>
+                                    <td colspan="6" class="text-uppercase text-center py-3" id="invFootTitle">TỔNG CỘNG (<span id="invFootCount"><?= count($invoiceRows) ?></span> HÓA ĐƠN)</td>
+                                    <td class="text-end py-3 text-dark" id="invFootRoomTotal"><?= number_format($filterSummary['room_total'], 0, ',', '.') ?> đ</td>
+                                    <td class="text-end py-3 text-dark" id="invFootUtilTotal"><?= number_format($filterSummary['utility_total'], 0, ',', '.') ?> đ</td>
+                                    <td class="text-end py-3 text-dark fs-6" id="invFootTotal"><?= number_format($filterSummary['total_amount'], 0, ',', '.') ?> đ</td>
+                                    <td class="text-end py-3 text-success fs-6" id="invFootPaid"><?= number_format($filterSummary['paid_amount'], 0, ',', '.') ?> đ</td>
+                                    <td class="text-end py-3 text-danger fs-6" id="invFootDebt"><?= number_format($filterSummary['unpaid_amount'], 0, ',', '.') ?> đ</td>
+                                    <td class="text-center py-3 text-teal-main" id="invFootStatus"><?= $filterSummary['paid_count'] ?> đã thu / <?= $filterSummary['unpaid_count'] ?> nợ</td>
                                     <td></td>
                                 </tr>
                             </tfoot>
@@ -680,39 +798,68 @@ $tab3RenewalRate = $tab3TotalTenants > 0 ? round(($tab3RenewedCount / $tab3Total
                 </div>
 
                 <!-- ============================================================== -->
-                <!-- TAB 2: BÁO CÁO HIỆN TRẠNG PHÒNG ỐC & TIỀN CỌC GIỮ CHỖ (60 PHÒNG) -->
+                <!-- TAB 2: BÁO CÁO HIỆN TRẠNG PHÒNG ỐC & TIỀN CỌC GIỮ CHỖ (<?= $tab2TotalRooms ?> PHÒNG) -->
                 <!-- ============================================================== -->
                 <div class="tab-pane fade" id="tabRooms" role="tabpanel" style="display: none;">
                     
                     <!-- DÒNG THỐNG KÊ NHANH CHO TAB 2 -->
                     <div class="d-flex align-items-center gap-2 mb-3 flex-wrap">
                         <div class="mini-kpi-pill">
-                            <i class="fa-solid fa-bed text-dark"></i> Tổng phòng: <strong class="text-dark"><?= $tab2TotalRooms ?></strong>
+                            <i class="fa-solid fa-bed text-dark"></i> Tổng phòng: <strong class="text-dark" id="tab2KpiTotal"><?= $tab2TotalRooms ?></strong>
                         </div>
                         <div class="mini-kpi-pill text-success border-success-subtle bg-success-subtle">
-                            <i class="fa-solid fa-circle-check"></i> Đang cho thuê: <strong><?= $tab2Rented ?></strong>
+                            <i class="fa-solid fa-circle-check"></i> Đang cho thuê: <strong id="tab2KpiRented"><?= $tab2Rented ?></strong>
                         </div>
                         <div class="mini-kpi-pill text-warning border-warning-subtle bg-warning-subtle">
-                            <i class="fa-solid fa-door-open"></i> Phòng trống: <strong><?= $tab2Available ?></strong>
+                            <i class="fa-solid fa-door-open"></i> Phòng trống: <strong id="tab2KpiAvail"><?= $tab2Available ?></strong>
                         </div>
                         <div class="mini-kpi-pill text-secondary border-secondary-subtle bg-light">
-                            <i class="fa-solid fa-wrench"></i> Đang bảo trì: <strong><?= $tab2Maintenance ?></strong>
+                            <i class="fa-solid fa-wrench"></i> Đang bảo trì: <strong id="tab2KpiMaint"><?= $tab2Maintenance ?></strong>
                         </div>
                         <div class="mini-kpi-pill text-primary border-primary-subtle bg-primary-subtle ms-auto">
-                            <i class="fa-solid fa-shield-halved"></i> Tổng cọc đang giữ: <strong><?= number_format($tab2TotalDepositHeld, 0, ',', '.') ?> đ</strong>
+                            <i class="fa-solid fa-shield-halved"></i> Tổng cọc đang giữ: <strong id="tab2KpiDeposit"><?= number_format($tab2TotalDepositHeld, 0, ',', '.') ?> đ</strong>
                         </div>
                     </div>
 
                     <!-- BỘ LỌC TÌM KIẾM TRỰC TIẾP TAB 2 -->
                     <div class="p-3 bg-light rounded-4 mb-3 no-print border">
                         <div class="row g-2 align-items-end">
+                            <?php if (!empty($isManager) && !empty($managerBuilding)): ?>
+                            <input type="hidden" id="filterRoomBuilding" value="<?= htmlspecialchars($managerBuilding['prefix']) ?>">
+                            <div class="col-12 col-md-4">
+                                <label class="form-label small fw-bold text-muted mb-1"><i class="fa-solid fa-filter text-teal-main me-1"></i> Trạng thái phòng</label>
+                                <select id="filterRoomStatus" class="form-select rounded-3">
+                                    <option value="all">Tất cả trạng thái</option>
+                                    <option value="rented">Đang cho thuê</option>
+                                    <option value="available">Phòng trống</option>
+                                    <option value="maintenance">Đang bảo trì</option>
+                                </select>
+                            </div>
+                            <div class="col-12 col-md-4">
+                                <label class="form-label small fw-bold text-muted mb-1"><i class="fa-solid fa-shield-halved text-teal-main me-1"></i> Tiền đặt cọc</label>
+                                <select id="filterRoomDeposit" class="form-select rounded-3">
+                                    <option value="all">Tất cả tình trạng cọc</option>
+                                    <option value="has_deposit">Đang giữ tiền cọc</option>
+                                    <option value="no_deposit">Chưa có tiền cọc</option>
+                                </select>
+                            </div>
+                            <div class="col-12 col-md-4">
+                                <label class="form-label small fw-bold text-muted mb-1"><i class="fa-solid fa-magnifying-glass text-teal-main me-1"></i> Tìm kiếm phòng</label>
+                                <div class="input-group">
+                                    <input type="text" id="searchRoomKeyword" class="form-control rounded-start-3" placeholder="Số phòng, tên khách, SĐT...">
+                                    <button type="button" id="btnResetRoomFilter" class="btn btn-outline-secondary rounded-end-3" title="Đặt lại bộ lọc phòng">
+                                        <i class="fa-solid fa-rotate-left"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            <?php else: ?>
                             <div class="col-12 col-md-3">
                                 <label class="form-label small fw-bold text-muted mb-1"><i class="fa-solid fa-building text-teal-main me-1"></i> Tòa nhà</label>
                                 <select id="filterRoomBuilding" class="form-select rounded-3">
                                     <option value="all">Tất cả 3 tòa nhà</option>
-                                    <option value="Tòa A">Tòa A - StayMate Sunrise</option>
-                                    <option value="Tòa B">Tòa B - StayMate Emerald</option>
-                                    <option value="Tòa C">Tòa C - StayMate Horizon</option>
+                                    <option value="A">Tòa A - StayMate Sunrise</option>
+                                    <option value="B">Tòa B - StayMate Emerald</option>
+                                    <option value="C">Tòa C - StayMate Horizon</option>
                                 </select>
                             </div>
                             <div class="col-12 col-md-3">
@@ -741,12 +888,22 @@ $tab3RenewalRate = $tab3TotalTenants > 0 ? round(($tab3RenewedCount / $tab3Total
                                     </button>
                                 </div>
                             </div>
+                            <?php endif; ?>
+                        </div>
+                    </div>
+
+                    <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+                        <div class="small text-muted">
+                            <i class="fa-solid fa-circle-info text-teal-main me-1"></i> Bấm vào <strong>Số Phòng</strong> để xem nhanh phòng trên sơ đồ tổng thể.
+                        </div>
+                        <div class="small text-muted fw-bold">
+                            <i class="fa-solid fa-arrows-up-down text-teal-main me-1"></i> Cuộn bảng để xem toàn bộ <?= $tab2TotalRooms ?> phòng (Cố định tiêu đề & tổng cộng)
                         </div>
                     </div>
 
                     <!-- BẢNG BÁO CÁO 60 PHÒNG -->
-                    <div class="table-responsive">
-                        <table class="table table-hover table-custom align-middle border rounded-4 overflow-hidden" id="roomsReportTable">
+                    <div class="table-responsive table-scroll-container shadow-sm mb-3">
+                        <table class="table table-hover table-custom align-middle mb-0" id="roomsReportTable">
                             <thead>
                                 <tr>
                                     <th class="text-center" style="width: 50px;">STT</th>
@@ -763,6 +920,12 @@ $tab3RenewalRate = $tab3TotalTenants > 0 ? round(($tab3RenewedCount / $tab3Total
                                 </tr>
                             </thead>
                             <tbody>
+                                <tr id="roomsEmptyRow" style="display: none;">
+                                    <td colspan="11" class="text-center py-5 text-muted">
+                                        <i class="fa-solid fa-inbox fs-2 mb-2 d-block text-secondary"></i>
+                                        Không tìm thấy phòng trọ nào phù hợp với bộ lọc.
+                                    </td>
+                                </tr>
                                 <?php 
                                 $rStt = 1;
                                 foreach ($roomRows as $rm): 
@@ -770,14 +933,18 @@ $tab3RenewalRate = $tab3TotalTenants > 0 ? round(($tab3RenewedCount / $tab3Total
                                     $isAvail  = ($rm['status'] === 'available');
                                     $isMaint  = ($rm['status'] === 'maintenance');
                                     $bldName  = $rm['building_name'] ?? ('Tòa ' . substr($rm['room_number'], 0, 1));
+                                    $bldCode  = substr($rm['room_number'], 0, 1);
                                     $depAmt   = (float)($rm['deposit_amount'] ?? 0);
                                     $floorNum = 'Tầng ' . (preg_match('/^[A-Z](\d)/i', $rm['room_number'], $fm) ? $fm[1] : '1');
                                 ?>
                                     <tr class="room-row" 
                                         data-building="<?= htmlspecialchars($bldName) ?>" 
+                                        data-building-code="<?= htmlspecialchars($bldCode) ?>"
                                         data-status="<?= $rm['status'] ?>" 
                                         data-deposit="<?= $depAmt > 0 ? 'has_deposit' : 'no_deposit' ?>"
-                                        data-keyword="<?= strtolower($rm['room_number'] . ' ' . ($rm['tenant_name'] ?? '') . ' ' . ($rm['tenant_phone'] ?? '') . ' ' . ($rm['contract_code'] ?? '')) ?>">
+                                        data-deposit-amount="<?= $depAmt ?>"
+                                        data-price="<?= (float)$rm['price'] ?>"
+                                        data-keyword="<?= strtolower($rm['room_number'] . ' ' . ($rm['tenant_name'] ?? '') . ' ' . ($rm['tenant_phone'] ?? '') . ' ' . ($rm['contract_code'] ?? '') . ' ' . $bldName) ?>">
                                         <td class="text-center text-muted fw-bold room-index"><?= $rStt++ ?></td>
                                         <td class="fw-bold">
                                             <a href="index.php?route=rooms" class="badge bg-dark rounded-pill px-3 py-1 fs-6 text-decoration-none" title="Xem phòng trên sơ đồ">
@@ -840,11 +1007,11 @@ $tab3RenewalRate = $tab3TotalTenants > 0 ? round(($tab3RenewedCount / $tab3Total
                             </tbody>
                             <tfoot class="table-light border-top-2 fw-bold">
                                 <tr>
-                                    <td colspan="4" class="text-uppercase text-center py-3">TỔNG CỘNG 60 PHÒNG</td>
-                                    <td class="text-end py-3 text-dark"><?= number_format($tab2TotalListedPrice, 0, ',', '.') ?> đ</td>
-                                    <td class="text-center py-3 text-success"><?= $tab2Rented ?> thuê / <?= $tab2Available ?> trống</td>
+                                    <td colspan="4" class="text-uppercase text-center py-3" id="tab2FootTitle">TỔNG CỘNG (<span id="tab2FootCount"><?= $tab2TotalRooms ?></span> PHÒNG)</td>
+                                    <td class="text-end py-3 text-dark" id="tab2FootPrice"><?= number_format($tab2TotalListedPrice, 0, ',', '.') ?> đ</td>
+                                    <td class="text-center py-3 text-success" id="tab2FootStatus"><span id="tab2FootRented"><?= $tab2Rented ?></span> thuê / <span id="tab2FootAvail"><?= $tab2Available ?></span> trống</td>
                                     <td colspan="3"></td>
-                                    <td class="text-end py-3 text-primary fs-6"><?= number_format($tab2TotalDepositHeld, 0, ',', '.') ?> đ</td>
+                                    <td class="text-end py-3 text-primary fs-6" id="tab2FootDeposit"><?= number_format($tab2TotalDepositHeld, 0, ',', '.') ?> đ</td>
                                     <td class="text-center py-3 text-muted">100% bảo đảm</td>
                                 </tr>
                             </tfoot>
@@ -853,45 +1020,71 @@ $tab3RenewalRate = $tab3TotalTenants > 0 ? round(($tab3RenewedCount / $tab3Total
                 </div>
 
                 <!-- ============================================================== -->
-                <!-- TAB 3: BÁO CÁO KHÁCH THUÊ & HỢP ĐỒNG CƯ TRÚ (52 KHÁCH) -->
+                <!-- TAB 3: BÁO CÁO KHÁCH THUÊ & HỢP ĐỒNG CƯ TRÚ (<?= $tab3TotalTenants ?> KHÁCH) -->
                 <!-- ============================================================== -->
                 <div class="tab-pane fade" id="tabTenants" role="tabpanel" style="display: none;">
                     
                     <!-- DÒNG THỐNG KÊ NHANH CHO TAB 3 -->
                     <div class="d-flex align-items-center gap-2 mb-3 flex-wrap">
                         <div class="mini-kpi-pill">
-                            <i class="fa-solid fa-users text-dark"></i> Tổng khách cư trú: <strong class="text-dark"><?= $tab3TotalTenants ?></strong>
+                            <i class="fa-solid fa-users text-dark"></i> Tổng khách cư trú: <strong class="text-dark" id="tab3KpiTotal"><?= $tab3TotalTenants ?></strong>
                         </div>
                         <div class="mini-kpi-pill text-success border-success-subtle bg-success-subtle">
-                            <i class="fa-solid fa-file-contract"></i> Hợp đồng hiệu lực: <strong><?= $tab3TotalTenants ?></strong>
+                            <i class="fa-solid fa-file-contract"></i> Hợp đồng hiệu lực: <strong id="tab3KpiActive"><?= $tab3TotalTenants ?></strong>
                         </div>
                         <!-- TỶ LỆ GIA HẠN HỢP ĐỒNG -->
                         <div class="mini-kpi-pill border-purple-subtle bg-purple-subtle" style="color: #7c3aed; background: #faf5ff; border: 1.5px solid #d8b4fe;">
-                            <i class="fa-solid fa-repeat me-1"></i> Tỷ lệ gia hạn HĐ: <strong style="color: #7c3aed;"><?= $tab3RenewalRate ?>%</strong> (<?= $tab3RenewedCount ?> HĐ tái ký)
+                            <i class="fa-solid fa-repeat me-1"></i> Tỷ lệ gia hạn HĐ: <strong id="tab3KpiRenewalRate" style="color: #7c3aed;"><?= $tab3RenewalRate ?>%</strong> (<span id="tab3KpiRenewedCount"><?= $tab3RenewedCount ?></span> HĐ tái ký)
                         </div>
-                        <?php if ($tab3ExpiringSoon > 0): ?>
-                            <div class="mini-kpi-pill text-warning border-warning-subtle bg-warning-subtle">
-                                <i class="fa-solid fa-clock"></i> Sắp hết hạn (≤ 30 ngày): <strong><?= $tab3ExpiringSoon ?></strong>
-                            </div>
-                        <?php endif; ?>
+                        <div class="mini-kpi-pill text-warning border-warning-subtle bg-warning-subtle">
+                            <i class="fa-solid fa-clock"></i> Sắp hết hạn (≤ 30 ngày): <strong id="tab3KpiExpiring"><?= $tab3ExpiringSoon ?></strong>
+                        </div>
                         <div class="mini-kpi-pill text-teal-main border-teal-subtle bg-teal-subtle ms-auto">
-                            <i class="fa-solid fa-coins"></i> Tiền thuê theo HĐ: <strong><?= number_format($tab3TotalRent, 0, ',', '.') ?> đ/tháng</strong>
+                            <i class="fa-solid fa-coins"></i> Tiền thuê theo HĐ: <strong id="tab3KpiRent"><?= number_format($tab3TotalRent, 0, ',', '.') ?> đ/tháng</strong>
                         </div>
                         <div class="mini-kpi-pill text-primary border-primary-subtle bg-primary-subtle">
-                            <i class="fa-solid fa-shield-halved"></i> Tiền cọc bảo đảm: <strong><?= number_format($tab3TotalDeposit, 0, ',', '.') ?> đ</strong>
+                            <i class="fa-solid fa-shield-halved"></i> Tiền cọc bảo đảm: <strong id="tab3KpiDeposit"><?= number_format($tab3TotalDeposit, 0, ',', '.') ?> đ</strong>
                         </div>
                     </div>
 
                     <!-- BỘ LỌC TÌM KIẾM TRỰC TIẾP TAB 3 -->
                     <div class="p-3 bg-light rounded-4 mb-3 no-print border">
                         <div class="row g-2 align-items-end">
+                            <?php if (!empty($isManager) && !empty($managerBuilding)): ?>
+                            <input type="hidden" id="filterTenantBuilding" value="<?= htmlspecialchars($managerBuilding['prefix']) ?>">
+                            <div class="col-12 col-md-4">
+                                <label class="form-label small fw-bold text-muted mb-1"><i class="fa-solid fa-clock text-teal-main me-1"></i> Thời hạn hợp đồng</label>
+                                <select id="filterTenantExpiry" class="form-select rounded-3">
+                                    <option value="all">Tất cả thời hạn</option>
+                                    <option value="expiring_soon">Sắp hết hạn (≤ 30 ngày)</option>
+                                    <option value="long_term">Còn hạn dài (> 30 ngày)</option>
+                                </select>
+                            </div>
+                            <div class="col-12 col-md-4">
+                                <label class="form-label small fw-bold text-muted mb-1"><i class="fa-solid fa-repeat text-purple me-1"></i> Tình trạng gia hạn</label>
+                                <select id="filterTenantRenewal" class="form-select rounded-3">
+                                    <option value="all">Tất cả hợp đồng</option>
+                                    <option value="renewed">Đã gia hạn (Tái ký)</option>
+                                    <option value="initial">Hợp đồng ban đầu</option>
+                                </select>
+                            </div>
+                            <div class="col-12 col-md-4">
+                                <label class="form-label small fw-bold text-muted mb-1"><i class="fa-solid fa-magnifying-glass text-teal-main me-1"></i> Tìm kiếm khách thuê</label>
+                                <div class="input-group">
+                                    <input type="text" id="searchTenantKeyword" class="form-control rounded-start-3" placeholder="Tên khách, SĐT, CCCD, phòng...">
+                                    <button type="button" id="btnResetTenantFilter" class="btn btn-outline-secondary rounded-end-3" title="Đặt lại bộ lọc khách">
+                                        <i class="fa-solid fa-rotate-left"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            <?php else: ?>
                             <div class="col-12 col-md-3">
                                 <label class="form-label small fw-bold text-muted mb-1"><i class="fa-solid fa-building text-teal-main me-1"></i> Tòa nhà</label>
                                 <select id="filterTenantBuilding" class="form-select rounded-3">
                                     <option value="all">Tất cả 3 tòa nhà</option>
-                                    <option value="Tòa A">Tòa A - StayMate Sunrise</option>
-                                    <option value="Tòa B">Tòa B - StayMate Emerald</option>
-                                    <option value="Tòa C">Tòa C - StayMate Horizon</option>
+                                    <option value="A">Tòa A - StayMate Sunrise</option>
+                                    <option value="B">Tòa B - StayMate Emerald</option>
+                                    <option value="C">Tòa C - StayMate Horizon</option>
                                 </select>
                             </div>
                             <div class="col-12 col-md-3">
@@ -919,12 +1112,22 @@ $tab3RenewalRate = $tab3TotalTenants > 0 ? round(($tab3RenewedCount / $tab3Total
                                     </button>
                                 </div>
                             </div>
+                            <?php endif; ?>
+                        </div>
+                    </div>
+
+                    <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+                        <div class="small text-muted">
+                            <i class="fa-solid fa-circle-info text-teal-main me-1"></i> Bấm vào <strong>Mã Hợp Đồng</strong> để mở trang quản lý chi tiết hợp đồng thuê.
+                        </div>
+                        <div class="small text-muted fw-bold">
+                            <i class="fa-solid fa-arrows-up-down text-teal-main me-1"></i> Cuộn bảng để xem toàn bộ khách thuê (Cố định tiêu đề & tổng cộng)
                         </div>
                     </div>
 
                     <!-- BẢNG BÁO CÁO KHÁCH THUÊ & HỢP ĐỒNG -->
-                    <div class="table-responsive">
-                        <table class="table table-hover table-custom align-middle border rounded-4 overflow-hidden" id="tenantsReportTable">
+                    <div class="table-responsive table-scroll-container shadow-sm mb-3">
+                        <table class="table table-hover table-custom align-middle mb-0" id="tenantsReportTable">
                             <thead>
                                 <tr>
                                     <th class="text-center" style="width: 50px;">STT</th>
@@ -943,25 +1146,41 @@ $tab3RenewalRate = $tab3TotalTenants > 0 ? round(($tab3RenewedCount / $tab3Total
                                 </tr>
                             </thead>
                             <tbody>
+                                <tr id="tenantsEmptyRow" style="display: none;">
+                                    <td colspan="13" class="text-center py-5 text-muted">
+                                        <i class="fa-solid fa-inbox fs-2 mb-2 d-block text-secondary"></i>
+                                        Không tìm thấy khách thuê nào phù hợp với bộ lọc.
+                                    </td>
+                                </tr>
                                 <?php 
                                 $tStt = 1;
                                 foreach ($tenantRows as $tn): 
                                     $daysLeft = (int)($tn['days_left'] ?? 0);
                                     $tBldName = $tn['building_name'] ?? ('Tòa ' . substr($tn['room_number'], 0, 1));
+                                    $tBldCode = substr($tn['room_number'], 0, 1);
                                     $isRenewed = ($tn['renewal_status'] ?? '') === 'renewed';
                                 ?>
                                     <tr class="tenant-row"
                                         data-building="<?= htmlspecialchars($tBldName) ?>"
+                                        data-building-code="<?= htmlspecialchars($tBldCode) ?>"
                                         data-expiry="<?= $daysLeft <= 30 ? 'expiring_soon' : 'long_term' ?>"
                                         data-renewal="<?= $isRenewed ? 'renewed' : 'initial' ?>"
-                                        data-keyword="<?= strtolower($tn['full_name'] . ' ' . $tn['phone'] . ' ' . ($tn['cccd'] ?? '') . ' ' . $tn['room_number'] . ' ' . $tn['contract_code']) ?>">
+                                        data-rent="<?= (float)$tn['monthly_rent'] ?>"
+                                        data-deposit="<?= (float)$tn['deposit_amount'] ?>"
+                                        data-keyword="<?= strtolower($tn['full_name'] . ' ' . $tn['phone'] . ' ' . ($tn['cccd'] ?? '') . ' ' . $tn['room_number'] . ' ' . $tn['contract_code'] . ' ' . $tBldName) ?>">
                                         <td class="text-center text-muted fw-bold tenant-index"><?= $tStt++ ?></td>
                                         <td>
                                             <div class="fw-bold text-dark"><?= htmlspecialchars($tn['full_name']) ?></div>
                                             <div class="small text-muted"><?= htmlspecialchars($tn['email'] ?? '') ?></div>
                                         </td>
                                         <td class="fw-bold"><i class="fa-solid fa-phone me-1 text-muted" style="font-size: 0.75rem;"></i><?= htmlspecialchars($tn['phone']) ?></td>
-                                        <td><?= htmlspecialchars($tn['cccd'] ?? '-') ?></td>
+                                        <td class="font-monospace fw-semibold text-secondary">
+                                            <?php if (!empty($tn['cccd'])): ?>
+                                                <i class="fa-solid fa-id-card me-1 text-muted" style="font-size: 0.8rem;"></i><?= htmlspecialchars($tn['cccd']) ?>
+                                            <?php else: ?>
+                                                <span class="text-muted">-</span>
+                                            <?php endif; ?>
+                                        </td>
                                         <td><span class="badge bg-dark rounded-pill px-3 py-1"><?= htmlspecialchars($tn['room_number']) ?></span></td>
                                         <td><?= htmlspecialchars($tBldName) ?></td>
                                         <td>
@@ -1011,12 +1230,12 @@ $tab3RenewalRate = $tab3TotalTenants > 0 ? round(($tab3RenewedCount / $tab3Total
                             </tbody>
                             <tfoot class="table-light border-top-2 fw-bold">
                                 <tr>
-                                    <td colspan="6" class="text-uppercase text-center py-3">TỔNG CỘNG 52 KHÁCH THUÊ</td>
-                                    <td colspan="4" class="text-center py-3 text-teal-main">
-                                        <?= $tab3TotalTenants ?> HĐ hiệu lực (<strong class="text-purple"><?= $tab3RenewedCount ?> tái ký - <?= $tab3RenewalRate ?>%</strong>, <?= $tab3ExpiringSoon ?> sắp hết hạn)
+                                    <td colspan="6" class="text-uppercase text-center py-3" id="tab3FootTitle">TỔNG CỘNG (<span id="tab3FootCount"><?= $tab3TotalTenants ?></span> KHÁCH THUÊ)</td>
+                                    <td colspan="4" class="text-center py-3 text-teal-main" id="tab3FootStatus">
+                                        Hiệu lực: <span id="tab3FootActiveCount"><?= $tab3TotalTenants ?></span> HĐ (<strong class="text-purple" id="tab3FootRenewalRate"><?= $tab3RenewedCount ?> tái ký - <?= $tab3RenewalRate ?>%</strong>, <span id="tab3FootExpiring"><?= $tab3ExpiringSoon ?></span> sắp hết hạn)
                                     </td>
-                                    <td class="text-end py-3 text-dark fs-6"><?= number_format($tab3TotalRent, 0, ',', '.') ?> đ</td>
-                                    <td class="text-end py-3 text-primary fs-6"><?= number_format($tab3TotalDeposit, 0, ',', '.') ?> đ</td>
+                                    <td class="text-end py-3 text-dark fs-6" id="tab3FootRent"><?= number_format($tab3TotalRent, 0, ',', '.') ?> đ</td>
+                                    <td class="text-end py-3 text-primary fs-6" id="tab3FootDeposit"><?= number_format($tab3TotalDeposit, 0, ',', '.') ?> đ</td>
                                     <td></td>
                                 </tr>
                             </tfoot>
@@ -1050,7 +1269,7 @@ $tab3RenewalRate = $tab3TotalTenants > 0 ? round(($tab3RenewedCount / $tab3Total
                 <div class="modal-body p-4 text-center">
                     <div class="avatar-circle mx-auto mb-3" style="width: 70px; height: 70px; font-size: 1.6rem;">AD</div>
                     <h5 class="fw-bold text-dark mb-1"><?= htmlspecialchars($userFullName) ?></h5>
-                    <span class="badge bg-teal-subtle text-teal-main border border-teal-subtle px-3 py-1 rounded-pill fw-bold mb-3">Quản trị viên (Admin)</span>
+                    <span class="badge bg-teal-subtle text-teal-main border border-teal-subtle px-3 py-1 rounded-pill fw-bold mb-3"><?= !empty($isManager) ? ('Quản lý ' . htmlspecialchars($managerBuilding['name'])) : 'Quản trị viên (Admin)' ?></span>
                     <div class="text-start p-3 bg-light rounded-3 small">
                         <div class="mb-2"><i class="fa-solid fa-user me-2 text-muted"></i> <strong>Tên đăng nhập:</strong> <?= htmlspecialchars($userName) ?></div>
                         <div class="mb-2"><i class="fa-solid fa-envelope me-2 text-muted"></i> <strong>Email:</strong> <?= htmlspecialchars($userEmail) ?></div>
@@ -1068,7 +1287,8 @@ $tab3RenewalRate = $tab3TotalTenants > 0 ? round(($tab3RenewedCount / $tab3Total
     <div class="modal fade" id="changePasswordModal" tabindex="-1">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content border-0 rounded-4 shadow">
-                <form action="index.php?route=accounts/change_password" method="POST">
+                <form method="POST" action="index.php?route=dashboard">
+                    <input type="hidden" name="action" value="change_password">
                     <div class="modal-header border-0 pb-0">
                         <h5 class="modal-title fw-bold text-dark"><i class="fa-solid fa-key text-warning me-2"></i> Đổi Mật Khẩu</h5>
                         <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
@@ -1098,6 +1318,13 @@ $tab3RenewalRate = $tab3TotalTenants > 0 ? round(($tab3RenewedCount / $tab3Total
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
+        // ==========================================
+        // 0. HÀM ĐỊNH DẠNG TIỀN TỆ VNĐ CHUẨN
+        // ==========================================
+        function formatVND(val) {
+            return new Intl.NumberFormat('vi-VN').format(Math.round(val)) + ' đ';
+        }
+
         // ==========================================
         // 1. CHUYỂN ĐỔI TAB BÁO CÁO (CHẮC CHẮN 100%)
         // ==========================================
@@ -1140,96 +1367,386 @@ $tab3RenewalRate = $tab3TotalTenants > 0 ? round(($tab3RenewedCount / $tab3Total
             });
         });
 
-        // Tự động mở đúng tab nếu URL có hash
-        window.addEventListener('DOMContentLoaded', function() {
-            const currentHash = window.location.hash.replace('#', '');
-            if (currentHash && document.getElementById(currentHash)) {
-                activateReportTab(currentHash);
-            }
-        });
+        // ==========================================
+        // 2. ĐỒNG BỘ BỘ LỌC TÒA NHÀ TRÊN CẢ 3 TAB
+        // ==========================================
+        function syncBuildingSelection(selectedBld) {
+            const master = document.getElementById('masterBuildingFilter');
+            const bldTab1 = document.getElementById('filterInvoiceBuilding');
+            const bldTab2 = document.getElementById('filterRoomBuilding');
+            const bldTab3 = document.getElementById('filterTenantBuilding');
+
+            if (master && master.value !== selectedBld) master.value = selectedBld;
+            if (bldTab1 && bldTab1.value !== selectedBld) bldTab1.value = selectedBld;
+            if (bldTab2 && bldTab2.value !== selectedBld) bldTab2.value = selectedBld;
+            if (bldTab3 && bldTab3.value !== selectedBld) bldTab3.value = selectedBld;
+
+            // Kích hoạt bộ lọc đồng thời cho cả 3 Tab
+            applyInvoiceFilter();
+            applyRoomFilter();
+            applyTenantFilter();
+        }
 
         // ==========================================
-        // 2. BỘ LỌC TÌM KIẾM TRỰC TIẾP CHO TAB 2 (PHÒNG & CỌC)
+        // 3. BỘ LỌC TRỰC TIẾP TAB 1: DOANH THU & CÔNG NỢ
+        // ==========================================
+        function applyInvoiceFilter() {
+            const bldEl = document.getElementById('filterInvoiceBuilding');
+            const periodEl = document.getElementById('filterInvoicePeriod');
+            const statusEl = document.getElementById('filterInvoiceStatus');
+            const kwEl = document.getElementById('searchInvoiceKeyword');
+
+            const bld = bldEl ? bldEl.value : 'all';
+            const period = periodEl ? periodEl.value : 'all';
+            const status = statusEl ? statusEl.value : 'all';
+            const kw = kwEl ? kwEl.value.trim().toLowerCase() : '';
+
+            let visibleCount = 0;
+            let sumRoom = 0;
+            let sumUtil = 0;
+            let sumTotal = 0;
+            let sumPaid = 0;
+            let sumDebt = 0;
+            let countPaid = 0;
+            let countUnpaid = 0;
+
+            const rows = document.querySelectorAll('#invoicesReportTable tbody .invoice-row');
+            rows.forEach(function(row) {
+                const rowBldCode = row.getAttribute('data-building-code') || '';
+                const rowBldName = row.getAttribute('data-building') || '';
+                const rowMonth = row.getAttribute('data-month') || '';
+                const rowStatus = row.getAttribute('data-status') || '';
+                const rowKw = row.getAttribute('data-keyword') || '';
+
+                const matchBld = (bld === 'all' || rowBldCode === bld || rowBldName.indexOf(bld) !== -1);
+                const matchMonth = (period === 'all' || rowMonth === period);
+                const matchStatus = (status === 'all' || rowStatus === status);
+                const matchKw = (kw === '' || rowKw.indexOf(kw) !== -1);
+
+                if (matchBld && matchMonth && matchStatus && matchKw) {
+                    row.style.display = '';
+                    visibleCount++;
+                    const sttEl = row.querySelector('.inv-stt');
+                    if (sttEl) sttEl.textContent = visibleCount;
+
+                    const rTotal = parseFloat(row.getAttribute('data-amount')) || 0;
+                    const rRoom = parseFloat(row.getAttribute('data-room-price')) || 0;
+                    const rUtil = parseFloat(row.getAttribute('data-util-price')) || 0;
+                    const rPaid = parseFloat(row.getAttribute('data-paid')) || 0;
+                    const rDebt = parseFloat(row.getAttribute('data-debt')) || 0;
+
+                    sumTotal += rTotal;
+                    sumRoom += rRoom;
+                    sumUtil += rUtil;
+                    sumPaid += rPaid;
+                    sumDebt += rDebt;
+
+                    if (rowStatus === 'paid') countPaid++;
+                    else countUnpaid++;
+                } else {
+                    row.style.display = 'none';
+                }
+            });
+
+            // Cập nhật huy hiệu số lượng trên Tab 1
+            const badge = document.getElementById('countTabInvoices');
+            if (badge) badge.textContent = visibleCount;
+
+            // Cập nhật dòng chân trang tfoot
+            const footCount = document.getElementById('invFootCount');
+            if (footCount) footCount.textContent = visibleCount;
+            const footRoom = document.getElementById('invFootRoomTotal');
+            if (footRoom) footRoom.textContent = formatVND(sumRoom);
+            const footUtil = document.getElementById('invFootUtilTotal');
+            if (footUtil) footUtil.textContent = formatVND(sumUtil);
+            const footTotal = document.getElementById('invFootTotal');
+            if (footTotal) footTotal.textContent = formatVND(sumTotal);
+            const footPaid = document.getElementById('invFootPaid');
+            if (footPaid) footPaid.textContent = formatVND(sumPaid);
+            const footDebt = document.getElementById('invFootDebt');
+            if (footDebt) footDebt.textContent = formatVND(sumDebt);
+            const footStatus = document.getElementById('invFootStatus');
+            if (footStatus) footStatus.textContent = countPaid + ' đã thu / ' + countUnpaid + ' nợ';
+
+            // Dòng thông báo khi không có kết quả
+            const emptyRow = document.getElementById('invEmptyRow');
+            if (emptyRow) {
+                emptyRow.style.display = (visibleCount === 0) ? '' : 'none';
+            }
+        }
+
+        // ==========================================
+        // 4. BỘ LỌC TRỰC TIẾP TAB 2: HIỆN TRẠNG PHÒNG & CỌC
         // ==========================================
         function applyRoomFilter() {
-            const bldVal = document.getElementById('filterRoomBuilding').value;
-            const statusVal = document.getElementById('filterRoomStatus').value;
-            const depVal = document.getElementById('filterRoomDeposit').value;
-            const kw = document.getElementById('searchRoomKeyword').value.trim().toLowerCase();
+            const bldEl = document.getElementById('filterRoomBuilding');
+            const statusEl = document.getElementById('filterRoomStatus');
+            const depEl = document.getElementById('filterRoomDeposit');
+            const kwEl = document.getElementById('searchRoomKeyword');
 
-            let visibleIdx = 1;
-            document.querySelectorAll('#roomsReportTable tbody .room-row').forEach(function(row) {
-                const rowBld = row.getAttribute('data-building') || '';
+            const bld = bldEl ? bldEl.value : 'all';
+            const status = statusEl ? statusEl.value : 'all';
+            const dep = depEl ? depEl.value : 'all';
+            const kw = kwEl ? kwEl.value.trim().toLowerCase() : '';
+
+            let visibleCount = 0;
+            let countRented = 0;
+            let countAvail = 0;
+            let countMaint = 0;
+            let sumPrice = 0;
+            let sumDeposit = 0;
+
+            const rows = document.querySelectorAll('#roomsReportTable tbody .room-row');
+            rows.forEach(function(row) {
+                const rowBldCode = row.getAttribute('data-building-code') || '';
+                const rowBldName = row.getAttribute('data-building') || '';
                 const rowStatus = row.getAttribute('data-status') || '';
                 const rowDep = row.getAttribute('data-deposit') || '';
                 const rowKw = row.getAttribute('data-keyword') || '';
 
-                const matchBld = (bldVal === 'all' || rowBld.indexOf(bldVal) !== -1);
-                const matchStatus = (statusVal === 'all' || rowStatus === statusVal);
-                const matchDep = (depVal === 'all' || rowDep === depVal);
+                const matchBld = (bld === 'all' || rowBldCode === bld || rowBldName.indexOf(bld) !== -1);
+                const matchStatus = (status === 'all' || rowStatus === status);
+                const matchDep = (dep === 'all' || rowDep === dep);
                 const matchKw = (kw === '' || rowKw.indexOf(kw) !== -1);
 
                 if (matchBld && matchStatus && matchDep && matchKw) {
                     row.style.display = '';
-                    row.querySelector('.room-index').textContent = visibleIdx++;
+                    visibleCount++;
+                    const idxEl = row.querySelector('.room-index');
+                    if (idxEl) idxEl.textContent = visibleCount;
+
+                    const rPrice = parseFloat(row.getAttribute('data-price')) || 0;
+                    const rDep = parseFloat(row.getAttribute('data-deposit-amount')) || 0;
+
+                    sumPrice += rPrice;
+                    sumDeposit += rDep;
+
+                    if (rowStatus === 'rented') countRented++;
+                    else if (rowStatus === 'available') countAvail++;
+                    else if (rowStatus === 'maintenance') countMaint++;
                 } else {
                     row.style.display = 'none';
                 }
             });
+
+            // Cập nhật huy hiệu số lượng trên Tab 2
+            const badge = document.getElementById('countTabRooms');
+            if (badge) badge.textContent = visibleCount;
+
+            // Cập nhật mini-KPI pills
+            const kpiTotal = document.getElementById('tab2KpiTotal');
+            if (kpiTotal) kpiTotal.textContent = visibleCount;
+            const kpiRented = document.getElementById('tab2KpiRented');
+            if (kpiRented) kpiRented.textContent = countRented;
+            const kpiAvail = document.getElementById('tab2KpiAvail');
+            if (kpiAvail) kpiAvail.textContent = countAvail;
+            const kpiMaint = document.getElementById('tab2KpiMaint');
+            if (kpiMaint) kpiMaint.textContent = countMaint;
+            const kpiDep = document.getElementById('tab2KpiDeposit');
+            if (kpiDep) kpiDep.textContent = formatVND(sumDeposit);
+
+            // Cập nhật tfoot
+            const footCount = document.getElementById('tab2FootCount');
+            if (footCount) footCount.textContent = visibleCount;
+            const footPrice = document.getElementById('tab2FootPrice');
+            if (footPrice) footPrice.textContent = formatVND(sumPrice);
+            const footStatus = document.getElementById('tab2FootStatus');
+            if (footStatus) footStatus.innerHTML = '<span id="tab2FootRented">' + countRented + '</span> thuê / <span id="tab2FootAvail">' + countAvail + '</span> trống';
+            const footDep = document.getElementById('tab2FootDeposit');
+            if (footDep) footDep.textContent = formatVND(sumDeposit);
+
+            const emptyRow = document.getElementById('roomsEmptyRow');
+            if (emptyRow) {
+                emptyRow.style.display = (visibleCount === 0) ? '' : 'none';
+            }
         }
 
-        document.getElementById('filterRoomBuilding').addEventListener('change', applyRoomFilter);
-        document.getElementById('filterRoomStatus').addEventListener('change', applyRoomFilter);
-        document.getElementById('filterRoomDeposit').addEventListener('change', applyRoomFilter);
-        document.getElementById('searchRoomKeyword').addEventListener('input', applyRoomFilter);
-        document.getElementById('btnResetRoomFilter').addEventListener('click', function() {
-            document.getElementById('filterRoomBuilding').value = 'all';
-            document.getElementById('filterRoomStatus').value = 'all';
-            document.getElementById('filterRoomDeposit').value = 'all';
-            document.getElementById('searchRoomKeyword').value = '';
-            applyRoomFilter();
-        });
-
         // ==========================================
-        // 3. BỘ LỌC TÌM KIẾM TRỰC TIẾP CHO TAB 3 (KHÁCH & HỢP ĐỒNG)
+        // 5. BỘ LỌC TRỰC TIẾP TAB 3: KHÁCH & HỢP ĐỒNG
         // ==========================================
         function applyTenantFilter() {
-            const bldVal = document.getElementById('filterTenantBuilding').value;
-            const expVal = document.getElementById('filterTenantExpiry').value;
-            const renVal = document.getElementById('filterTenantRenewal').value;
-            const kw = document.getElementById('searchTenantKeyword').value.trim().toLowerCase();
+            const bldEl = document.getElementById('filterTenantBuilding');
+            const expEl = document.getElementById('filterTenantExpiry');
+            const renEl = document.getElementById('filterTenantRenewal');
+            const kwEl = document.getElementById('searchTenantKeyword');
 
-            let visibleIdx = 1;
-            document.querySelectorAll('#tenantsReportTable tbody .tenant-row').forEach(function(row) {
-                const rowBld = row.getAttribute('data-building') || '';
+            const bld = bldEl ? bldEl.value : 'all';
+            const exp = expEl ? expEl.value : 'all';
+            const ren = renEl ? renEl.value : 'all';
+            const kw = kwEl ? kwEl.value.trim().toLowerCase() : '';
+
+            let visibleCount = 0;
+            let countRenewed = 0;
+            let countExpiring = 0;
+            let sumRent = 0;
+            let sumDeposit = 0;
+
+            const rows = document.querySelectorAll('#tenantsReportTable tbody .tenant-row');
+            rows.forEach(function(row) {
+                const rowBldCode = row.getAttribute('data-building-code') || '';
+                const rowBldName = row.getAttribute('data-building') || '';
                 const rowExp = row.getAttribute('data-expiry') || '';
                 const rowRen = row.getAttribute('data-renewal') || '';
                 const rowKw = row.getAttribute('data-keyword') || '';
 
-                const matchBld = (bldVal === 'all' || rowBld.indexOf(bldVal) !== -1);
-                const matchExp = (expVal === 'all' || rowExp === expVal);
-                const matchRen = (renVal === 'all' || rowRen === renVal);
+                const matchBld = (bld === 'all' || rowBldCode === bld || rowBldName.indexOf(bld) !== -1);
+                const matchExp = (exp === 'all' || rowExp === exp);
+                const matchRen = (ren === 'all' || rowRen === ren);
                 const matchKw = (kw === '' || rowKw.indexOf(kw) !== -1);
 
                 if (matchBld && matchExp && matchRen && matchKw) {
                     row.style.display = '';
-                    row.querySelector('.tenant-index').textContent = visibleIdx++;
+                    visibleCount++;
+                    const idxEl = row.querySelector('.tenant-index');
+                    if (idxEl) idxEl.textContent = visibleCount;
+
+                    const rRent = parseFloat(row.getAttribute('data-rent')) || 0;
+                    const rDep = parseFloat(row.getAttribute('data-deposit')) || 0;
+                    const isRenewed = (rowRen === 'renewed');
+
+                    sumRent += rRent;
+                    sumDeposit += rDep;
+
+                    if (isRenewed) countRenewed++;
+                    if (rowExp === 'expiring_soon') countExpiring++;
                 } else {
                     row.style.display = 'none';
                 }
             });
+
+            // Cập nhật huy hiệu số lượng trên Tab 3
+            const badge = document.getElementById('countTabTenants');
+            if (badge) badge.textContent = visibleCount;
+
+            // Cập nhật mini-KPI pills
+            const kpiTotal = document.getElementById('tab3KpiTotal');
+            if (kpiTotal) kpiTotal.textContent = visibleCount;
+            const kpiActive = document.getElementById('tab3KpiActive');
+            if (kpiActive) kpiActive.textContent = visibleCount;
+            const kpiRenewedRate = document.getElementById('tab3KpiRenewalRate');
+            const renewalRate = visibleCount > 0 ? (Math.round((countRenewed / visibleCount) * 1000) / 10).toFixed(1) : '0';
+            if (kpiRenewedRate) kpiRenewedRate.textContent = renewalRate + '%';
+            const kpiRenewedCount = document.getElementById('tab3KpiRenewedCount');
+            if (kpiRenewedCount) kpiRenewedCount.textContent = countRenewed;
+            const kpiExpiring = document.getElementById('tab3KpiExpiring');
+            if (kpiExpiring) kpiExpiring.textContent = countExpiring;
+            const kpiRent = document.getElementById('tab3KpiRent');
+            if (kpiRent) kpiRent.textContent = formatVND(sumRent) + '/tháng';
+            const kpiDep = document.getElementById('tab3KpiDeposit');
+            if (kpiDep) kpiDep.textContent = formatVND(sumDeposit);
+
+            // Cập nhật tfoot
+            const footCount = document.getElementById('tab3FootCount');
+            if (footCount) footCount.textContent = visibleCount;
+            const footActive = document.getElementById('tab3FootActiveCount');
+            if (footActive) footActive.textContent = visibleCount;
+            const footRenewal = document.getElementById('tab3FootRenewalRate');
+            if (footRenewal) footRenewal.textContent = countRenewed + ' tái ký - ' + renewalRate + '%';
+            const footExpiring = document.getElementById('tab3FootExpiring');
+            if (footExpiring) footExpiring.textContent = countExpiring;
+            const footRent = document.getElementById('tab3FootRent');
+            if (footRent) footRent.textContent = formatVND(sumRent) + '/tháng';
+            const footDep = document.getElementById('tab3FootDeposit');
+            if (footDep) footDep.textContent = formatVND(sumDeposit);
+
+            const emptyRow = document.getElementById('tenantsEmptyRow');
+            if (emptyRow) {
+                emptyRow.style.display = (visibleCount === 0) ? '' : 'none';
+            }
         }
 
-        document.getElementById('filterTenantBuilding').addEventListener('change', applyTenantFilter);
-        document.getElementById('filterTenantExpiry').addEventListener('change', applyTenantFilter);
-        document.getElementById('filterTenantRenewal').addEventListener('change', applyTenantFilter);
-        document.getElementById('searchTenantKeyword').addEventListener('input', applyTenantFilter);
-        document.getElementById('btnResetTenantFilter').addEventListener('click', function() {
-            document.getElementById('filterTenantBuilding').value = 'all';
-            document.getElementById('filterTenantExpiry').value = 'all';
-            document.getElementById('filterTenantRenewal').value = 'all';
-            document.getElementById('searchTenantKeyword').value = '';
-            applyTenantFilter();
+        // ==========================================
+        // 6. KHỞI TẠO VÀ GẮN EVENT LISTENERS
+        // ==========================================
+        window.addEventListener('DOMContentLoaded', function() {
+            // Mở tab theo URL hash nếu có
+            const currentHash = window.location.hash.replace('#', '');
+            if (currentHash && document.getElementById(currentHash)) {
+                activateReportTab(currentHash);
+            }
+
+            // Đồng bộ 4 dropdown tòa nhà
+            const masterBld = document.getElementById('masterBuildingFilter');
+            const bldTab1 = document.getElementById('filterInvoiceBuilding');
+            const bldTab2 = document.getElementById('filterRoomBuilding');
+            const bldTab3 = document.getElementById('filterTenantBuilding');
+
+            if (masterBld) {
+                masterBld.addEventListener('change', function() { syncBuildingSelection(this.value); });
+            }
+            if (bldTab1) {
+                bldTab1.addEventListener('change', function() { syncBuildingSelection(this.value); });
+            }
+            if (bldTab2) {
+                bldTab2.addEventListener('change', function() { syncBuildingSelection(this.value); });
+            }
+            if (bldTab3) {
+                bldTab3.addEventListener('change', function() { syncBuildingSelection(this.value); });
+            }
+
+            // Tab 1 filters
+            const periodTab1 = document.getElementById('filterInvoicePeriod');
+            const statusTab1 = document.getElementById('filterInvoiceStatus');
+            const kwTab1 = document.getElementById('searchInvoiceKeyword');
+            const btnSubmitTab1 = document.getElementById('btnSubmitInvoiceFilter');
+            const btnResetTab1 = document.getElementById('btnResetInvoiceFilter');
+
+            if (periodTab1) periodTab1.addEventListener('change', applyInvoiceFilter);
+            if (statusTab1) statusTab1.addEventListener('change', applyInvoiceFilter);
+            if (kwTab1) kwTab1.addEventListener('input', applyInvoiceFilter);
+            if (btnSubmitTab1) btnSubmitTab1.addEventListener('click', applyInvoiceFilter);
+            if (btnResetTab1) {
+                btnResetTab1.addEventListener('click', function() {
+                    if (periodTab1) periodTab1.value = 'all';
+                    if (statusTab1) statusTab1.value = 'all';
+                    if (kwTab1) kwTab1.value = '';
+                    <?php if (!empty($isManager)): ?>
+                    syncBuildingSelection('<?= $managerBuilding['prefix'] ?>');
+                    <?php else: ?>
+                    syncBuildingSelection('all');
+                    <?php endif; ?>
+                });
+            }
+
+            // Tab 2 filters
+            const statusTab2 = document.getElementById('filterRoomStatus');
+            const depTab2 = document.getElementById('filterRoomDeposit');
+            const kwTab2 = document.getElementById('searchRoomKeyword');
+            const btnResetTab2 = document.getElementById('btnResetRoomFilter');
+
+            if (statusTab2) statusTab2.addEventListener('change', applyRoomFilter);
+            if (depTab2) depTab2.addEventListener('change', applyRoomFilter);
+            if (kwTab2) kwTab2.addEventListener('input', applyRoomFilter);
+            if (btnResetTab2) {
+                btnResetTab2.addEventListener('click', function() {
+                    if (statusTab2) statusTab2.value = 'all';
+                    if (depTab2) depTab2.value = 'all';
+                    if (kwTab2) kwTab2.value = '';
+                    syncBuildingSelection('all');
+                });
+            }
+
+            // Tab 3 filters
+            const expTab3 = document.getElementById('filterTenantExpiry');
+            const renTab3 = document.getElementById('filterTenantRenewal');
+            const kwTab3 = document.getElementById('searchTenantKeyword');
+            const btnResetTab3 = document.getElementById('btnResetTenantFilter');
+
+            if (expTab3) expTab3.addEventListener('change', applyTenantFilter);
+            if (renTab3) renTab3.addEventListener('change', applyTenantFilter);
+            if (kwTab3) kwTab3.addEventListener('input', applyTenantFilter);
+            if (btnResetTab3) {
+                btnResetTab3.addEventListener('click', function() {
+                    if (expTab3) expTab3.value = 'all';
+                    if (renTab3) renTab3.value = 'all';
+                    if (kwTab3) kwTab3.value = '';
+                    syncBuildingSelection('all');
+                });
+            }
+
+            // Khởi chạy bộ lọc ban đầu theo giá trị đã chọn
+            const initialBld = masterBld ? masterBld.value : 'all';
+            syncBuildingSelection(initialBld);
         });
     </script>
 </body>
