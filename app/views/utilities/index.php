@@ -238,25 +238,37 @@ try {
         $water_old = (int)($_POST['water_old'] ?? 0);
         $water_new = (int)($_POST['water_new'] ?? 0);
 
-        if ($electric_new < $electric_old || $water_new < $water_old) {
-            $msg = "Cập nhật thất bại: Chỉ số mới không được nhỏ hơn chỉ số cũ!";
-            $msgType = "warning";
-        } else {
-            $stmt = $conn->prepare("
-                UPDATE utilities_readings 
-                SET electric_old = ?, electric_new = ?, water_old = ?, water_new = ? 
-                WHERE id = ?
-            ");
-            $stmt->execute([$electric_old, $electric_new, $water_old, $water_new, $id]);
+        // Lấy thông tin phòng và kỳ của bản ghi chỉ số điện nước
+        $rStmt = $conn->prepare("SELECT room_id, month_year FROM utilities_readings WHERE id = ?");
+        $rStmt->execute([$id]);
+        $readingRow = $rStmt->fetch(PDO::FETCH_ASSOC);
 
-            // Tự động đồng bộ sang hóa đơn tương ứng của phòng trong kỳ (nếu chưa thanh toán)
-            $rStmt = $conn->prepare("SELECT room_id, month_year FROM utilities_readings WHERE id = ?");
-            $rStmt->execute([$id]);
-            $readingRow = $rStmt->fetch(PDO::FETCH_ASSOC);
-            if ($readingRow) {
-                $chkInv = $conn->prepare("SELECT id, status FROM invoices WHERE room_id = ? AND month_year = ?");
-                $chkInv->execute([$readingRow['room_id'], $readingRow['month_year']]);
-                $inv = $chkInv->fetch(PDO::FETCH_ASSOC);
+        if (!$readingRow) {
+            $msg = "Không tìm thấy bản ghi chỉ số điện nước cần sửa!";
+            $msgType = "danger";
+        } else {
+            // QUY TẮC BẮT BUỘC (Đề bài & Yêu cầu thực tế):
+            // Nếu khách đã thanh toán hóa đơn của phòng trong kỳ này rồi thì quản lý không thể sửa số điện nước được nữa!
+            $chkInv = $conn->prepare("SELECT id, status FROM invoices WHERE room_id = ? AND month_year = ?");
+            $chkInv->execute([$readingRow['room_id'], $readingRow['month_year']]);
+            $inv = $chkInv->fetch(PDO::FETCH_ASSOC);
+
+            if ($inv && $inv['status'] === 'paid') {
+                $msg = "Khách đã thanh toán không thể sửa, chỉ được xem chi tiết!";
+                $msgType = "danger";
+            } elseif ($electric_new < $electric_old || $water_new < $water_old) {
+                // QUY TẮC ĐỀ BÀI: Chỉ số mới không giảm
+                $msg = "Cập nhật thất bại: Chỉ số mới không được nhỏ hơn chỉ số cũ!";
+                $msgType = "warning";
+            } else {
+                $stmt = $conn->prepare("
+                    UPDATE utilities_readings 
+                    SET electric_old = ?, electric_new = ?, water_old = ?, water_new = ? 
+                    WHERE id = ?
+                ");
+                $stmt->execute([$electric_old, $electric_new, $water_old, $water_new, $id]);
+
+                // Tự động đồng bộ sang hóa đơn tương ứng của phòng trong kỳ (nếu chưa thanh toán)
                 if ($inv && $inv['status'] !== 'paid') {
                     $invId = (int)$inv['id'];
                     $eUsed = max(0, $electric_new - $electric_old);
@@ -277,10 +289,10 @@ try {
                     $newTotal = (float)$totStmt->fetchColumn();
                     $conn->prepare("UPDATE invoices SET total_amount = ? WHERE id = ?")->execute([$newTotal, $invId]);
                 }
-            }
 
-            $msg = "Đã cập nhật chỉ số điện nước thành công!";
-            $msgType = "success";
+                $msg = "Đã cập nhật chỉ số điện nước thành công!";
+                $msgType = "success";
+            }
         }
     }
 
@@ -288,10 +300,24 @@ try {
     if ((isset($_GET['action']) && $_GET['action'] === 'delete' && isset($_GET['id'])) ||
         (isset($_POST['action']) && $_POST['action'] === 'delete' && isset($_POST['id']))) {
         $delId = (int)($_POST['id'] ?? $_GET['id'] ?? 0);
-        $stmt = $conn->prepare("DELETE FROM utilities_readings WHERE id = ?");
-        $stmt->execute([$delId]);
-        $msg = "Đã xóa bản ghi chỉ số điện nước thành công!";
-        $msgType = "success";
+        $rStmt = $conn->prepare("SELECT room_id, month_year FROM utilities_readings WHERE id = ?");
+        $rStmt->execute([$delId]);
+        $delRow = $rStmt->fetch(PDO::FETCH_ASSOC);
+
+        if ($delRow) {
+            $chkInv = $conn->prepare("SELECT id, status FROM invoices WHERE room_id = ? AND month_year = ?");
+            $chkInv->execute([$delRow['room_id'], $delRow['month_year']]);
+            $inv = $chkInv->fetch(PDO::FETCH_ASSOC);
+            if ($inv && $inv['status'] === 'paid') {
+                $msg = "Khách đã thanh toán không thể xóa, chỉ được xem chi tiết!";
+                $msgType = "danger";
+            } else {
+                $stmt = $conn->prepare("DELETE FROM utilities_readings WHERE id = ?");
+                $stmt->execute([$delId]);
+                $msg = "Đã xóa bản ghi chỉ số điện nước thành công!";
+                $msgType = "success";
+            }
+        }
     }
 
     // E. LẬP HÓA ĐƠN NHANH TỪ BẢN GHI ĐIỆN NƯỚC
@@ -1642,15 +1668,26 @@ try {
                                             onclick="openReceiptModal('<?= htmlspecialchars($row['room_number']) ?>', '<?= htmlspecialchars($tenantName) ?>', '<?= htmlspecialchars($periodVal) ?>', <?= (int)$row['electric_old'] ?>, <?= (int)$row['electric_new'] ?>, <?= (int)$row['water_old'] ?>, <?= (int)$row['water_new'] ?>, <?= (float)($row['room_price'] ?? 0) ?>)">
                                             <i class="fa-solid fa-receipt"></i>
                                         </button>
-                                        <button type="button" class="btn-icon-circle btn-icon-edit" title="Chỉnh sửa chỉ số"
-                                            onclick="openEditModal(<?= (int)$row['id'] ?>, '<?= htmlspecialchars($row['room_number']) ?>', '<?= htmlspecialchars($periodVal) ?>', <?= (int)$row['electric_old'] ?>, <?= (int)$row['electric_new'] ?>, <?= (int)$row['water_old'] ?>, <?= (int)$row['water_new'] ?>)">
-                                            <i class="fa-solid fa-pen"></i>
-                                        </button>
-                                        <a href="index.php?route=utilities&period=<?= urlencode($selectedPeriod) ?>&action=delete&id=<?= (int)$row['id'] ?>" 
-                                           class="btn-icon-circle btn-icon-del" title="Xóa bản ghi"
-                                           onclick="return confirm('Bạn có chắc chắn muốn xóa chỉ số phòng <?= htmlspecialchars($row['room_number']) ?> kỳ <?= htmlspecialchars($periodVal) ?> không?');">
-                                            <i class="fa-solid fa-trash"></i>
-                                        </a>
+                                        <?php $isPaidRow = (!empty($row['invoice_id']) && ($row['invoice_status'] ?? '') === 'paid'); if ($isPaidRow): ?>
+                                            <button type="button" class="btn-icon-circle btn-icon-edit opacity-50" title="Khách đã thanh toán không thể sửa, chỉ được xem chi tiết"
+                                                onclick="openEditModal(<?= (int)$row['id'] ?>, '<?= htmlspecialchars($row['room_number']) ?>', '<?= htmlspecialchars($periodVal) ?>', <?= (int)$row['electric_old'] ?>, <?= (int)$row['electric_new'] ?>, <?= (int)$row['water_old'] ?>, <?= (int)$row['water_new'] ?>, 1)">
+                                                <i class="fa-solid fa-lock text-muted"></i>
+                                            </button>
+                                            <button type="button" class="btn-icon-circle btn-icon-del opacity-50" title="Khách đã thanh toán không thể xóa, chỉ được xem chi tiết"
+                                                onclick="alert('Khách đã thanh toán không thể xóa, chỉ được xem chi tiết!'); return false;" style="cursor:not-allowed;">
+                                                <i class="fa-solid fa-lock text-muted"></i>
+                                            </button>
+                                        <?php else: ?>
+                                            <button type="button" class="btn-icon-circle btn-icon-edit" title="Chỉnh sửa chỉ số"
+                                                onclick="openEditModal(<?= (int)$row['id'] ?>, '<?= htmlspecialchars($row['room_number']) ?>', '<?= htmlspecialchars($periodVal) ?>', <?= (int)$row['electric_old'] ?>, <?= (int)$row['electric_new'] ?>, <?= (int)$row['water_old'] ?>, <?= (int)$row['water_new'] ?>, 0)">
+                                                <i class="fa-solid fa-pen"></i>
+                                            </button>
+                                            <a href="index.php?route=utilities&period=<?= urlencode($selectedPeriod) ?>&action=delete&id=<?= (int)$row['id'] ?>" 
+                                               class="btn-icon-circle btn-icon-del" title="Xóa bản ghi"
+                                               onclick="return confirm('Bạn có chắc chắn muốn xóa chỉ số phòng <?= htmlspecialchars($row['room_number']) ?> kỳ <?= htmlspecialchars($periodVal) ?> không?');">
+                                                <i class="fa-solid fa-trash"></i>
+                                            </a>
+                                        <?php endif; ?>
                                     </div>
                                     <?php endif; ?>
                                 </td>
@@ -2274,7 +2311,12 @@ try {
         // ===============================================================
         // 2. MỞ MODAL SỬA & PHIẾU BÁO CHI TIẾT
         // ===============================================================
-        function openEditModal(id, room, month, e_old, e_new, w_old, w_new) {
+        function openEditModal(id, room, month, e_old, e_new, w_old, w_new, isPaid) {
+            if (isPaid === 1 || isPaid === true) {
+                alert('Khách đã thanh toán không thể sửa, chỉ được xem chi tiết!');
+                openReceiptModal(room, '', month, e_old, e_new, w_old, w_new, 0);
+                return;
+            }
             document.getElementById('edit_id').value = id;
             document.getElementById('edit_title').textContent = 'Phòng ' + room + ' — Kỳ ' + month;
             document.getElementById('edit_electric_old').value = e_old;
@@ -2564,15 +2606,26 @@ try {
                                 onclick="openReceiptModal('${escapeJs(roomNum)}', '${escapeJs(tenantName)}', '${escapeJs(period)}', ${eOld}, ${eNew}, ${wOld}, ${wNew}, ${roomPrice})">
                                 <i class="fa-solid fa-receipt"></i>
                             </button>
-                            <button type="button" class="btn-icon-circle btn-icon-edit" title="Chỉnh sửa chỉ số"
-                                onclick="openEditModal(${Number(item.id)}, '${escapeJs(roomNum)}', '${escapeJs(period)}', ${eOld}, ${eNew}, ${wOld}, ${wNew})">
-                                <i class="fa-solid fa-pen"></i>
-                            </button>
-                            <a href="index.php?route=utilities&action=delete&id=${Number(item.id)}" 
-                               class="btn-icon-circle btn-icon-del" title="Xóa bản ghi"
-                               onclick="return confirm('Bạn có chắc chắn muốn xóa bản ghi chỉ số phòng ${escapeJs(roomNum)} không?');">
-                                <i class="fa-solid fa-trash"></i>
-                            </a>
+                            ${item.invoice_status === 'paid' ? `
+                                <button type="button" class="btn-icon-circle btn-icon-edit opacity-50" title="Khách đã thanh toán không thể sửa, chỉ được xem chi tiết"
+                                    onclick="openEditModal(${Number(item.id)}, '${escapeJs(roomNum)}', '${escapeJs(period)}', ${eOld}, ${eNew}, ${wOld}, ${wNew}, 1)">
+                                    <i class="fa-solid fa-lock text-muted"></i>
+                                </button>
+                                <button type="button" class="btn-icon-circle btn-icon-del opacity-50" title="Khách đã thanh toán không thể xóa, chỉ được xem chi tiết"
+                                    onclick="alert('Khách đã thanh toán không thể xóa, chỉ được xem chi tiết!'); return false;" style="cursor:not-allowed;">
+                                    <i class="fa-solid fa-lock text-muted"></i>
+                                </button>
+                            ` : `
+                                <button type="button" class="btn-icon-circle btn-icon-edit" title="Chỉnh sửa chỉ số"
+                                    onclick="openEditModal(${Number(item.id)}, '${escapeJs(roomNum)}', '${escapeJs(period)}', ${eOld}, ${eNew}, ${wOld}, ${wNew}, 0)">
+                                    <i class="fa-solid fa-pen"></i>
+                                </button>
+                                <a href="index.php?route=utilities&action=delete&id=${Number(item.id)}" 
+                                   class="btn-icon-circle btn-icon-del" title="Xóa bản ghi"
+                                   onclick="return confirm('Bạn có chắc chắn muốn xóa bản ghi chỉ số phòng ${escapeJs(roomNum)} không?');">
+                                    <i class="fa-solid fa-trash"></i>
+                                </a>
+                            `}
                         </div>
                     </td>
                 `;

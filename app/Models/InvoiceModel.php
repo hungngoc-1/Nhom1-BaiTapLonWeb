@@ -360,6 +360,220 @@ class InvoiceModel {
         }
     }
 
+    // ===================== FETCH API PREVIEW & LẬP HÓA ĐƠN THỦ CÔNG =====================
+    public function previewInvoiceJson(int $roomId, string $monthYear): array {
+        if ($roomId <= 0 || $monthYear === '') {
+            return ['ok' => false, 'msg' => 'Vui lòng chọn phòng trọ và kỳ hóa đơn!'];
+        }
+
+        // 1. Kiểm tra phòng tồn tại
+        $stRoom = $this->db->prepare("SELECT id, room_number, price FROM rooms WHERE id = ?");
+        $stRoom->execute([$roomId]);
+        $room = $stRoom->fetch(PDO::FETCH_ASSOC);
+        if (!$room) {
+            return ['ok' => false, 'msg' => 'Không tìm thấy phòng trọ.'];
+        }
+
+        // 2. Kiểm tra hóa đơn đã tồn tại chưa (Quy tắc D & Kiểm thử 6: Không lập trùng hóa đơn)
+        $chkInv = $this->db->prepare("SELECT id, status, total_amount FROM invoices WHERE room_id = ? AND month_year = ?");
+        $chkInv->execute([$roomId, $monthYear]);
+        $existingInv = $chkInv->fetch(PDO::FETCH_ASSOC);
+        if ($existingInv) {
+            return [
+                'ok' => false,
+                'is_duplicate' => true,
+                'invoice_id' => (int)$existingInv['id'],
+                'invoice_code' => self::code((int)$existingInv['id']),
+                'room_number' => $room['room_number'],
+                'month_year' => $monthYear,
+                'msg' => "Phòng {$room['room_number']} đã được lập hóa đơn kỳ {$monthYear} (" . self::code((int)$existingInv['id']) . ")! Không được phép lập trùng."
+            ];
+        }
+
+        // 3. Kiểm tra hợp đồng của phòng
+        $stContract = $this->db->prepare("
+            SELECT c.*, u.full_name AS tenant_name, u.phone AS tenant_phone
+            FROM contracts c
+            JOIN users u ON u.id = c.tenant_id
+            WHERE c.room_id = ? AND c.status = 'active'
+            ORDER BY c.id DESC LIMIT 1
+        ");
+        $stContract->execute([$roomId]);
+        $contract = $stContract->fetch(PDO::FETCH_ASSOC);
+
+        if (!$contract) {
+            return [
+                'ok' => false,
+                'has_contract' => false,
+                'room_number' => $room['room_number'],
+                'month_year' => $monthYear,
+                'msg' => "Phòng {$room['room_number']} hiện chưa có hợp đồng hiệu lực! Vui lòng lập hợp đồng trước."
+            ];
+        }
+
+        // 4. Lấy chỉ số điện nước của phòng trong kỳ này
+        $stRead = $this->db->prepare("SELECT * FROM utilities_readings WHERE room_id = ? AND month_year = ?");
+        $stRead->execute([$roomId, $monthYear]);
+        $reading = $stRead->fetch(PDO::FETCH_ASSOC);
+
+        $hasReading = (bool)$reading;
+        $rates = $this->getRates();
+
+        if ($reading) {
+            $eOld = (int)$reading['electric_old'];
+            $eNew = (int)$reading['electric_new'];
+            $wOld = (int)$reading['water_old'];
+            $wNew = (int)$reading['water_new'];
+        } else {
+            $stPrev = $this->db->prepare("
+                SELECT electric_new, water_new FROM utilities_readings 
+                WHERE room_id = ? 
+                ORDER BY SUBSTRING(month_year, 4, 4) DESC, SUBSTRING(month_year, 1, 2) DESC, id DESC LIMIT 1
+            ");
+            $stPrev->execute([$roomId]);
+            $prev = $stPrev->fetch(PDO::FETCH_ASSOC);
+            $eOld = $prev ? (int)$prev['electric_new'] : 0;
+            $eNew = $eOld;
+            $wOld = $prev ? (int)$prev['water_new'] : 0;
+            $wNew = $wOld;
+        }
+
+        $eUsage = max(0, $eNew - $eOld);
+        $wUsage = max(0, $wNew - $wOld);
+        $eCost = $eUsage * $rates['elec'];
+        $wCost = $wUsage * $rates['water'];
+
+        $roomPrice = (float)$room['price'];
+
+        $servicesList = [];
+        $servicesTotal = 0;
+        foreach ($rates['others'] as $o) {
+            $price = (float)$o['unit_price'];
+            $servicesList[] = [
+                'name' => $o['service_name'],
+                'price' => $price,
+                'unit' => $o['unit']
+            ];
+            $servicesTotal += $price;
+        }
+
+        $depositRemaining = 0;
+        $depositStatus = $contract['deposit_status'] ?? 'held';
+        $depositPercent = (int)($contract['deposit_paid_percent'] ?? 100);
+        $depositNote = '';
+
+        if ($depositPercent === 50 && $depositStatus === 'held') {
+            $depositRemaining = round((float)$contract['monthly_rent'] * 0.5, 2);
+            $depositNote = 'Bao gồm thu bổ sung 50% tiền cọc còn thiếu (' . number_format($depositRemaining, 0, ',', '.') . ' đ)';
+        } elseif ($depositStatus === 'refunded') {
+            $depositNote = 'Hợp đồng đã hoàn cọc (không tính cọc)';
+        } elseif ($depositStatus === 'forfeited') {
+            $depositNote = 'Mất cọc do bỏ phòng trước hạn (không hoàn cọc)';
+        } else {
+            $depositNote = 'Đã hoàn thành 100% tiền cọc';
+        }
+
+        $totalAmount = $roomPrice + $eCost + $wCost + $servicesTotal + $depositRemaining;
+
+        return [
+            'ok' => true,
+            'is_duplicate' => false,
+            'has_contract' => true,
+            'has_reading' => $hasReading,
+            'reading_id' => $reading ? (int)$reading['id'] : null,
+            'room_id' => $roomId,
+            'room_number' => $room['room_number'],
+            'tenant_name' => $contract['tenant_name'],
+            'tenant_phone' => $contract['tenant_phone'],
+            'contract_id' => (int)$contract['id'],
+            'contract_code' => $contract['contract_code'],
+            'month_year' => $monthYear,
+            'room_price' => $roomPrice,
+            'electric' => [
+                'old' => $eOld,
+                'new' => $eNew,
+                'usage' => $eUsage,
+                'rate' => $rates['elec'],
+                'amount' => $eCost
+            ],
+            'water' => [
+                'old' => $wOld,
+                'new' => $wNew,
+                'usage' => $wUsage,
+                'rate' => $rates['water'],
+                'amount' => $wCost
+            ],
+            'services' => $servicesList,
+            'services_total' => $servicesTotal,
+            'deposit_remaining' => $depositRemaining,
+            'deposit_note' => $depositNote,
+            'total_amount' => $totalAmount
+        ];
+    }
+
+    public function createInvoiceManual(int $roomId, string $monthYear, ?string $dueDate, string $notes): array {
+        $preview = $this->previewInvoiceJson($roomId, $monthYear);
+        if (!$preview['ok']) {
+            return ['ok' => false, 'msg' => $preview['msg'] ?? 'Không thể lập hóa đơn!'];
+        }
+
+        $rates = $this->getRates();
+        $roomPrice = (float)$preview['room_price'];
+        $eUsed = (int)$preview['electric']['usage'];
+        $eCost = (float)$preview['electric']['amount'];
+        $wUsed = (int)$preview['water']['usage'];
+        $wCost = (float)$preview['water']['amount'];
+        $total = (float)$preview['total_amount'];
+        $contractId = (int)$preview['contract_id'];
+        $dueDateVal = !empty($dueDate) ? $dueDate : self::calcDueDate($monthYear);
+
+        $this->db->beginTransaction();
+        try {
+            if (empty($preview['reading_id'])) {
+                $stInsUr = $this->db->prepare("
+                    INSERT INTO utilities_readings (room_id, month_year, electric_old, electric_new, water_old, water_new)
+                    VALUES (?, ?, ?, ?, ?, ?)
+                ");
+                $stInsUr->execute([
+                    $roomId,
+                    $monthYear,
+                    $preview['electric']['old'],
+                    $preview['electric']['new'],
+                    $preview['water']['old'],
+                    $preview['water']['new']
+                ]);
+            }
+
+            $stInv = $this->db->prepare("
+                INSERT INTO invoices (room_id, contract_id, month_year, total_amount, status, due_date, payment_note)
+                VALUES (?, ?, ?, ?, 'unpaid', ?, ?)
+            ");
+            $stInv->execute([$roomId, $contractId, $monthYear, $total, $dueDateVal, $notes]);
+            $invId = (int)$this->db->lastInsertId();
+
+            $ins = $this->db->prepare("INSERT INTO invoice_details (invoice_id, service_id, quantity, applied_price, subtotal) VALUES (?, ?, ?, ?, ?)");
+            $ins->execute([$invId, null, 1, $roomPrice, $roomPrice]);
+            if ($rates['elec_id']) $ins->execute([$invId, $rates['elec_id'], $eUsed, $rates['elec'], $eCost]);
+            if ($rates['water_id']) $ins->execute([$invId, $rates['water_id'], $wUsed, $rates['water'], $wCost]);
+            foreach ($rates['others'] as $o) {
+                $ins->execute([$invId, (int)$o['id'], 1, (float)$o['unit_price'], (float)$o['unit_price']]);
+            }
+            if ($preview['deposit_remaining'] > 0) {
+                $ins->execute([$invId, null, 1, $preview['deposit_remaining'], $preview['deposit_remaining']]);
+            }
+
+            $this->db->commit();
+            return [
+                'ok' => true,
+                'id' => $invId,
+                'msg' => "Đã lập thành công hóa đơn " . self::code($invId) . " cho phòng {$preview['room_number']} kỳ {$monthYear} (" . number_format($total, 0, ',', '.') . " đ)!"
+            ];
+        } catch (Throwable $e) {
+            $this->db->rollBack();
+            return ['ok' => false, 'msg' => 'Không thể lập hóa đơn: ' . $e->getMessage()];
+        }
+    }
+
     public function createAllForPeriod(string $period): array {
         $ok = 0; $fail = 0;
         foreach ($this->getPendingReadings($period) as $rd) {
@@ -455,6 +669,11 @@ class InvoiceModel {
         $inv = $this->getInvoice($id);
         if (!$inv) {
             return ['ok' => false, 'msg' => 'Không tìm thấy hóa đơn cần cập nhật.'];
+        }
+        // QUY TẮC BẮT BUỘC ĐỀ BÀI (Quy tắc D & Kiểm thử 8):
+        // Hóa đơn đã thanh toán không được sửa trực tiếp; từ chối sửa hóa đơn đã thanh toán!
+        if ($inv['status'] === 'paid') {
+            return ['ok' => false, 'msg' => 'Từ chối cập nhật: Hóa đơn ' . self::code($id) . ' đã thanh toán thành công, không được phép chỉnh sửa!'];
         }
         $dueDate = !empty($data['due_date']) ? $data['due_date'] : $inv['due_date'];
         $status = in_array($data['status'] ?? '', ['paid', 'unpaid'], true) ? $data['status'] : $inv['status'];

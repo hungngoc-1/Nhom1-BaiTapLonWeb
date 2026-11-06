@@ -33,6 +33,7 @@ class ContractController {
         $statuses = self::STATUSES;
         $contractTypes = self::CONTRACT_TYPES;
         $pendingVerifications = $this->contractModel->getPendingOverdueVerifications();
+        $terminatedContracts = $this->contractModel->getTerminationHistory($keyword);
 
         // Xử lý pre-fill nếu được chuyển từ trang Khách thuê hoặc trang Xem phòng
         $preTenantId = (int)($_GET['tenant_id'] ?? 0);
@@ -279,6 +280,11 @@ class ContractController {
             $this->redirect('index.php?route=contracts', 'Không tìm thấy hợp đồng.');
         }
 
+        if ($contract['status'] === 'terminated' || $contract['status'] === 'expired') {
+            $_SESSION['flash_error'] = 'Hợp đồng đã thanh lý không thể chỉnh sửa, chỉ được xem chi tiết!';
+            $this->redirect('index.php?route=contracts/detail&id=' . $id);
+        }
+
         $rooms = $this->contractModel->getRooms();
         $tenants = $this->contractModel->getTenants();
         $statuses = self::STATUSES;
@@ -297,6 +303,11 @@ class ContractController {
         }
 
         $id = (int)($_POST['id'] ?? 0);
+        $contract = $this->contractModel->getContractById($id);
+        if ($contract && ($contract['status'] === 'terminated' || $contract['status'] === 'expired')) {
+            $_SESSION['flash_error'] = 'Từ chối cập nhật: Hợp đồng đã thanh lý không được phép chỉnh sửa!';
+            $this->redirect('index.php?route=contracts/detail&id=' . $id);
+        }
         $data = $this->getFormData();
         $error = $this->validate($data, $id);
         if ($error) {
@@ -316,6 +327,11 @@ class ContractController {
     public function delete() {
         $id = (int)($_POST['id'] ?? ($_GET['id'] ?? 0));
         if ($id > 0) {
+            $contract = $this->contractModel->getContractById($id);
+            if ($contract && ($contract['status'] === 'terminated' || $contract['status'] === 'expired')) {
+                $_SESSION['flash_error'] = 'Hợp đồng đã thanh lý được lưu giữ trong lịch sử phòng, không thể xóa!';
+                $this->redirect('index.php?route=contracts');
+            }
             try {
                 $this->contractModel->deleteContract($id);
                 $_SESSION['flash_success'] = 'Đã xóa hợp đồng thành công.';

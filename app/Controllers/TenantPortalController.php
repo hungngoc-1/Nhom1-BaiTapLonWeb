@@ -177,7 +177,8 @@ class TenantPortalController {
 
         $inv = $this->model->getInvoiceDetail($invoiceId, $tenantId);
         if (!$inv) {
-            echo json_encode(['success' => false, 'message' => 'Không tìm thấy hóa đơn.']);
+            http_response_code(403);
+            echo json_encode(['success' => false, 'message' => 'Lỗi 403: Không có quyền truy cập hoặc không tìm thấy hóa đơn của bạn.']);
             exit;
         }
 

@@ -157,6 +157,11 @@ $sixMonthsEndDay = date('Y-m-d', strtotime('+6 months'));
         .btn-act-warn:hover { background: #d97706; color: white;}
         .btn-act-danger { background: #fee2e2; color: #dc2626;}
         .btn-act-danger:hover { background: #dc2626; color: white;}
+        .btn-act-secondary { background: #e2e8f0; color: #64748b; }
+        .badge-room-pill { background: #0f172a; color: #fff; font-weight: 900; font-size: 0.82rem; padding: 4px 10px; border-radius: 8px; display: inline-flex; align-items: center; gap: 4px; }
+        .nav-pills .nav-link { border-radius: 50px; font-weight: 800; color: #64748b; transition: 0.2s; border: none; }
+        .nav-pills .nav-link.active { background: var(--teal-main) !important; color: white !important; box-shadow: 0 4px 12px rgba(48,143,134,0.3); }
+        #tab-terminated-btn.active { background: #7e22ce !important; color: white !important; box-shadow: 0 4px 12px rgba(126,34,206,0.3); }
         .btn-act-upgrade { background: linear-gradient(135deg, #10b981, #059669); color: white; width: auto; padding: 0 12px; font-weight: 800; border-radius: 50px; box-shadow: 0 4px 10px rgba(16, 185, 129, 0.3);}
         .btn-act-upgrade:hover { transform: translateY(-2px); color: white;}
 
@@ -386,7 +391,7 @@ $sixMonthsEndDay = date('Y-m-d', strtotime('+6 months'));
             </div>
 
             <div class="col-12 col-md-6 col-lg-3">
-                <div class="overview-card card-purple">
+                <div class="overview-card card-purple" style="cursor: pointer;" onclick="switchContractTab('terminated')" title="Bấm để xem danh sách lịch sử phòng thanh lý">
                     <div class="overview-title" style="color: #7e22ce;"><i class="fa-solid fa-clock-rotate-left fs-6"></i> LỊCH SỬ HỦY / THANH LÝ</div>
                     <div class="d-flex align-items-baseline mt-2">
                         <span class="overview-val text-dark me-2"><?= (int)($stats['expired_hold'] ?? 0) + (int)($stats['terminated'] ?? 0) ?></span>
@@ -400,8 +405,24 @@ $sixMonthsEndDay = date('Y-m-d', strtotime('+6 months'));
             </div>
         </div>
 
-        <!-- Khung Bảng Danh sách & Bộ lọc Hợp đồng -->
-        <div class="contract-section">
+        <!-- TAB CHUYỂN ĐỔI: TẤT CẢ HỢP ĐỒNG & LỊCH SỬ PHÒNG THANH LÝ -->
+        <ul class="nav nav-pills p-1 bg-white rounded-pill border shadow-sm mb-4 position-relative z-2" id="contractMainTabs" role="tablist">
+            <li class="nav-item" role="presentation">
+                <button class="nav-link active py-2 px-4 rounded-pill fw-bold" id="tab-contracts-btn" data-bs-toggle="pill" data-bs-target="#pane-contracts" type="button" role="tab">
+                    <i class="fa-solid fa-file-contract me-2"></i> Danh sách Hợp đồng (<?= count($contracts) ?>)
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link py-2 px-4 rounded-pill fw-bold" id="tab-terminated-btn" data-bs-toggle="pill" data-bs-target="#pane-terminated" type="button" role="tab" style="color: #7e22ce;">
+                    <i class="fa-solid fa-clock-rotate-left me-2"></i> Lịch sử Phòng Thanh Lý (<?= count($terminatedContracts ?? []) ?>)
+                </button>
+            </li>
+        </ul>
+
+        <div class="tab-content position-relative z-2" id="contractMainTabsContent">
+            <!-- TAB 1: DANH SÁCH HỢP ĐỒNG -->
+            <div class="tab-pane fade show active" id="pane-contracts" role="tabpanel">
+                <div class="contract-section">
             <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 border-bottom border-light pb-3 mb-3">
                 <form action="index.php" method="GET" class="d-flex flex-wrap gap-2 align-items-center">
                     <input type="hidden" name="route" value="contracts">
@@ -575,14 +596,23 @@ $sixMonthsEndDay = date('Y-m-d', strtotime('+6 months'));
                                                 </button>
                                             <?php endif; ?>
 
-                                            <a href="index.php?route=contracts/edit&id=<?= (int)$c['id'] ?>" class="btn-act btn-act-info" title="Sửa hợp đồng">
-                                                <i class="fa-solid fa-pen"></i>
-                                            </a>
+                                            <?php if ($c['status'] === 'terminated' || $c['status'] === 'expired'): ?>
+                                                <button type="button" class="btn-act btn-act-secondary opacity-50" title="Hợp đồng đã thanh lý không thể sửa, chỉ được xem chi tiết" onclick="alert('Hợp đồng đã thanh lý không thể sửa, chỉ được xem chi tiết!'); location.href='index.php?route=contracts/detail&id=<?= (int)$c['id'] ?>';">
+                                                    <i class="fa-solid fa-lock text-muted"></i>
+                                                </button>
+                                                <button type="button" class="btn-act btn-act-secondary opacity-50" title="Hợp đồng đã thanh lý được lưu giữ trong lịch sử, không thể xóa" onclick="alert('Hợp đồng đã thanh lý được lưu giữ trong lịch sử phòng, không thể xóa!');">
+                                                    <i class="fa-solid fa-shield-halved text-muted"></i>
+                                                </button>
+                                            <?php else: ?>
+                                                <a href="index.php?route=contracts/edit&id=<?= (int)$c['id'] ?>" class="btn-act btn-act-info" title="Sửa hợp đồng">
+                                                    <i class="fa-solid fa-pen"></i>
+                                                </a>
 
-                                            <form method="POST" action="index.php?route=contracts/delete" style="display:inline;" onsubmit="return confirm('Bạn có chắc chắn muốn xóa hợp đồng <?= h($c['contract_code']) ?> không?');">
-                                                <input type="hidden" name="id" value="<?= (int)$c['id'] ?>">
-                                                <button type="submit" class="btn-act btn-act-danger" title="Xóa hợp đồng"><i class="fa-solid fa-trash"></i></button>
-                                            </form>
+                                                <form method="POST" action="index.php?route=contracts/delete" style="display:inline;" onsubmit="return confirm('Bạn có chắc chắn muốn xóa hợp đồng <?= h($c['contract_code']) ?> không?');">
+                                                    <input type="hidden" name="id" value="<?= (int)$c['id'] ?>">
+                                                    <button type="submit" class="btn-act btn-act-danger" title="Xóa hợp đồng"><i class="fa-solid fa-trash"></i></button>
+                                                </form>
+                                            <?php endif; ?>
                                         </div>
                                     </td>
                                 </tr>
@@ -597,6 +627,122 @@ $sixMonthsEndDay = date('Y-m-d', strtotime('+6 months'));
                         <?php endif; ?>
                     </tbody>
                 </table>
+            </div>
+                </div>
+            </div>
+
+            <!-- TAB 2: LỊCH SỬ PHÒNG THANH LÝ -->
+            <div class="tab-pane fade" id="pane-terminated" role="tabpanel">
+                <div class="contract-section">
+                    <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 border-bottom border-light pb-3 mb-3">
+                        <div>
+                            <h5 class="fw-bold text-dark mb-1">
+                                <i class="fa-solid fa-clock-rotate-left text-teal-main me-2"></i>Lịch sử Phòng Thanh Lý &amp; Trả Phòng
+                            </h5>
+                            <span class="small text-muted fw-bold">Theo dõi danh sách các phòng đã thanh lý, trạng thái hoàn trả tiền cọc và lý do chấm dứt hợp đồng</span>
+                        </div>
+                        <div class="badge rounded-pill bg-purple-subtle text-purple border px-3 py-2 fw-bold" style="background:#f3e8ff; color:#7e22ce; font-size: 0.88rem;">
+                            Tổng cộng: <?= count($terminatedContracts ?? []) ?> phòng đã thanh lý
+                        </div>
+                    </div>
+
+                    <div class="table-responsive">
+                        <table class="table table-custom align-middle mb-0">
+                            <thead>
+                                <tr>
+                                    <th>Phòng &amp; Khách thuê</th>
+                                    <th>Mã Hợp Đồng</th>
+                                    <th>Thời hạn hợp đồng</th>
+                                    <th>Ngày thanh lý / Trả phòng</th>
+                                    <th>Giá phòng &amp; Cọc</th>
+                                    <th>Trạng thái hoàn cọc</th>
+                                    <th>Lý do / Biên bản thanh lý</th>
+                                    <th class="text-center" style="width: 140px;">Thao tác</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                            <?php if (!empty($terminatedContracts)): ?>
+                                <?php foreach ($terminatedContracts as $tc): ?>
+                                    <tr>
+                                        <td>
+                                            <div class="d-flex align-items-center gap-2 mb-1">
+                                                <span class="badge-room-pill"><i class="fa-solid fa-door-closed"></i> P.<?= h($tc['room_number'] ?? '---') ?></span>
+                                            </div>
+                                            <div class="fw-bold text-dark"><i class="fa-regular fa-user text-muted me-1"></i><?= h($tc['full_name'] ?? 'Khách thuê') ?></div>
+                                            <div class="small text-muted"><i class="fa-solid fa-phone me-1 text-teal-main"></i><?= h($tc['phone'] ?? '---') ?></div>
+                                        </td>
+                                        <td>
+                                            <span class="badge bg-light text-secondary border fw-bold"><?= h($tc['contract_code']) ?></span>
+                                            <div class="small text-muted mt-1">
+                                                <?= ($tc['contract_type'] ?? '') === 'deposit_hold' ? '<i class="fa-solid fa-clock text-warning me-1"></i>HĐ cọc giữ chỗ 5N' : '<i class="fa-solid fa-shield-halved text-success me-1"></i>HĐ thuê 6 tháng' ?>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <div class="small fw-bold text-dark">
+                                                <i class="fa-regular fa-calendar me-1 text-muted"></i><?= date('d/m/Y', strtotime($tc['start_date'])) ?>
+                                            </div>
+                                            <div class="small text-muted">
+                                                <i class="fa-solid fa-arrow-down text-muted mx-1" style="font-size:0.7rem;"></i>
+                                                <?= date('d/m/Y', strtotime($tc['end_date'])) ?>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <div class="d-flex flex-column gap-1">
+                                                <span class="badge rounded-pill bg-light text-dark border px-3 py-1 fw-bold" style="font-size:0.84rem;">
+                                                    <i class="fa-regular fa-calendar-check text-danger me-1"></i>
+                                                    <?= !empty($tc['terminated_at']) ? date('d/m/Y', strtotime($tc['terminated_at'])) : date('d/m/Y', strtotime($tc['start_date'])) ?>
+                                                </span>
+                                                <span class="small text-muted fw-semibold">Đã trả phòng</span>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <div class="small text-muted">Tiền phòng: <strong><?= number_format((float)$tc['monthly_rent'], 0, ',', '.') ?> đ</strong></div>
+                                            <div class="small text-muted">Tiền cọc: <strong class="text-teal-main"><?= number_format((float)$tc['deposit_amount'], 0, ',', '.') ?> đ</strong></div>
+                                        </td>
+                                        <td>
+                                            <?php if ($tc['deposit_status'] === 'refunded'): ?>
+                                                <span class="badge rounded-pill bg-success-subtle text-success border border-success-subtle px-3 py-1 fw-bold">
+                                                    <i class="fa-solid fa-circle-check me-1"></i> Đã hoàn cọc 100%
+                                                </span>
+                                            <?php elseif ($tc['deposit_status'] === 'forfeited'): ?>
+                                                <span class="badge rounded-pill bg-danger-subtle text-danger border border-danger-subtle px-3 py-1 fw-bold">
+                                                    <i class="fa-solid fa-circle-xmark me-1"></i> Mất cọc (Trả trước hạn)
+                                                </span>
+                                            <?php else: ?>
+                                                <span class="badge rounded-pill bg-warning-subtle text-warning-emphasis border border-warning-subtle px-3 py-1 fw-bold">
+                                                    <i class="fa-solid fa-clock-rotate-left me-1"></i> Quá hạn tự hủy
+                                                </span>
+                                            <?php endif; ?>
+                                        </td>
+                                        <td>
+                                            <div class="small fw-semibold text-secondary" style="max-width: 320px; white-space: normal; line-height: 1.35;">
+                                                <?= h($tc['termination_reason'] ?: 'Thanh lý hoàn tất theo biên bản nghiệm thu trả phòng.') ?>
+                                            </div>
+                                        </td>
+                                        <td class="text-center">
+                                            <div class="d-inline-flex align-items-center gap-1">
+                                                <a href="index.php?route=contracts/detail&id=<?= (int)$tc['id'] ?>" class="btn-act btn-act-teal" title="Xem văn bản hợp đồng & chi tiết điều khoản">
+                                                    <i class="fa-solid fa-eye me-1"></i> Chi tiết
+                                                </a>
+                                                <button type="button" class="btn-act btn-act-secondary opacity-50" title="Hợp đồng đã thanh lý không thể sửa, chỉ được xem chi tiết" onclick="alert('Hợp đồng đã thanh lý không thể sửa, chỉ được xem chi tiết!'); location.href='index.php?route=contracts/detail&id=<?= (int)$tc['id'] ?>';">
+                                                    <i class="fa-solid fa-lock text-muted"></i>
+                                                </button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                <?php endforeach; ?>
+                            <?php else: ?>
+                                <tr>
+                                    <td colspan="8" class="text-center py-5 text-muted">
+                                        <i class="fa-regular fa-folder-open fs-1 text-teal-main opacity-50 mb-2 d-block"></i>
+                                        Chưa có phòng nào thanh lý hoặc hủy hợp đồng.
+                                    </td>
+                                </tr>
+                            <?php endif; ?>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
             </div>
         </div>
 
@@ -792,10 +938,8 @@ $sixMonthsEndDay = date('Y-m-d', strtotime('+6 months'));
 
                         <div class="col-md-4">
                             <label class="form-label small fw-bold mb-1">Hình thức thực hiện</label>
-                            <select name="signature_type" class="form-select">
-                                <option value="paper" selected>Ký Giấy A4 (Có lưu Scan)</option>
-                                <option value="online">Chữ ký điện tử Online</option>
-                            </select>
+                            <input type="text" class="form-control bg-light fw-bold text-secondary" value="Ký Giấy A4 &amp; Tải Scan" readonly>
+                            <input type="hidden" name="signature_type" value="paper">
                         </div>
 
                         <div class="col-md-4">
@@ -916,7 +1060,23 @@ $sixMonthsEndDay = date('Y-m-d', strtotime('+6 months'));
         </div>
     </footer>
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js">
+    function switchContractTab(tab) {
+        if (tab === 'terminated') {
+            const btn = document.getElementById('tab-terminated-btn');
+            if (btn) {
+                bootstrap.Tab.getOrCreateInstance(btn).show();
+                document.getElementById('contractMainTabs')?.scrollIntoView({ behavior: 'smooth' });
+            }
+        } else {
+            const btn = document.getElementById('tab-contracts-btn');
+            if (btn) {
+                bootstrap.Tab.getOrCreateInstance(btn).show();
+                document.getElementById('contractMainTabs')?.scrollIntoView({ behavior: 'smooth' });
+            }
+        }
+    }
+    </script>
 
     <!-- MODAL XÁC NHẬN LÝ DO KHÔNG ĐÓNG TIỀN PHÒNG THÁNG ĐẦU -->
     <div class="modal fade" id="verificationModal" tabindex="-1" aria-hidden="true">
@@ -1365,7 +1525,23 @@ function openVerificationModal(contractId, room, tenant, deposit) {
         document.getElementById('verify_deposit_info').textContent = 'Tiền cọc quy định: ' + Math.round(deposit).toLocaleString('vi-VN') + ' đ';
         new bootstrap.Modal(document.getElementById('verificationModal')).show();
     }
-</script>
+
+    function switchContractTab(tab) {
+        if (tab === 'terminated') {
+            const btn = document.getElementById('tab-terminated-btn');
+            if (btn) {
+                bootstrap.Tab.getOrCreateInstance(btn).show();
+                document.getElementById('contractMainTabs')?.scrollIntoView({ behavior: 'smooth' });
+            }
+        } else {
+            const btn = document.getElementById('tab-contracts-btn');
+            if (btn) {
+                bootstrap.Tab.getOrCreateInstance(btn).show();
+                document.getElementById('contractMainTabs')?.scrollIntoView({ behavior: 'smooth' });
+            }
+        }
+    }
+    </script>
 
     <!-- MODAL XÁC NHẬN LÝ DO KHÔNG ĐÓNG TIỀN PHÒNG THÁNG ĐẦU -->
     <div class="modal fade" id="verificationModal" tabindex="-1" aria-hidden="true">

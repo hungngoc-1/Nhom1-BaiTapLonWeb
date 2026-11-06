@@ -615,6 +615,9 @@ class ContractModel {
     // Cập nhật hợp đồng
     public function updateContract($id, $data) {
         $old = $this->getContractById($id);
+        if ($old && ($old['status'] === 'terminated' || $old['status'] === 'expired')) {
+            throw new Exception("Hợp đồng đã thanh lý không thể chỉnh sửa, chỉ được xem chi tiết!");
+        }
         $monthlyRent = (float)($data['monthly_rent'] ?? 0);
         $contractType = $data['contract_type'] ?? ($old['contract_type'] ?? 'official_lease');
         $depositPaidPercent = (int)($data['deposit_paid_percent'] ?? ($contractType === 'deposit_hold' ? 50 : 100));
@@ -785,6 +788,9 @@ class ContractModel {
 
     public function deleteContract($id) {
         $contract = $this->getContractById($id);
+        if ($contract && ($contract['status'] === 'terminated' || $contract['status'] === 'expired')) {
+            throw new Exception("Hợp đồng đã thanh lý được lưu giữ trong lịch sử phòng, không thể xóa!");
+        }
         $stmt = $this->conn->prepare("DELETE FROM contracts WHERE id = :id");
         $ok = $stmt->execute([':id' => $id]);
 
@@ -906,5 +912,46 @@ class ContractModel {
             return ['ok' => false, 'msg' => 'Lỗi xử lý: ' . $e->getMessage()];
         }
     }
+
+    /**
+     * Lấy danh sách lịch sử phòng đã thanh lý / hủy hợp đồng
+     */
+    public function getTerminationHistory($keyword = '') {
+        $sql = "SELECT c.*,
+                       r.room_number, r.price AS room_price,
+                       u.full_name, u.phone, u.email,
+                       DATEDIFF(c.end_date, c.start_date) AS total_lease_days
+                FROM contracts c
+                LEFT JOIN rooms r ON c.room_id = r.id
+                LEFT JOIN users u ON c.tenant_id = u.id
+                WHERE c.status IN ('terminated', 'expired') ";
+        $params = [];
+        require_once __DIR__ . '/ReportModel.php';
+        $mgr = ReportModel::getManagerBuildingInfo();
+        if ($mgr) {
+            $sql .= " AND (r.building_id = :mgrBId OR r.room_number LIKE :mgrPfx)";
+            $params[':mgrBId'] = $mgr['id'];
+            $params[':mgrPfx'] = $mgr['prefix'] . '%';
+        }
+        if ($keyword !== '') {
+            $sql .= " AND (c.contract_code LIKE :kw1 OR r.room_number LIKE :kw2 OR u.full_name LIKE :kw3 OR u.phone LIKE :kw4)";
+            $params[':kw1'] = $params[':kw2'] = $params[':kw3'] = $params[':kw4'] = "%$keyword%";
+        }
+        $sql .= " ORDER BY COALESCE(c.terminated_at, c.start_date) DESC, c.id DESC";
+
+        $stmt = $this->conn->prepare($sql);
+        $stmt->execute($params);
+        $list = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+        foreach ($list as &$row) {
+            if (empty($row['contract_code'])) {
+                $row['contract_code'] = 'HD-' . date('Y', strtotime($row['created_at'] ?? 'now')) . '-' . str_pad($row['id'], 3, '0', STR_PAD_LEFT);
+            }
+            if (empty($row['monthly_rent']) || (float)$row['monthly_rent'] <= 0) {
+                $row['monthly_rent'] = $row['room_price'] ?? $row['deposit_amount'];
+            }
+        }
+        return $list;
+    }
+
 }
-?>

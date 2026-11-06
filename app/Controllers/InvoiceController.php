@@ -60,6 +60,13 @@ class InvoiceController {
         $pending = $this->model->getPendingReadings();
         $rates = $this->model->getRates();
         $rooms = Database::getConnection()->query("SELECT id, room_number FROM rooms ORDER BY room_number")->fetchAll();
+        $activeContractRooms = Database::getConnection()->query("
+            SELECT r.id, r.room_number, r.price, u.full_name AS tenant_name
+            FROM rooms r
+            JOIN contracts c ON c.room_id = r.id AND c.status = 'active'
+            JOIN users u ON u.id = c.tenant_id
+            ORDER BY r.room_number
+        ")->fetchAll(PDO::FETCH_ASSOC);
         $methods = InvoiceModel::METHODS;
         $thirdPartyFinance = $this->model->getThirdPartyFinance($filters['period']);
         $depositContracts = $this->model->getDepositAndFirstMonthContracts($filters);
@@ -84,6 +91,27 @@ class InvoiceController {
         $flash_error = $_SESSION['flash_error'] ?? '';
         unset($_SESSION['flash_success'], $_SESSION['flash_error']);
         require __DIR__ . '/../views/invoices/detail.php';
+    }
+
+    public function previewApi(): void {
+        header('Content-Type: application/json; charset=utf-8');
+        $roomId = (int)($_GET['room_id'] ?? 0);
+        $monthYear = trim($_GET['month_year'] ?? '');
+        $data = $this->model->previewInvoiceJson($roomId, $monthYear);
+        echo json_encode($data, JSON_UNESCAPED_UNICODE);
+        exit;
+    }
+
+    public function createManual(): void {
+        $this->checkPost();
+        $roomId = (int)($_POST['room_id'] ?? 0);
+        $monthYear = trim($_POST['month_year'] ?? '');
+        $dueDate = !empty($_POST['due_date']) ? $_POST['due_date'] : null;
+        $notes = trim($_POST['notes'] ?? '');
+
+        $res = $this->model->createInvoiceManual($roomId, $monthYear, $dueDate, $notes);
+        $this->flash($res);
+        $this->back($this->returnUrl());
     }
 
     public function store(): void {

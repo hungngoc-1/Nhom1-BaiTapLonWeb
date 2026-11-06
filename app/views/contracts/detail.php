@@ -153,10 +153,14 @@ $durationDays = max(1, (int)round(($endTs - $startTs) / 86400));
                     </span>
                 <?php endif; ?>
 
-                <?php if ($sigStatus === 'signed' || !empty($contract['scan_file'])): ?>
+                <?php if ($contract['status'] === 'terminated'): ?>
+                    <span class="badge rounded-pill bg-danger px-3 py-2 fw-bold"><i class="fa-solid fa-lock me-1"></i> Đã thanh lý (Phòng đã trả)</span>
+                <?php elseif ($contract['status'] === 'expired'): ?>
+                    <span class="badge rounded-pill bg-secondary px-3 py-2 fw-bold"><i class="fa-solid fa-clock-rotate-left me-1"></i> Đã hết hạn (Tự hủy)</span>
+                <?php elseif (!empty($contract['scan_file'])): ?>
                     <span class="badge rounded-pill bg-success px-3 py-2 fw-bold"><i class="fa-solid fa-circle-check me-1"></i> Đã hoàn tất ký / Có Scan</span>
                 <?php else: ?>
-                    <span class="badge rounded-pill bg-warning text-dark px-3 py-2 fw-bold"><i class="fa-regular fa-clock me-1"></i> Chờ ký / Chờ nộp Scan</span>
+                    <span class="badge rounded-pill bg-warning text-dark px-3 py-2 fw-bold"><i class="fa-regular fa-clock me-1"></i> Chờ ký giấy / Chờ nộp Scan</span>
                 <?php endif; ?>
             </div>
 
@@ -164,14 +168,23 @@ $durationDays = max(1, (int)round(($endTs - $startTs) / 86400));
                 <button type="button" class="btn btn-outline-dark rounded-pill fw-bold px-3" onclick="window.print()">
                     <i class="fa-solid fa-print me-1"></i> In Hợp đồng Ra Giấy (A4)
                 </button>
-                <button type="button" class="btn btn-success rounded-pill fw-bold px-3" data-bs-toggle="modal" data-bs-target="#uploadScanModal">
-                    <i class="fa-solid fa-camera me-1"></i> <?= !empty($contract['scan_file']) ? 'Đổi ảnh Scan' : 'Tải lên Bản Scan (Đã Ký Tay)' ?>
-                </button>
-                <button type="button" class="btn-teal-custom" data-bs-toggle="modal" data-bs-target="#signOnlineModal">
-                    <i class="fa-solid fa-pen-nib me-1"></i> Ký Điện Tử (Online)
-                </button>
+                <?php if ($contract['status'] !== 'terminated' && $contract['status'] !== 'expired'): ?>
+                    <button type="button" class="btn btn-success rounded-pill fw-bold px-3" data-bs-toggle="modal" data-bs-target="#uploadScanModal">
+                        <i class="fa-solid fa-camera me-1"></i> <?= !empty($contract['scan_file']) ? 'Đổi ảnh Scan' : 'Tải lên Bản Scan (Đã Ký Tay)' ?>
+                    </button>
+                <?php endif; ?>
             </div>
         </div>
+
+        <?php if ($contract['status'] === 'terminated'): ?>
+            <div class="alert alert-secondary rounded-4 fw-bold d-print-none mb-3 border-2 shadow-sm">
+                <i class="fa-solid fa-lock me-2 text-danger fs-5 align-middle"></i>
+                <span>Hợp đồng này <strong>đã được thanh lý</strong> vào ngày <?= !empty($contract['terminated_at']) ? date('d/m/Y', strtotime($contract['terminated_at'])) : date('d/m/Y', strtotime($contract['start_date'])) ?> (Phòng đã hoàn tất thủ tục trả phòng). Hồ sơ được lưu trữ lịch sử và <strong>không thể chỉnh sửa</strong>.</span>
+                <?php if (!empty($contract['termination_reason'])): ?>
+                    <div class="mt-1 small text-muted ps-4">Lý do / Biên bản: <em><?= h($contract['termination_reason']) ?></em></div>
+                <?php endif; ?>
+            </div>
+        <?php endif; ?>
 
         <?php if (!empty($flash_error)): ?>
             <div class="alert alert-danger rounded-4 fw-bold d-print-none"><i class="fa-solid fa-circle-exclamation me-2"></i><?= h($flash_error) ?></div>
@@ -180,15 +193,6 @@ $durationDays = max(1, (int)round(($endTs - $startTs) / 86400));
             <div class="alert alert-success rounded-4 fw-bold d-print-none"><i class="fa-solid fa-circle-check me-2"></i><?= h($flash_success) ?></div>
         <?php endif; ?>
 
-        
-                <div class="col-12 mt-1">
-                    <span class="text-muted">REST API JSON:</span>
-                    <code class="d-block bg-white p-2 rounded border mt-1 user-select-all font-monospace">
-                        index.php?route=api/tenant/contract&tenant_id=<?= (int)$contract['tenant_id'] ?>
-                    </code>
-                </div>
-            </div>
-        </div>
 
         <!-- KHUNG HIỂN THỊ BẢN SCAN ĐÃ KÝ NẾU ĐÃ TẢI LÊN -->
         <?php if (!empty($contract['scan_file'])): ?>
@@ -341,12 +345,8 @@ $durationDays = max(1, (int)round(($endTs - $startTs) / 86400));
                     <div class="col-6">
                         <div class="fw-bold text-uppercase">ĐẠI DIỆN BÊN CHO THUÊ (BÊN A)</div>
                         <div class="small text-muted fst-italic mb-2">(Ký và ghi rõ họ tên)</div>
-                        <div style="min-height: 110px;" class="d-flex align-items-center justify-content-center">
-                            <?php if (!empty($contract['manager_signature'])): ?>
-                                <img src="<?= $contract['manager_signature'] ?>" alt="Chữ ký Bên A" style="max-height: 95px; max-width: 220px;">
-                            <?php else: ?>
-                                <span class="text-muted small d-print-none">(Ký trực tiếp trên giấy A4)</span>
-                            <?php endif; ?>
+                        <div style="min-height: 100px;" class="d-flex align-items-center justify-content-center">
+                            <span class="text-muted small d-print-none">(Ký trực tiếp trên văn bản giấy A4)</span>
                         </div>
                         <div class="fw-bold mt-1">Ban Quản Lý StayMate</div>
                     </div>
@@ -354,17 +354,14 @@ $durationDays = max(1, (int)round(($endTs - $startTs) / 86400));
                     <div class="col-6">
                         <div class="fw-bold text-uppercase">ĐẠI DIỆN BÊN THUÊ (BÊN B)</div>
                         <div class="small text-muted fst-italic mb-2">(Ký và ghi rõ họ tên)</div>
-                        <div style="min-height: 110px;" class="d-flex align-items-center justify-content-center">
-                            <?php if (!empty($contract['tenant_signature'])): ?>
-                                <img src="<?= $contract['tenant_signature'] ?>" alt="Chữ ký Bên B" style="max-height: 95px; max-width: 220px;">
-                            <?php else: ?>
-                                <span class="text-muted small d-print-none">(Ký trực tiếp trên giấy A4)</span>
-                            <?php endif; ?>
+                        <div style="min-height: 100px;" class="d-flex align-items-center justify-content-center">
+                            <span class="text-muted small d-print-none">(Ký trực tiếp trên văn bản giấy A4)</span>
                         </div>
                         <div class="fw-bold mt-1"><?= h($contract['full_name'] ?? '') ?></div>
                     </div>
                 </div>
             </div>
+        </div>
         </div>
 
     </div>
@@ -395,40 +392,7 @@ $durationDays = max(1, (int)round(($endTs - $startTs) / 86400));
         </div>
     </div>
 
-    <!-- ================= MODAL: KÝ ĐIỆN TỬ (ONLINE CANVAS) ================= -->
-    <div class="modal fade d-print-none" id="signOnlineModal" tabindex="-1" aria-hidden="true">
-        <div class="modal-dialog modal-lg modal-dialog-centered">
-            <form method="POST" action="index.php?route=contracts/sign-online" id="signOnlineForm" class="modal-content" style="border-radius: 24px;">
-                <input type="hidden" name="id" value="<?= (int)$contract['id'] ?>">
-                <input type="hidden" name="manager_signature" id="manager_signature_input">
-                <input type="hidden" name="tenant_signature" id="tenant_signature_input">
-
-                <div class="modal-header border-bottom-0">
-                    <h5 class="modal-title fw-bold text-teal-main"><i class="fa-solid fa-pen-nib me-2"></i>Ký Hợp đồng Điện tử (Online) — <?= h($contract['contract_code']) ?></h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                </div>
-                <div class="modal-body">
-                    <div class="row g-3">
-                        <div class="col-md-6">
-                            <div class="d-flex justify-content-between align-items-center mb-1">
-                                <label class="form-label small fw-bold mb-0">Chữ ký Bên Cho Thuê (Bên A)</label>
-                                <button type="button" class="btn btn-sm btn-link text-danger p-0 fw-bold" onclick="clearPad('managerPad')">Ký lại</button>
-                            </div>
-                            <div class="border rounded-4 bg-light text-center p-2">
-                                <canvas id="managerPad" width="320" height="140" class="bg-white rounded-3 border w-100" style="touch-action: none; cursor: crosshair;"></canvas>
-                            </div>
-                        </div>
-
-                        <div class="col-md-6">
-                            <div class="d-flex justify-content-between align-items-center mb-1">
-                                <label class="form-label small fw-bold mb-0">Chữ ký Khách Thuê (Bên B)</label>
-                                <button type="button" class="btn btn-sm btn-link text-danger p-0 fw-bold" onclick="clearPad('tenantPad')">Ký lại</button>
-                            </div>
-                            <div class="border rounded-4 bg-light text-center p-2">
-                                <canvas id="tenantPad" width="320" height="140" class="bg-white rounded-3 border w-100" style="touch-action: none; cursor: crosshair;"></canvas>
-                            </div>
-                        </div>
-                    </div>
+    
                 </div>
                 <div class="modal-footer border-top-0">
                     <button type="button" class="btn btn-light rounded-pill px-4 fw-bold" data-bs-dismiss="modal">Đóng</button>
@@ -440,73 +404,7 @@ $durationDays = max(1, (int)round(($endTs - $startTs) / 86400));
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
-    const padState = {};
-
-    function initPad(canvasId) {
-        const canvas = document.getElementById(canvasId);
-        if (!canvas) return;
-        const ctx = canvas.getContext('2d');
-        ctx.strokeStyle = '#0f766e';
-        ctx.lineWidth = 2.4;
-        ctx.lineCap = 'round';
-        padState[canvasId] = { drawing: false, dirty: false, canvas, ctx };
-
-        const getPos = (e) => {
-            const rect = canvas.getBoundingClientRect();
-            const clientX = e.touches ? e.touches[0].clientX : e.clientX;
-            const clientY = e.touches ? e.touches[0].clientY : e.clientY;
-            return {
-                x: (clientX - rect.left) * (canvas.width / rect.width),
-                y: (clientY - rect.top) * (canvas.height / rect.height)
-            };
-        };
-
-        const start = (e) => {
-            e.preventDefault();
-            const pos = getPos(e);
-            padState[canvasId].drawing = true;
-            padState[canvasId].dirty = true;
-            ctx.beginPath();
-            ctx.moveTo(pos.x, pos.y);
-        };
-        const move = (e) => {
-            if (!padState[canvasId].drawing) return;
-            e.preventDefault();
-            const pos = getPos(e);
-            ctx.lineTo(pos.x, pos.y);
-            ctx.stroke();
-        };
-        const end = () => { padState[canvasId].drawing = false; };
-
-        canvas.addEventListener('mousedown', start);
-        canvas.addEventListener('mousemove', move);
-        window.addEventListener('mouseup', end);
-        canvas.addEventListener('touchstart', start, { passive: false });
-        canvas.addEventListener('touchmove', move, { passive: false });
-        canvas.addEventListener('touchend', end);
-    }
-
-    function clearPad(canvasId) {
-        const st = padState[canvasId];
-        if (!st) return;
-        st.ctx.clearRect(0, 0, st.canvas.width, st.canvas.height);
-        st.dirty = false;
-    }
-
-    document.addEventListener('DOMContentLoaded', function () {
-        initPad('managerPad');
-        initPad('tenantPad');
-
-        const form = document.getElementById('signOnlineForm');
-        if (form) {
-            form.addEventListener('submit', function () {
-                if (padState['managerPad'] && padState['managerPad'].dirty) {
-                    document.getElementById('manager_signature_input').value = padState['managerPad'].canvas.toDataURL('image/png');
-                }
-                if (padState['tenantPad'] && padState['tenantPad'].dirty) {
-                    document.getElementById('tenant_signature_input').value = padState['tenantPad'].canvas.toDataURL('image/png');
-                }
-            });
+    
         }
     });
     </script>

@@ -441,56 +441,9 @@ $pendingInPeriod = array_values(array_filter($pendingView, fn($x) => $filters['p
         <!-- TAB 1: KHOẢN THU & HÓA ĐƠN KHÁCH THUÊ -->
         <div class="tab-pane fade show active" id="tab-revenue" role="tabpanel">
             <div class="section-box mb-4">
-                <!-- SUB-NAV CHUYỂN ĐỔI GIỮA BẢNG 1 VÀ BẢNG 2 -->
-                <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-4 pb-3 border-bottom border-light no-print">
-                    <ul class="nav nav-pills p-1 bg-light rounded-pill border" id="revenueSubTabs" role="tablist">
-                        <li class="nav-item" role="presentation">
-                            <button class="nav-link <?= ($filters['subtab'] === 'deposit') ? '' : 'active' ?> rounded-pill fw-bold" id="btn-sub-monthly" data-bs-toggle="pill" data-bs-target="#sub-monthly" type="button" role="tab">
-                                <i class="fa-solid fa-file-invoice-dollar me-2 text-teal-main"></i> Bảng 2: Hóa Đơn Hàng Tháng (Phòng + Điện Nước + DV) <span class="badge rounded-pill bg-teal text-white ms-1"><?= count($invoices) ?></span>
-                            </button>
-                        </li>
-                        <li class="nav-item" role="presentation">
-                            <button class="nav-link <?= ($filters['subtab'] === 'deposit') ? 'active' : '' ?> rounded-pill fw-bold" id="btn-sub-deposit" data-bs-toggle="pill" data-bs-target="#sub-deposit" type="button" role="tab">
-                                <i class="fa-solid fa-shield-halved me-2 text-warning-emphasis"></i> Bảng 1: Cọc &amp; Tiền Phòng Tháng Đầu (Trạng thái) <span class="badge rounded-pill bg-warning-subtle text-warning-emphasis ms-1"><?= count($depositContracts) ?></span>
-                            </button>
-                        </li>
-                        <li class="nav-item" role="presentation">
-                            <button class="nav-link <?= ($filters['subtab'] === 'all') ? 'active' : '' ?> rounded-pill fw-bold" id="btn-sub-both" data-bs-toggle="pill" data-bs-target="#sub-both" type="button" role="tab">
-                                <i class="fa-solid fa-table-columns me-2 text-primary"></i> Xem Cả 2 Bảng Đồng Thời
-                            </button>
-                        </li>
-                    </ul>
-                    <div class="text-muted small fw-bold">
-                        <i class="fa-solid fa-circle-info text-teal-main me-1"></i> Bảng 1: Trạng thái cọc &amp; tháng đầu · Bảng 2: Dòng tiền phòng &amp; dịch vụ định kỳ
-                    </div>
-                </div>
-
-                <div class="tab-content" id="revenueSubTabsContent">
-                    <!-- SUB-TAB 2: HÓA ĐƠN HÀNG THÁNG -->
-                    <div class="tab-pane fade <?= ($filters['subtab'] === 'monthly' || empty($filters['subtab'])) ? 'show active' : '' ?>" id="sub-monthly" role="tabpanel">
-                        <?php require __DIR__ . '/table_monthly_invoices.php'; ?>
-                    </div>
-
-                    <!-- SUB-TAB 1: TIỀN CỌC & THU PHÒNG THÁNG ĐẦU -->
-                    <div class="tab-pane fade <?= ($filters['subtab'] === 'deposit') ? 'show active' : '' ?>" id="sub-deposit" role="tabpanel">
-                        <?php require __DIR__ . '/table_deposit_first_month.php'; ?>
-                    </div>
-
-                    <!-- SUB-TAB 3: XEM CẢ 2 BẢNG ĐỒNG THỜI -->
-                    <div class="tab-pane fade <?= ($filters['subtab'] === 'all') ? 'show active' : '' ?>" id="sub-both" role="tabpanel">
-                        <div class="mb-5 pb-4 border-bottom">
-                            <h5 class="fw-black text-dark mb-3" style="font-weight:900">
-                                <i class="fa-solid fa-shield-halved text-warning-emphasis me-2"></i> BẢNG 1: THEO DÕI CỌC &amp; TIỀN PHÒNG THÁNG ĐẦU
-                            </h5>
-                            <?php require __DIR__ . '/table_deposit_first_month.php'; ?>
-                        </div>
-                        <div>
-                            <h5 class="fw-black text-dark mb-3" style="font-weight:900">
-                                <i class="fa-solid fa-file-invoice-dollar text-teal-main me-2"></i> BẢNG 2: HÓA ĐƠN TIỀN PHÒNG HÀNG THÁNG + ĐIỆN NƯỚC, DỊCH VỤ SỬ DỤNG
-                            </h5>
-                            <?php require __DIR__ . '/table_monthly_invoices.php'; ?>
-                        </div>
-                    </div>
+                <!-- BẢNG DANH SÁCH HÓA ĐƠN HÀNG THÁNG (BẢNG DUY NHẤT) -->
+                <div class="mb-2">
+                    <?php require __DIR__ . '/table_monthly_invoices.php'; ?>
                 </div>
             </div>
         </div> <!-- END TAB 1 -->
@@ -633,71 +586,174 @@ $pendingInPeriod = array_values(array_filter($pendingView, fn($x) => $filters['p
 <!-- MODAL LẬP HÓA ĐƠN -->
 <div class="modal fade modal-staymate" id="createModal" tabindex="-1">
     <div class="modal-dialog modal-dialog-centered modal-xl">
-        <div class="modal-content">
-            <div class="modal-header">
+        <div class="modal-content border-0 shadow-lg rounded-4">
+            <div class="modal-header border-bottom px-4 py-3 bg-light rounded-top-4">
                 <div>
-                    <h5 class="modal-title text-teal-main mb-0" style="font-weight:900"><i class="fa-solid fa-file-circle-plus me-2"></i> Lập Hóa Đơn Từ Chỉ Số Điện Nước</h5>
-                    <div class="text-muted small fw-bold">Tiền phòng + điện + nước + dịch vụ cố định, tự tính từ bảng giá &amp; chỉ số đã chốt</div>
+                    <h5 class="modal-title text-teal-main mb-0" style="font-weight:900">
+                        <i class="fa-solid fa-file-circle-plus me-2"></i> Lập Hóa Đơn Hàng Tháng
+                    </h5>
+                    <div class="text-muted small fw-bold">Tính tiền phòng, điện nước và dịch vụ - Sử dụng Fetch API xem trước tổng tiền</div>
                 </div>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body p-4">
-                <?php if ($pendingView): ?>
-                    <?php
-                    $pendingPeriods = array_values(array_unique(array_column($pendingView, 'month_year')));
-                    ?>
-                    <div class="d-flex flex-wrap gap-2 mb-3 align-items-center">
-                        <span class="fw-bold small text-muted">Lập hàng loạt cho kỳ:</span>
-                        <?php foreach ($pendingPeriods as $pp):
-                            $cnt = count(array_filter($pendingView, fn($x) => $x['month_year'] === $pp)); ?>
-                            <form method="POST" action="index.php?route=invoices/store-all" class="d-inline" onsubmit="return confirm('Lập <?= $cnt ?> hóa đơn kỳ <?= h($pp) ?>?');">
-                                <input type="hidden" name="csrf_token" value="<?= h($csrf) ?>">
-                                <input type="hidden" name="period" value="<?= h($pp) ?>">
-                                <input type="hidden" name="return_query" value="<?= h($returnQuery) ?>">
-                                <button type="submit" class="btn-pill-amber py-1 px-3" style="font-size:.8rem"><i class="fa-solid fa-layer-group"></i> Kỳ <?= h($pp) ?> (<?= $cnt ?>)</button>
-                            </form>
-                        <?php endforeach; ?>
+                <!-- TABS LỰA CHỌN PHƯƠNG THỨC LẬP HÓA ĐƠN -->
+                <ul class="nav nav-pills p-1 bg-light rounded-pill border mb-4" id="createInvoiceTabs" role="tablist">
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link active rounded-pill fw-bold" id="tab-manual-inv" data-bs-toggle="pill" data-bs-target="#pane-manual-inv" type="button" role="tab">
+                            <i class="fa-solid fa-file-invoice me-2 text-teal-main"></i> 1. Lập Theo Phòng &amp; Kỳ (Fetch API Xem Trước)
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link rounded-pill fw-bold" id="tab-batch-inv" data-bs-toggle="pill" data-bs-target="#pane-batch-inv" type="button" role="tab">
+                            <i class="fa-solid fa-wand-magic-sparkles me-2 text-warning"></i> 2. Lập Nhanh Từ Điện Nước Đã Chốt
+                            <?php if (count($pendingView) > 0): ?>
+                                <span class="badge rounded-pill bg-warning text-dark ms-1"><?= count($pendingView) ?></span>
+                            <?php endif; ?>
+                        </button>
+                    </li>
+                </ul>
+
+                <div class="tab-content" id="createInvoiceTabsContent">
+                    <!-- TAB 1: LẬP THEO PHÒNG & KỲ CÓ FETCH API PREVIEW (ĐÚNG ĐỀ BÀI) -->
+                    <div class="tab-pane fade show active" id="pane-manual-inv" role="tabpanel">
+                        <form method="POST" action="index.php?route=invoices/create-manual" id="formManualInvoice">
+                            <input type="hidden" name="csrf_token" value="<?= h($csrf) ?>">
+                            <input type="hidden" name="return_query" value="<?= h($returnQuery) ?>">
+
+                            <div class="row g-3 mb-3">
+                                <div class="col-md-5">
+                                    <label class="form-label small fw-bold mb-1">
+                                        Chọn Phòng trọ (Đang thuê) <span class="text-danger">*</span>
+                                    </label>
+                                    <select name="room_id" id="manual_room_id" class="form-select rounded-3 fw-bold" required onchange="runInvoiceFetchPreview()">
+                                        <option value="">-- Chọn phòng trọ cần lập hóa đơn --</option>
+                                        <?php if (!empty($activeContractRooms)): foreach ($activeContractRooms as $ar): ?>
+                                            <option value="<?= (int)$ar['id'] ?>" data-room-number="<?= h($ar['room_number']) ?>">
+                                                Phòng <?= h($ar['room_number']) ?> - <?= h($ar['tenant_name']) ?> (<?= money($ar['price']) ?>)
+                                            </option>
+                                        <?php endforeach; else: foreach ($rooms as $rm): ?>
+                                            <option value="<?= (int)$rm['id'] ?>" data-room-number="<?= h($rm['room_number']) ?>">
+                                                Phòng <?= h($rm['room_number']) ?>
+                                            </option>
+                                        <?php endforeach; endif; ?>
+                                    </select>
+                                </div>
+
+                                <div class="col-md-3">
+                                    <label class="form-label small fw-bold mb-1">
+                                        Kỳ hóa đơn (MM-YYYY) <span class="text-danger">*</span>
+                                    </label>
+                                    <select name="month_year" id="manual_month_year" class="form-select rounded-3 fw-bold" required onchange="runInvoiceFetchPreview()">
+                                        <?php 
+                                        $curM = date('m-Y');
+                                        $prevM = date('m-Y', strtotime('-1 month'));
+                                        $nextM = date('m-Y', strtotime('+1 month'));
+                                        $optPeriods = array_unique(array_merge([$curM, $prevM, $nextM], $periods));
+                                        foreach ($optPeriods as $op): if ($op === 'all') continue; ?>
+                                            <option value="<?= h($op) ?>" <?= ($op === $filters['period'] || ($filters['period'] === 'all' && $op === $curM)) ? 'selected' : '' ?>>
+                                                Kỳ <?= h($op) ?>
+                                            </option>
+                                        <?php endforeach; ?>
+                                    </select>
+                                </div>
+
+                                <div class="col-md-4">
+                                    <label class="form-label small fw-bold mb-1">Hạn thanh toán</label>
+                                    <input type="date" name="due_date" id="manual_due_date" class="form-control rounded-3" value="<?= date('Y-m-10', strtotime('+1 month')) ?>">
+                                </div>
+
+                                <div class="col-12">
+                                    <label class="form-label small fw-bold mb-1">Ghi chú hóa đơn</label>
+                                    <input type="text" name="notes" id="manual_notes" class="form-control rounded-3" placeholder="Ghi chú thêm cho người thuê (nếu có)">
+                                </div>
+                            </div>
+
+                            <!-- KHUNG XEM TRƯỚC FETCH API (JSON PREVIEW) -->
+                            <div class="card border rounded-4 shadow-xs mb-3" style="background:#f8fafc;">
+                                <div class="card-header bg-white py-2 px-3 border-bottom d-flex justify-content-between align-items-center">
+                                    <span class="small fw-bold text-teal-main">
+                                        <i class="fa-solid fa-calculator me-1"></i> Bảng tính xem trước tiền hóa đơn (Fetch API Preview)
+                                    </span>
+                                    <span id="preview_fetch_badge" class="badge rounded-pill bg-light text-secondary border">Sẵn sàng</span>
+                                </div>
+                                <div class="card-body p-3" id="preview_content_area">
+                                    <div class="text-center text-muted py-4">
+                                        <i class="fa-solid fa-hand-pointer fs-3 text-teal-main opacity-50 mb-2 d-block"></i>
+                                        <span class="small fw-bold">Vui lòng chọn Phòng trọ và Kỳ hóa đơn ở trên để tự động tải dữ liệu tính tiền từ máy chủ.</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="d-flex justify-content-end gap-2">
+                                <button type="button" class="btn btn-light rounded-pill px-4 fw-bold" data-bs-dismiss="modal">Đóng</button>
+                                <button type="submit" id="btn_submit_manual_inv" class="btn-teal-custom" disabled>
+                                    <i class="fa-solid fa-check me-2"></i> Xác Nhận Tạo Hóa Đơn
+                                </button>
+                            </div>
+                        </form>
                     </div>
-                    <div class="table-rounded-wrap table-responsive" style="max-height:55vh;overflow:auto">
-                        <table class="table table-staymate align-middle mb-0">
-                            <thead><tr><th>PHÒNG &amp; KHÁCH</th><th>KỲ</th><th class="text-end">PHÒNG</th><th class="text-end">ĐIỆN</th><th class="text-end">NƯỚC</th><th class="text-end">DỊCH VỤ</th><th class="text-end">TỔNG DỰ KIẾN</th><th class="text-end">LẬP</th></tr></thead>
-                            <tbody>
-                            <?php foreach ($pendingView as $pv): ?>
-                                <tr>
-                                    <td>
-                                        <div class="d-flex align-items-center gap-2">
-                                            <span class="badge-room-pill"><?= h($pv['room_number']) ?></span>
-                                            <span class="tenant-name fw-bold" style="font-size:0.92rem"><?= h($pv['tenant_name'] ?? 'Chưa có hợp đồng') ?></span>
-                                        </div>
-                                    </td>
-                                    <td><span class="badge-period-pill"><?= h($pv['month_year']) ?></span></td>
-                                    <td class="text-end"><?= money($pv['room_price']) ?></td>
-                                    <td class="text-end"><?= money($pv['e_used'] * $rates['elec']) ?><div class="sub-note"><?= $pv['e_used'] ?> kWh</div></td>
-                                    <td class="text-end"><?= money($pv['w_used'] * $rates['water']) ?><div class="sub-note"><?= $pv['w_used'] ?> m³</div></td>
-                                    <td class="text-end"><?= money($rates['others_total']) ?></td>
-                                    <td class="text-end" style="font-weight:900;color:var(--teal-main)"><?= money($pv['preview_total']) ?></td>
-                                    <td class="text-end">
-                                        <?php if ($pv['contract_id']): ?>
-                                        <form method="POST" action="index.php?route=invoices/store" class="d-inline">
-                                            <input type="hidden" name="csrf_token" value="<?= h($csrf) ?>">
-                                            <input type="hidden" name="reading_id" value="<?= (int)$pv['id'] ?>">
-                                            <input type="hidden" name="return_query" value="<?= h($returnQuery) ?>">
-                                            <button type="submit" class="btn-teal-custom py-1 px-3" style="font-size:.8rem"><i class="fa-solid fa-wand-magic-sparkles"></i> Lập</button>
-                                        </form>
-                                        <?php else: ?><span class="text-danger small fw-bold">Thiếu hợp đồng</span><?php endif; ?>
-                                    </td>
-                                </tr>
-                            <?php endforeach; ?>
-                            </tbody>
-                        </table>
+
+                    <!-- TAB 2: LẬP NHANH TỪ CÁC CHỈ SỐ ĐÃ CHỐT -->
+                    <div class="tab-pane fade" id="pane-batch-inv" role="tabpanel">
+                        <?php if ($pendingView): ?>
+                            <?php
+                            $pendingPeriods = array_values(array_unique(array_column($pendingView, 'month_year')));
+                            ?>
+                            <div class="d-flex flex-wrap gap-2 mb-3 align-items-center">
+                                <span class="fw-bold small text-muted">Lập hàng loạt cho kỳ:</span>
+                                <?php foreach ($pendingPeriods as $pp):
+                                    $cnt = count(array_filter($pendingView, fn($x) => $x['month_year'] === $pp)); ?>
+                                    <form method="POST" action="index.php?route=invoices/store-all" class="d-inline" onsubmit="return confirm('Lập <?= $cnt ?> hóa đơn kỳ <?= h($pp) ?>?');">
+                                        <input type="hidden" name="csrf_token" value="<?= h($csrf) ?>">
+                                        <input type="hidden" name="period" value="<?= h($pp) ?>">
+                                        <input type="hidden" name="return_query" value="<?= h($returnQuery) ?>">
+                                        <button type="submit" class="btn-pill-amber py-1 px-3" style="font-size:.8rem"><i class="fa-solid fa-layer-group"></i> Kỳ <?= h($pp) ?> (<?= $cnt ?>)</button>
+                                    </form>
+                                <?php endforeach; ?>
+                            </div>
+                            <div class="table-rounded-wrap table-responsive" style="max-height:50vh;overflow:auto">
+                                <table class="table table-staymate align-middle mb-0">
+                                    <thead><tr><th>PHÒNG &amp; KHÁCH</th><th>KỲ</th><th class="text-end">PHÒNG</th><th class="text-end">ĐIỆN</th><th class="text-end">NƯỚC</th><th class="text-end">DỊCH VỤ</th><th class="text-end">TỔNG DỰ KIẾN</th><th class="text-end">LẬP</th></tr></thead>
+                                    <tbody>
+                                    <?php foreach ($pendingView as $pv): ?>
+                                        <tr>
+                                            <td>
+                                                <div class="d-flex align-items-center gap-2">
+                                                    <span class="badge-room-pill"><?= h($pv['room_number']) ?></span>
+                                                    <span class="tenant-name fw-bold" style="font-size:0.92rem"><?= h($pv['tenant_name'] ?? 'Chưa có hợp đồng') ?></span>
+                                                </div>
+                                            </td>
+                                            <td><span class="badge-period-pill"><?= h($pv['month_year']) ?></span></td>
+                                            <td class="text-end"><?= money($pv['room_price']) ?></td>
+                                            <td class="text-end"><?= money($pv['e_used'] * $rates['elec']) ?><div class="sub-note"><?= $pv['e_used'] ?> kWh</div></td>
+                                            <td class="text-end"><?= money($pv['w_used'] * $rates['water']) ?><div class="sub-note"><?= $pv['w_used'] ?> m³</div></td>
+                                            <td class="text-end"><?= money($rates['others_total']) ?></td>
+                                            <td class="text-end" style="font-weight:900;color:var(--teal-main)"><?= money($pv['preview_total']) ?></td>
+                                            <td class="text-end">
+                                                <?php if ($pv['contract_id']): ?>
+                                                <form method="POST" action="index.php?route=invoices/store" class="d-inline">
+                                                    <input type="hidden" name="csrf_token" value="<?= h($csrf) ?>">
+                                                    <input type="hidden" name="reading_id" value="<?= (int)$pv['id'] ?>">
+                                                    <input type="hidden" name="return_query" value="<?= h($returnQuery) ?>">
+                                                    <button type="submit" class="btn-teal-custom py-1 px-3" style="font-size:.8rem"><i class="fa-solid fa-wand-magic-sparkles"></i> Lập</button>
+                                                </form>
+                                                <?php else: ?><span class="text-danger small fw-bold">Thiếu hợp đồng</span><?php endif; ?>
+                                            </td>
+                                        </tr>
+                                    <?php endforeach; ?>
+                                    </tbody>
+                                </table>
+                            </div>
+                        <?php else: ?>
+                            <div class="text-center py-4">
+                                <i class="fa-solid fa-circle-check text-success fs-2 mb-2 d-block"></i>
+                                <div class="fw-bold">Tất cả bản ghi điện nước đã được lập hóa đơn.</div>
+                                <a href="index.php?route=utilities" class="btn-teal-custom btn-sm mt-2"><i class="fa-solid fa-bolt"></i> Chốt thêm chỉ số điện nước</a>
+                            </div>
+                        <?php endif; ?>
                     </div>
-                <?php else: ?>
-                    <div class="text-center py-5">
-                        <i class="fa-solid fa-circle-check text-success fs-1 mb-3 d-block"></i>
-                        <div class="fw-bold">Tất cả bản ghi điện nước đã được lập hóa đơn.</div>
-                        <a href="index.php?route=utilities" class="btn-teal-custom mt-3"><i class="fa-solid fa-bolt"></i> Chốt thêm chỉ số điện nước</a>
-                    </div>
-                <?php endif; ?>
+                </div>
             </div>
         </div>
     </div>
@@ -1041,6 +1097,137 @@ $pendingInPeriod = array_values(array_filter($pendingView, fn($x) => $filters['p
         document.getElementById('edit_inv_method').value = method || 'transfer';
         document.getElementById('edit_inv_note').value = note || '';
         new bootstrap.Modal(document.getElementById('editInvoiceModal')).show();
+    }
+
+    // ==============================================================================
+    // FETCH API: XEM TRƯỚC TỔNG TIỀN HÓA ĐƠN THEO KỊCH BẢN ĐỀ BÀI TẬP LỚN
+    // ==============================================================================
+    async function runInvoiceFetchPreview() {
+        const roomId = document.getElementById('manual_room_id').value;
+        const monthYear = document.getElementById('manual_month_year').value;
+        const area = document.getElementById('preview_content_area');
+        const badge = document.getElementById('preview_fetch_badge');
+        const submitBtn = document.getElementById('btn_submit_manual_inv');
+
+        if (!roomId || !monthYear) {
+            area.innerHTML = `
+                <div class="text-center text-muted py-4">
+                    <i class="fa-solid fa-hand-pointer fs-3 text-teal-main opacity-50 mb-2 d-block"></i>
+                    <span class="small fw-bold">Vui lòng chọn Phòng trọ và Kỳ hóa đơn ở trên để tự động tải dữ liệu tính tiền từ máy chủ.</span>
+                </div>
+            `;
+            badge.className = 'badge rounded-pill bg-light text-secondary border';
+            badge.textContent = 'Chờ chọn phòng';
+            submitBtn.disabled = true;
+            return;
+        }
+
+        badge.className = 'badge rounded-pill bg-warning-subtle text-warning-emphasis border';
+        badge.innerHTML = '<i class="fa-solid fa-spinner fa-spin me-1"></i> Đang tính toán...';
+        area.innerHTML = `
+            <div class="text-center py-4 text-muted">
+                <div class="spinner-border text-teal-main spinner-border-sm mb-2" role="status"></div>
+                <div class="small fw-bold">Đang gọi Fetch API xem trước tổng tiền hóa đơn...</div>
+            </div>
+        `;
+        submitBtn.disabled = true;
+
+        try {
+            const resp = await fetch(`index.php?route=api/invoices/preview&room_id=${encodeURIComponent(roomId)}&month_year=${encodeURIComponent(monthYear)}`);
+            const data = await resp.json();
+
+            if (!data.ok) {
+                badge.className = 'badge rounded-pill bg-danger text-white';
+                badge.textContent = data.is_duplicate ? 'Đã có HĐ' : 'Chưa thể lập';
+                area.innerHTML = `
+                    <div class="alert alert-danger rounded-3 py-2 px-3 small fw-bold mb-0">
+                        <i class="fa-solid fa-circle-xmark me-2"></i> ${data.msg || 'Không thể lấy dữ liệu tính tiền.'}
+                    </div>
+                `;
+                submitBtn.disabled = true;
+                return;
+            }
+
+            badge.className = 'badge rounded-pill bg-success text-white';
+            badge.innerHTML = '<i class="fa-solid fa-circle-check me-1"></i> Khớp dữ liệu Server (Fetch API)';
+
+            let svcsHtml = '';
+            if (data.services && data.services.length > 0) {
+                svcsHtml = data.services.map(s => `
+                    <div class="d-flex justify-content-between small text-muted">
+                        <span>• ${s.name} (${s.unit}):</span>
+                        <span class="fw-bold">${Number(s.price).toLocaleString('vi-VN')} đ</span>
+                    </div>
+                `).join('');
+            }
+
+            area.innerHTML = `
+                <div class="p-2 mb-3 bg-white rounded-3 border">
+                    <div class="d-flex justify-content-between align-items-center mb-1">
+                        <div>
+                            <span class="badge-room-pill me-2">${data.room_number}</span>
+                            <strong>${data.tenant_name}</strong> - <span>${data.tenant_phone}</span>
+                        </div>
+                        <span class="badge rounded-pill bg-teal text-white small">Hợp đồng: ${data.contract_code}</span>
+                    </div>
+                </div>
+
+                <div class="row g-2 mb-3 small">
+                    <div class="col-md-6">
+                        <div class="p-2 rounded-3 border bg-white h-100">
+                            <div class="fw-bold text-teal-main mb-1"><i class="fa-solid fa-house me-1"></i> Tiền phòng:</div>
+                            <div class="fs-6 fw-black text-dark">${Number(data.room_price).toLocaleString('vi-VN')} đ / tháng</div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="p-2 rounded-3 border bg-white h-100">
+                            <div class="fw-bold text-teal-main mb-1"><i class="fa-solid fa-shield-halved me-1"></i> Trạng thái cọc:</div>
+                            <div class="fw-bold text-dark">${data.deposit_note}</div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="p-2 rounded-3 border bg-white h-100">
+                            <div class="fw-bold text-warning-emphasis mb-1"><i class="fa-solid fa-bolt text-warning me-1"></i> Điện sinh hoạt:</div>
+                            <div>Chỉ số: <strong>${data.electric.old}</strong> &rarr; <strong>${data.electric.new}</strong> (+${data.electric.usage} kWh &times; ${Number(data.electric.rate).toLocaleString('vi-VN')} đ)</div>
+                            <div class="fw-bold text-danger mt-1">= ${Number(data.electric.amount).toLocaleString('vi-VN')} đ</div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="p-2 rounded-3 border bg-white h-100">
+                            <div class="fw-bold text-primary mb-1"><i class="fa-solid fa-droplet text-info me-1"></i> Nước sinh hoạt:</div>
+                            <div>Chỉ số: <strong>${data.water.old}</strong> &rarr; <strong>${data.water.new}</strong> (+${data.water.usage} m³ &times; ${Number(data.water.rate).toLocaleString('vi-VN')} đ)</div>
+                            <div class="fw-bold text-primary mt-1">= ${Number(data.water.amount).toLocaleString('vi-VN')} đ</div>
+                        </div>
+                    </div>
+                    <div class="col-12">
+                        <div class="p-2 rounded-3 border bg-white">
+                            <div class="d-flex justify-content-between align-items-center mb-1">
+                                <span class="fw-bold text-teal-main"><i class="fa-solid fa-layer-group me-1"></i> Dịch vụ cố định:</span>
+                                <strong class="text-teal-main">= ${Number(data.services_total).toLocaleString('vi-VN')} đ</strong>
+                            </div>
+                            ${svcsHtml}
+                        </div>
+                    </div>
+                </div>
+
+                <div class="d-flex justify-content-between align-items-center p-3 rounded-3 bg-white border border-teal">
+                    <span class="fs-6 fw-black text-dark">TỔNG CỘNG HÓA ĐƠN DỰ KIẾN:</span>
+                    <span class="fs-4 fw-black text-teal-main" style="color:var(--teal-main);font-weight:900;">
+                        ${Number(data.total_amount).toLocaleString('vi-VN')} đ
+                    </span>
+                </div>
+            `;
+            submitBtn.disabled = false;
+        } catch (err) {
+            badge.className = 'badge rounded-pill bg-danger text-white';
+            badge.textContent = 'Lỗi kết nối';
+            area.innerHTML = `
+                <div class="alert alert-danger rounded-3 py-2 px-3 small fw-bold mb-0">
+                    <i class="fa-solid fa-circle-xmark me-2"></i> Lỗi khi gọi Fetch API: ${err.message}
+                </div>
+            `;
+            submitBtn.disabled = true;
+        }
     }
 </script>
 
