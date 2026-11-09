@@ -79,7 +79,7 @@ class ContractController {
                 }
                 $_SESSION['flash_success'] = $msg;
             }
-
+ 
             $roomLabel = $contract['room_number'] ?? ('#' . $data['room_id']);
             $tenantLabel = $contract['full_name'] ?? ('#' . $data['tenant_id']);
             $typeLabel = ($data['contract_type'] ?? '') === 'deposit_hold' ? 'HĐ Đặt cọc giữ chỗ' : 'HĐ Thuê chính thức';
