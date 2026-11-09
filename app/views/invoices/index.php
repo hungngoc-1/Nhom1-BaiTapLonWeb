@@ -236,7 +236,7 @@ $pendingInPeriod = array_values(array_filter($pendingView, fn($x) => $filters['p
 
 <div class="container-fluid px-4 px-xl-5 py-4 position-relative">
 
-    <div class="d-flex flex-wrap justify-content-end align-items-center mb-2 no-print">
+    <div class="d-flex flex-wrap justify-content-end align-items-center gap-2 mb-2 no-print">
         <div class="dropdown">
             <button class="period-dropdown-btn" type="button" data-bs-toggle="dropdown" aria-expanded="false">
                 <span><i class="fa-regular fa-calendar-check me-1 text-teal-main"></i> Kỳ đang xem:</span>
@@ -244,6 +244,11 @@ $pendingInPeriod = array_values(array_filter($pendingView, fn($x) => $filters['p
                 <i class="fa-solid fa-chevron-down text-muted small"></i>
             </button>
             <ul class="dropdown-menu dropdown-menu-end period-dropdown-menu">
+                <li>
+                    <button type="button" class="dropdown-item text-teal-main fw-black" style="background:#f0fdfa;border:1.5px dashed #308f86;margin-bottom:6px;" data-bs-toggle="modal" data-bs-target="#addPeriodModal">
+                        <span><i class="fa-solid fa-calendar-plus me-2"></i>+ Thêm kỳ mới</span>
+                    </button>
+                </li>
                 <li>
                     <a class="dropdown-item <?= $filters['period'] === 'all' ? 'active' : '' ?>" href="index.php?route=invoices&period=all">
                         <span><i class="fa-solid fa-layer-group me-2"></i>Tất cả các kỳ</span>
@@ -261,6 +266,9 @@ $pendingInPeriod = array_values(array_filter($pendingView, fn($x) => $filters['p
                 <?php endforeach; ?>
             </ul>
         </div>
+        <button type="button" class="period-dropdown-btn text-teal-main" data-bs-toggle="modal" data-bs-target="#addPeriodModal" title="Thêm kỳ mới vào danh sách">
+            <i class="fa-solid fa-plus-circle"></i> Thêm kỳ
+        </button>
     </div>
 
     <div class="header-title-wrapper">
@@ -646,10 +654,8 @@ $pendingInPeriod = array_values(array_filter($pendingView, fn($x) => $filters['p
                                     </label>
                                     <select name="month_year" id="manual_month_year" class="form-select rounded-3 fw-bold" required onchange="runInvoiceFetchPreview()">
                                         <?php 
-                                        $curM = date('m-Y');
-                                        $prevM = date('m-Y', strtotime('-1 month'));
-                                        $nextM = date('m-Y', strtotime('+1 month'));
-                                        $optPeriods = array_unique(array_merge([$curM, $prevM, $nextM], $periods));
+                                        $curM = '10-2026';
+                                        $optPeriods = array_unique(array_merge(['10-2026', '09-2026', '08-2026'], $periods));
                                         foreach ($optPeriods as $op): if ($op === 'all') continue; ?>
                                             <option value="<?= h($op) ?>" <?= ($op === $filters['period'] || ($filters['period'] === 'all' && $op === $curM)) ? 'selected' : '' ?>>
                                                 Kỳ <?= h($op) ?>
@@ -1290,6 +1296,66 @@ $pendingInPeriod = array_values(array_filter($pendingView, fn($x) => $filters['p
                     <button type="button" class="btn btn-outline-secondary rounded-pill px-4" data-bs-dismiss="modal">Đóng</button>
                     <a href="index.php?route=auth/logout" class="btn btn-danger rounded-pill px-4"><i class="fa-solid fa-right-from-bracket me-1"></i> Đăng xuất</a>
                 </div>
+            </div>
+        </div>
+    </div>
+
+    <?php
+        $topInvPeriod = $periods[0] ?? '10-2026';
+        $nextInvMonth = 11;
+        $nextInvYear = 2026;
+        if (preg_match('/^(\d{2})-(\d{4})$/', $topInvPeriod, $mp)) {
+            $nextInvMonth = (int)$mp[1] + 1;
+            $nextInvYear = (int)$mp[2];
+            if ($nextInvMonth > 12) { $nextInvMonth = 1; $nextInvYear++; }
+        }
+    ?>
+    <!-- MODAL THEM KY MOI -->
+    <div class="modal fade modal-staymate" id="addPeriodModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <div>
+                        <h5 class="modal-title fw-black text-teal-main mb-0" style="font-weight:900;">
+                            <i class="fa-solid fa-calendar-plus me-2"></i> Thêm Kỳ Mới
+                        </h5>
+                        <div class="text-muted small fw-bold">Tạo kỳ tháng mới để theo dõi điện nước &amp; hóa đơn</div>
+                    </div>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <form method="POST" action="index.php?route=invoices">
+                    <input type="hidden" name="action" value="add_period">
+                    <div class="modal-body p-4">
+                        <div class="row g-3 mb-3">
+                            <div class="col-6">
+                                <label class="form-label fw-bold small text-uppercase text-muted">Chọn Tháng</label>
+                                <select name="new_period_month" class="form-select filter-control rounded-4 py-2" required>
+                                    <?php for ($m = 1; $m <= 12; $m++): $mStr = str_pad((string)$m, 2, '0', STR_PAD_LEFT); ?>
+                                        <option value="<?= $mStr ?>" <?= $m === $nextInvMonth ? 'selected' : '' ?>>Tháng <?= $mStr ?></option>
+                                    <?php endfor; ?>
+                                </select>
+                            </div>
+                            <div class="col-6">
+                                <label class="form-label fw-bold small text-uppercase text-muted">Chọn Năm</label>
+                                <select name="new_period_year" class="form-select filter-control rounded-4 py-2" required>
+                                    <?php for ($y = 2025; $y <= 2030; $y++): ?>
+                                        <option value="<?= $y ?>" <?= $y === $nextInvYear ? 'selected' : '' ?>>Năm <?= $y ?></option>
+                                    <?php endfor; ?>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="p-3 rounded-4 bg-light border small fw-semibold text-secondary">
+                            <i class="fa-solid fa-circle-info text-teal-main me-1"></i>
+                            Kỳ mới sẽ được thêm vào mục <strong>Kỳ đang xem</strong> trên cả trang Điện Nước và Hóa Đơn.
+                        </div>
+                    </div>
+                    <div class="modal-footer border-0 pt-0 px-4 pb-4">
+                        <button type="button" class="btn-pill-white px-4" data-bs-dismiss="modal">Hủy</button>
+                        <button type="submit" class="btn-teal-custom px-4">
+                            <i class="fa-solid fa-plus me-1"></i> Thêm Kỳ &amp; Xem Ngay
+                        </button>
+                    </div>
+                </form>
             </div>
         </div>
     </div>

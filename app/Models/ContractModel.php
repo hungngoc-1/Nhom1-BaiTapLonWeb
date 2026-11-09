@@ -465,7 +465,7 @@ class ContractModel {
             $endDate = !empty($data['end_date']) ? $data['end_date'] : date('Y-m-d', strtotime($startDate . ' + 6 months'));
             $depositPaidPercent = 100;
             $depositAmount = $monthlyRent; // 100% tiền cọc = 1 tháng tiền phòng
-            $firstMonthPaid = 1;
+            $firstMonthPaid = 0; // Chưa thu: quản lý tự bấm xác nhận thu tiền tháng đầu ở trang Hóa đơn
             $firstMonthInvoiceId = null;
             $notes = trim($data['notes'] ?? '');
             if ($parentContractId > 0) {
@@ -512,9 +512,10 @@ class ContractModel {
 
         $newContractId = (int)$this->conn->lastInsertId();
 
-        // Nếu là Hợp đồng 2: Thu luôn 1 tháng tiền phòng đầu tiên & tự động cộng vào Doanh thu
+        // Nếu là Hợp đồng 2: xử lý chuyển tiếp từ HĐ 1 (tiền phòng tháng đầu do quản lý tự xác nhận thu)
         if ($contractType === 'official_lease' && $monthlyRent > 0) {
-            $invoiceId = $this->createFirstMonthRentInvoice($newContractId, (int)$data['room_id'], $monthlyRent, $startDate, $code);
+            // KHÔNG tự động tạo hóa đơn "đã thu" khi ký HĐ 2 (quản lý tự xác nhận thu tiền ở trang Hóa đơn)
+            $invoiceId = 0;
             if ($invoiceId > 0) {
                 $this->conn->prepare("UPDATE contracts SET first_month_rent_paid = 1, first_month_invoice_id = :inv_id WHERE id = :id")
                            ->execute([':inv_id' => $invoiceId, ':id' => $newContractId]);
@@ -547,7 +548,7 @@ class ContractModel {
      */
     private function createFirstMonthRentInvoice($contractId, $roomId, $monthlyRent, $startDate, $contractCode) {
         try {
-            $monthYear = date('m/Y', strtotime($startDate));
+            $monthYear = date('m-Y', strtotime($startDate)); // Chuẩn kỳ MM-YYYY
             // Kiểm tra xem kỳ này đã có hóa đơn chưa
             $chk = $this->conn->prepare("SELECT id FROM invoices WHERE room_id = :room_id AND month_year = :month_year LIMIT 1");
             $chk->execute([':room_id' => $roomId, ':month_year' => $monthYear]);

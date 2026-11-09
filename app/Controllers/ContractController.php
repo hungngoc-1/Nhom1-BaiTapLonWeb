@@ -1,5 +1,6 @@
 <?php
 require_once __DIR__ . '/../Models/ContractModel.php';
+require_once __DIR__ . '/../Models/ReportModel.php';
 
 class ContractController {
     private $contractModel;
@@ -78,6 +79,11 @@ class ContractController {
                 }
                 $_SESSION['flash_success'] = $msg;
             }
+
+            $roomLabel = $contract['room_number'] ?? ('#' . $data['room_id']);
+            $tenantLabel = $contract['full_name'] ?? ('#' . $data['tenant_id']);
+            $typeLabel = ($data['contract_type'] ?? '') === 'deposit_hold' ? 'HĐ Đặt cọc giữ chỗ' : 'HĐ Thuê chính thức';
+            ReportModel::recordActivity("Đã lập {$typeLabel} {$code} cho phòng {$roomLabel} — Khách thuê: {$tenantLabel}.", 'success');
 
             $this->redirect('index.php?route=contracts/detail&id=' . $contractId);
         } catch (PDOException $e) {
@@ -189,6 +195,7 @@ class ContractController {
 
         if ($this->contractModel->saveOnlineSignature($id, $tenantSig, $managerSig)) {
             $_SESSION['flash_success'] = 'Đã lưu chữ ký hợp đồng điện tử thành công!';
+            ReportModel::recordActivity("Đã lưu chữ ký hợp đồng " . ($contract['contract_code'] ?? ('#' . $id)) . " (Phòng " . ($contract['room_number'] ?? '') . ").", 'success');
         } else {
             $_SESSION['flash_error'] = 'Không thể lưu chữ ký điện tử.';
         }
@@ -228,6 +235,7 @@ class ContractController {
         if (move_uploaded_file($_FILES['scan_file']['tmp_name'], $targetPath)) {
             $this->contractModel->saveScanFile($id, 'public/uploads/contracts/' . $fileName);
             $_SESSION['flash_success'] = 'Đã lưu bản Scan hợp đồng ký giấy thành công! Khách thuê có thể xem ngay trên cổng khách thuê.';
+            ReportModel::recordActivity("Đã tải lên bản Scan hợp đồng ký giấy " . ($contract['contract_code'] ?? ('#' . $id)) . " (Phòng " . ($contract['room_number'] ?? '') . ").", 'success');
         } else {
             $_SESSION['flash_error'] = 'Không thể lưu file tải lên vào máy chủ.';
         }
@@ -243,12 +251,15 @@ class ContractController {
         $moveOutDate = !empty($_POST['move_out_date']) ? $_POST['move_out_date'] : date('Y-m-d');
         $reason = trim($_POST['termination_reason'] ?? '');
 
+        $cBefore = $this->contractModel->getContractById($id);
         $res = $this->contractModel->terminateContract($id, $moveOutDate, $reason);
         if ($res) {
             if ($res['is_completed_term']) {
                 $_SESSION['flash_success'] = 'Đã thanh lý hợp đồng! ' . $res['reason'];
+                ReportModel::recordActivity("Đã thanh lý hợp đồng " . ($cBefore['contract_code'] ?? ('#' . $id)) . " (Phòng " . ($cBefore['room_number'] ?? '') . ").", 'info');
             } else {
                 $_SESSION['flash_warning'] = 'Đã thanh lý hợp đồng trước hạn! ' . $res['reason'];
+                ReportModel::recordActivity("Đã thanh lý trước hạn hợp đồng " . ($cBefore['contract_code'] ?? ('#' . $id)) . " (Phòng " . ($cBefore['room_number'] ?? '') . ").", 'warning');
             }
         } else {
             $_SESSION['flash_error'] = 'Không thể thanh lý hợp đồng.';
@@ -266,6 +277,7 @@ class ContractController {
         if ($this->contractModel->renewContract($id, $months)) {
             $c = $this->contractModel->getContractById($id);
             $_SESSION['flash_success'] = 'Đã gia hạn hợp đồng ' . ($c['contract_code'] ?? '') . ' thêm ' . $months . ' tháng (đến ngày ' . date('d/m/Y', strtotime($c['end_date'])) . ')!';
+            ReportModel::recordActivity($_SESSION['flash_success'], 'success');
         } else {
             $_SESSION['flash_error'] = 'Không thể gia hạn hợp đồng.';
         }
@@ -317,6 +329,7 @@ class ContractController {
         try {
             $this->contractModel->updateContract($id, $data);
             $_SESSION['flash_success'] = 'Cập nhật thông tin hợp đồng thành công!';
+            ReportModel::recordActivity("Đã cập nhật thông tin hợp đồng " . ($data['contract_code'] ?: ('#' . $id)) . ".", 'info');
         } catch (PDOException $e) {
             $_SESSION['flash_error'] = 'Không thể cập nhật hợp đồng: ' . $e->getMessage();
         }
@@ -335,6 +348,7 @@ class ContractController {
             try {
                 $this->contractModel->deleteContract($id);
                 $_SESSION['flash_success'] = 'Đã xóa hợp đồng thành công.';
+                ReportModel::recordActivity("Đã xóa hợp đồng " . ($contract['contract_code'] ?? ('#' . $id)) . " khỏi hệ thống.", 'warning');
             } catch (PDOException $e) {
                 $_SESSION['flash_error'] = 'Không thể xóa hợp đồng đã phát sinh hóa đơn liên quan.';
             }

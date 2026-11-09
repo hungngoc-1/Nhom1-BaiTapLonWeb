@@ -97,11 +97,100 @@ class InvoiceModel {
     // ===================== KỲ & DANH SÁCH =====================
     private const ORDER_PERIOD = "SUBSTRING(i.month_year, 4, 4) DESC, SUBSTRING(i.month_year, 1, 2) DESC";
 
+    /** Chuẩn hóa kỳ về đúng 1 định dạng MM-YYYY (VD: "11/2026", "2026-11", "1-2026" => "11-2026"). */
+    public static function normalizePeriod(string $period): string {
+        $period = trim($period);
+        if ($period === '' || $period === 'all') return $period;
+        if (preg_match('/^(\d{4})[\/\-](\d{1,2})$/', $period, $m)) return str_pad($m[2], 2, '0', STR_PAD_LEFT) . '-' . $m[1];
+        if (preg_match('/^(\d{1,2})[\/\-](\d{4})$/', $period, $m)) return str_pad($m[1], 2, '0', STR_PAD_LEFT) . '-' . $m[2];
+        return $period;
+    }
+
+    /** Đọc danh sách các kỳ do quản lý tự thêm từ file JSON. */
+    public static function getCustomPeriods(): array {
+        $file = dirname(__DIR__, 2) . '/database/custom_periods.json';
+        if (!is_file($file)) return [];
+        $data = json_decode((string)file_get_contents($file), true);
+        if (!is_array($data)) return [];
+        $out = [];
+        foreach ($data as $p) {
+            $norm = self::normalizePeriod((string)$p);
+            if (preg_match('/^(0[1-9]|1[0-2])-\d{4}$/', $norm)) {
+                $out[] = $norm;
+            }
+        }
+        return array_values(array_unique($out));
+    }
+
+    /** Thêm kỳ mới vào danh sách kỳ hệ thống. */
+    public static function addCustomPeriod(string $rawPeriod): array {
+        $norm = self::normalizePeriod($rawPeriod);
+        if (!preg_match('/^(0[1-9]|1[0-2])-(\d{4})$/', $norm)) {
+            return ['ok' => false, 'msg' => 'Định dạng kỳ không hợp lệ! Vui lòng nhập theo dạng MM-YYYY (VD: 11-2026).'];
+        }
+        $list = self::getCustomPeriods();
+        if (!in_array($norm, $list, true)) {
+            $list[] = $norm;
+        }
+        $file = dirname(__DIR__, 2) . '/database/custom_periods.json';
+        file_put_contents($file, json_encode(array_values(array_unique($list)), JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
+        return ['ok' => true, 'period' => $norm, 'msg' => "Đã thêm Kỳ $norm vào danh sách kỳ thành công!"];
+    }
+
+    /** Đọc chỉ số điện nước đầu vào của khách mới nhận phòng. */
+    public static function getInitialMeters(): array {
+        $file = dirname(__DIR__, 2) . '/database/initial_meters.json';
+        if (!is_file($file)) return [];
+        $data = json_decode((string)file_get_contents($file), true);
+        return is_array($data) ? $data : [];
+    }
+
+    /** Lưu chỉ số điện nước đầu vào cho khách mới nhận phòng. */
+    public static function saveInitialMeter(int $roomId, int $electric, int $water): array {
+        if ($roomId <= 0 || $electric < 0 || $water < 0) {
+            return ['ok' => false, 'msg' => 'Chỉ số điện nước đầu vào phải là số nguyên không âm!'];
+        }
+        $meters = self::getInitialMeters();
+        $meters[(string)$roomId] = [
+            'electric'   => $electric,
+            'water'      => $water,
+            'updated_at' => date('Y-m-d H:i:s'),
+        ];
+        $file = dirname(__DIR__, 2) . '/database/initial_meters.json';
+        file_put_contents($file, json_encode($meters, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
+        return ['ok' => true, 'msg' => 'Đã ghi nhận chỉ số điện nước đầu vào cho khách mới!'];
+    }
+
     public function getPeriods(): array {
-        return $this->db->query("
-            SELECT DISTINCT month_year FROM invoices i
-            ORDER BY " . self::ORDER_PERIOD
-        )->fetchAll(PDO::FETCH_COLUMN);
+        $rows = $this->db->query("
+            SELECT DISTINCT month_year FROM invoices
+            UNION
+            SELECT DISTINCT month_year FROM utilities_readings
+        ")->fetchAll(PDO::FETCH_COLUMN);
+        // Luôn hiển thị Kỳ 10-2026 (chưa chốt), Kỳ 09-2026, Kỳ 08-2026 và các kỳ đã thêm
+        $rows = array_merge(['10-2026', '09-2026', '08-2026'], self::getCustomPeriods(), $rows);
+        if (!empty($_GET['period'])) {
+            $reqP = self::normalizePeriod((string)$_GET['period']);
+            if (preg_match('/^(0[1-9]|1[0-2])-\d{4}$/', $reqP)) {
+                $rows[] = $reqP;
+            }
+        }
+        $periods = array_values(array_unique(array_map([self::class, 'normalizePeriod'], $rows)));
+        usort($periods, function ($a, $b) {
+            $ka = substr($a, 3, 4) . substr($a, 0, 2);
+            $kb = substr($b, 3, 4) . substr($b, 0, 2);
+            return strcmp($kb, $ka);
+        });
+        return $periods;
+    }
+
+    public function getLatestInvoicePeriod(): string {
+        $latest = $this->db->query("
+            SELECT month_year FROM invoices
+            ORDER BY SUBSTRING(month_year, 4, 4) DESC, SUBSTRING(month_year, 1, 2) DESC
+            LIMIT 1
+        ")->fetchColumn();
+        return $latest ? self::normalizePeriod((string)$latest) : '09-2026';
     }
 
     public function getInvoices(array $f = []): array {
@@ -362,6 +451,7 @@ class InvoiceModel {
 
     // ===================== FETCH API PREVIEW & LẬP HÓA ĐƠN THỦ CÔNG =====================
     public function previewInvoiceJson(int $roomId, string $monthYear): array {
+        $monthYear = self::normalizePeriod($monthYear);
         if ($roomId <= 0 || $monthYear === '') {
             return ['ok' => false, 'msg' => 'Vui lòng chọn phòng trọ và kỳ hóa đơn!'];
         }
@@ -432,9 +522,10 @@ class InvoiceModel {
             ");
             $stPrev->execute([$roomId]);
             $prev = $stPrev->fetch(PDO::FETCH_ASSOC);
-            $eOld = $prev ? (int)$prev['electric_new'] : 0;
+            $initMeters = self::getInitialMeters();
+            $eOld = $prev ? (int)$prev['electric_new'] : (int)($initMeters[(string)$roomId]['electric'] ?? 0);
             $eNew = $eOld;
-            $wOld = $prev ? (int)$prev['water_new'] : 0;
+            $wOld = $prev ? (int)$prev['water_new'] : (int)($initMeters[(string)$roomId]['water'] ?? 0);
             $wNew = $wOld;
         }
 
@@ -512,6 +603,7 @@ class InvoiceModel {
     }
 
     public function createInvoiceManual(int $roomId, string $monthYear, ?string $dueDate, string $notes): array {
+        $monthYear = self::normalizePeriod($monthYear);
         $preview = $this->previewInvoiceJson($roomId, $monthYear);
         if (!$preview['ok']) {
             return ['ok' => false, 'msg' => $preview['msg'] ?? 'Không thể lập hóa đơn!'];

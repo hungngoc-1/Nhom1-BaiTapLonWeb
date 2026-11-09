@@ -132,9 +132,8 @@ class ReportModel {
 
     private function initDefaultBuildings(): void {
         $needReset = empty($_SESSION['buildings_config']) 
-            || ($_SESSION['buildings_config']['A']['room_prefix'] ?? '') === 'A'
-            || ($_SESSION['buildings_config']['B']['room_prefix'] ?? '') === 'B'
-            || ($_SESSION['buildings_config']['C']['room_prefix'] ?? '') === 'C';
+            || isset($_SESSION['buildings_config']['B'])
+            || isset($_SESSION['buildings_config']['C']);
 
         if ($needReset) {
             $_SESSION['buildings_config'] = [
@@ -143,45 +142,19 @@ class ReportModel {
                     'code'        => 'BLD-A',
                     'name'        => 'Tòa A - StayMate Sunrise',
                     'address'     => 'Số 128 Cầu Giấy, Quận Cầu Giấy, TP. Hà Nội',
-                    'manager'     => 'Quản lý Tòa A (Nguyễn Văn Quản)',
+                    'manager'     => 'Quản lý Tòa A (Nguyễn Văn Quân)',
                     'manager_acc' => 'quanly_a',
                     'manager_phone' => '0912 345 678',
-                    'manager_email' => 'quanly_a@nhatro.com',
+                    'manager_email' => 'quanly_a@staymate.vn',
                     'room_prefix' => 'A',
-                    'room_types'  => ['Phòng Đơn Tiêu Chuẩn', 'Phòng Ban Công Thoáng Mát'],
+                    'room_types'  => ['Phòng Đơn Tiêu Chuẩn', 'Phòng Ban Công Thoáng Mát', 'Phòng Studio Full Nội Thất'],
                     'theme'       => 'teal'
-                ],
-                'B' => [
-                    'id'          => 'B',
-                    'code'        => 'BLD-B',
-                    'name'        => 'Tòa B - StayMate Emerald',
-                    'address'     => 'Số 45 Nguyễn Chí Thanh, Quận Đống Đa, TP. Hà Nội',
-                    'manager'     => 'Quản lý Tòa B (Trần Thị Bích)',
-                    'manager_acc' => 'quanly_b',
-                    'manager_phone' => '0987 654 321',
-                    'manager_email' => 'quanly_b@nhatro.com',
-                    'room_prefix' => 'B',
-                    'room_types'  => ['Phòng Studio Full Nội Thất', 'Phòng Ban Công Thoáng Mát'],
-                    'theme'       => 'blue'
-                ],
-                'C' => [
-                    'id'          => 'C',
-                    'code'        => 'BLD-C',
-                    'name'        => 'Tòa C - StayMate Horizon',
-                    'address'     => 'Số 88 Nguyễn Trãi, Quận Thanh Xuân, TP. Hà Nội',
-                    'manager'     => 'Quản lý Tòa C (Lê Hoàng Nam)',
-                    'manager_acc' => 'quanly_c',
-                    'manager_phone' => '0934 567 890',
-                    'manager_email' => 'quanly_c@nhatro.com',
-                    'room_prefix' => 'C',
-                    'room_types'  => ['Phòng Studio Full Nội Thất', 'Phòng Duplex Gác Lửng', 'Căn Hộ 1 Phòng Ngủ (1PN)'],
-                    'theme'       => 'yellow'
                 ]
             ];
+            $_SESSION['current_building'] = 'A';
         }
     }
 
-    
     /**
      * Lấy danh sách ID các tòa nhà mà tài khoản hiện tại được phép quản lý / truy cập
      * - Admin: Được xem và quản lý tất cả các tòa (all)
@@ -614,59 +587,93 @@ class ReportModel {
     }
 
     // 8. Ghi nhận & Lấy danh sách Nhật ký Hoạt động (lưu SQL, tự động lọc/xóa nếu quá 30 ngày)
-    public function logActivity(string $title, string $type = 'info', ?string $buildingId = null): void {
+    public static function recordActivity(string $title, string $type = 'info', ?string $buildingId = 'BLD-A'): void {
         if (session_status() === PHP_SESSION_NONE) {
             session_start();
         }
-        $userFullName = $_SESSION['full_name'] ?? 'Quản trị viên';
-        $userRole     = $_SESSION['role'] ?? 'admin';
-        $userName     = $_SESSION['username'] ?? 'admin';
-        if ($buildingId === null) {
-            $buildingId = $_SESSION['building_id'] ?? 'all';
-        }
+        $userFullName = $_SESSION['full_name'] ?? $_SESSION['user']['full_name'] ?? 'Quản trị viên';
+        $userRole     = $_SESSION['role'] ?? $_SESSION['user']['role'] ?? 'admin';
+        $bId          = ($buildingId !== null && $buildingId !== '') ? $buildingId : 'BLD-A';
 
         try {
-            $stmt = $this->conn->prepare("
+            $conn = Database::getConnection();
+            $conn->exec("
+                CREATE TABLE IF NOT EXISTS `activity_logs` (
+                    `id` INT AUTO_INCREMENT PRIMARY KEY,
+                    `user_name` VARCHAR(100) NOT NULL DEFAULT 'Quản trị viên',
+                    `role` VARCHAR(50) NOT NULL DEFAULT 'admin',
+                    `building_id` VARCHAR(50) DEFAULT 'BLD-A',
+                    `action_type` VARCHAR(30) DEFAULT 'info',
+                    `title` TEXT NOT NULL,
+                    `created_at` DATETIME DEFAULT CURRENT_TIMESTAMP
+                ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+            ");
+            $stmt = $conn->prepare("
                 INSERT INTO activity_logs (user_name, role, building_id, action_type, title, created_at)
                 VALUES (:u, :r, :b, :t, :tit, NOW())
             ");
             $stmt->execute([
                 ':u'   => $userFullName,
                 ':r'   => $userRole,
-                ':b'   => $buildingId,
+                ':b'   => $bId,
                 ':t'   => $type,
                 ':tit' => $title
             ]);
-        } catch (Exception $e) {}
+        } catch (Exception $e) {
+            try {
+                $conn = Database::getConnection();
+                $stmt2 = $conn->prepare("
+                    INSERT INTO activity_logs (actor_name, actor_role, building_id, action_type, action_title, created_at)
+                    VALUES (:u, :r, :b, :t, :tit, NOW())
+                ");
+                $stmt2->execute([
+                    ':u'   => $userFullName,
+                    ':r'   => $userRole,
+                    ':b'   => $bId,
+                    ':t'   => $type,
+                    ':tit' => $title
+                ]);
+            } catch (Exception $e2) {}
+        }
+    }
+
+    public function logActivity(string $title, string $type = 'info', ?string $buildingId = null): void {
+        self::recordActivity($title, $type, $buildingId ?? 'BLD-A');
     }
 
     public function getNotifications(string $buildingId = 'all'): array {
         try {
+            $this->conn->exec("
+                CREATE TABLE IF NOT EXISTS `activity_logs` (
+                    `id` INT AUTO_INCREMENT PRIMARY KEY,
+                    `user_name` VARCHAR(100) NOT NULL DEFAULT 'Quản trị viên',
+                    `role` VARCHAR(50) NOT NULL DEFAULT 'admin',
+                    `building_id` VARCHAR(50) DEFAULT 'BLD-A',
+                    `action_type` VARCHAR(30) DEFAULT 'info',
+                    `title` TEXT NOT NULL,
+                    `created_at` DATETIME DEFAULT CURRENT_TIMESTAMP
+                ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+            ");
             // Tự động xóa các hoạt động quá 30 ngày theo đúng yêu cầu
             $this->conn->exec("DELETE FROM activity_logs WHERE created_at < DATE_SUB(NOW(), INTERVAL 30 DAY)");
 
-            $sql = "SELECT * FROM activity_logs WHERE 1=1";
-            $params = [];
-            if ($buildingId !== '' && $buildingId !== 'all') {
-                $sql .= " AND (building_id = :bld OR building_id = 'all' OR building_id IS NULL)";
-                $params[':bld'] = $buildingId;
-            }
-            $sql .= " ORDER BY created_at DESC LIMIT 50";
-
-            $stmt = $this->conn->prepare($sql);
-            $stmt->execute($params);
+            $sql = "SELECT * FROM activity_logs ORDER BY created_at DESC, id DESC LIMIT 50";
+            $stmt = $this->conn->query($sql);
             $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
             $out = [];
             foreach ($rows as $r) {
+                $userName = $r['user_name'] ?? $r['actor_name'] ?? 'Quản trị viên';
+                $roleName = $r['role'] ?? $r['actor_role'] ?? 'admin';
+                $titleTxt = $r['title'] ?? $r['action_title'] ?? '';
                 $out[] = [
                     'id'       => $r['id'],
-                    'user'     => $r['user_name'],
-                    'username' => $r['user_name'],
-                    'role'     => $r['role'],
-                    'title'    => $r['title'],
-                    'time'     => date('H:i - d/m/Y', strtotime($r['created_at'])),
-                    'type'     => $r['action_type']
+                    'user'     => $userName,
+                    'username' => $userName,
+                    'role'     => $roleName,
+                    'title'    => $titleTxt,
+                    'time'     => date('H:i - d/m/Y', strtotime($r['created_at'] ?? 'now')),
+                    'type'     => $r['action_type'] ?? 'info'
                 ];
             }
             return $out;

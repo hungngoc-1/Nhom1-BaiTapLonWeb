@@ -7,6 +7,7 @@ if (empty($_SESSION['csrf_token'])) {
 }
 
 require_once __DIR__ . '/../../Config/Database.php';
+require_once __DIR__ . '/../../Models/InvoiceModel.php';
 
 $msg = '';
 $msgType = '';
@@ -365,6 +366,36 @@ try {
         $msgType = "success";
     }
 
+    // G. THÊM KỲ MỚI VÀO MỤC KỲ ĐANG XEM
+    if (isset($_POST['action']) && $_POST['action'] === 'add_period') {
+        $rawPeriod = trim($_POST['new_period'] ?? '');
+        if ($rawPeriod === '' && !empty($_POST['new_period_month']) && !empty($_POST['new_period_year'])) {
+            $rawPeriod = str_pad((string)$_POST['new_period_month'], 2, '0', STR_PAD_LEFT) . '-' . trim((string)$_POST['new_period_year']);
+        }
+        $res = InvoiceModel::addCustomPeriod($rawPeriod);
+        $msg = $res['msg'];
+        $msgType = $res['ok'] ? 'success' : 'warning';
+        if (!empty($res['ok']) && !empty($res['period'])) {
+            $_GET['period'] = $res['period'];
+        }
+    }
+
+    // H. GHI SỐ ĐIỆN NƯỚC ĐẦU VÀO CỦA NGƯỜI MỚI VÀO Ở
+    if (isset($_POST['action']) && $_POST['action'] === 'save_initial_meter') {
+        $roomId = (int)($_POST['room_id'] ?? 0);
+        $initElec = isset($_POST['init_electric']) && $_POST['init_electric'] !== '' ? (int)$_POST['init_electric'] : -1;
+        $initWater = isset($_POST['init_water']) && $_POST['init_water'] !== '' ? (int)$_POST['init_water'] : -1;
+        $res = InvoiceModel::saveInitialMeter($roomId, $initElec, $initWater);
+        $msg = $res['msg'];
+        $msgType = $res['ok'] ? 'success' : 'warning';
+    }
+
+    // Tự động lưu vào Nhật ký hoạt động trên trang Tổng quan khi có thao tác thành công
+    if (($_SERVER['REQUEST_METHOD'] === 'POST' || isset($_GET['action'])) && $msg !== '' && $msgType === 'success') {
+        require_once __DIR__ . '/../../Models/ReportModel.php';
+        ReportModel::recordActivity(strip_tags($msg), 'success');
+    }
+
     // =========================================================================
     // 3. TRUY VẤN DỮ LIỆU HIỂN THỊ & THỐNG KÊ
     // =========================================================================
@@ -376,10 +407,24 @@ try {
         ORDER BY SUBSTRING(month_year, 4, 4) DESC, SUBSTRING(month_year, 1, 2) DESC
     ");
     $availablePeriods = $periodsStmt->fetchAll(PDO::FETCH_COLUMN);
-    $currentMonthYear = date('m-Y');
-    if (!in_array($currentMonthYear, $availablePeriods, true)) {
-        array_unshift($availablePeriods, $currentMonthYear);
+    $currentMonthYear = '10-2026'; // Kỳ 10-2026 (Chưa chốt số)
+    $customPeriods = InvoiceModel::getCustomPeriods();
+    foreach (array_merge(['10-2026', '09-2026', '08-2026'], $customPeriods) as $fixedPer) {
+        if (!in_array($fixedPer, $availablePeriods, true)) {
+            $availablePeriods[] = $fixedPer;
+        }
     }
+    if (!empty($_GET['period']) && $_GET['period'] !== 'all') {
+        $reqPer = $normalizePeriod((string)$_GET['period']);
+        if (preg_match('/^(0[1-9]|1[0-2])-\d{4}$/', $reqPer) && !in_array($reqPer, $availablePeriods, true)) {
+            $availablePeriods[] = $reqPer;
+        }
+    }
+    usort($availablePeriods, function ($a, $b) {
+        $ka = substr($a, 3, 4) . substr($a, 0, 2);
+        $kb = substr($b, 3, 4) . substr($b, 0, 2);
+        return strcmp($kb, $ka);
+    });
 
     // Kỳ đang được chọn để xem tiến độ & thống kê
     $latestDataPeriod = $conn->query("
@@ -430,6 +475,21 @@ try {
         FROM rooms r
         ORDER BY r.room_number ASC
     ")->fetchAll(PDO::FETCH_ASSOC);
+
+    $initMeters = InvoiceModel::getInitialMeters();
+    foreach ($allRooms as &$rItem) {
+        $rKey = (string)$rItem['id'];
+        $hasDbHistory = !empty($rItem['last_period']);
+        $hasInitMeter = isset($initMeters[$rKey]);
+        if (!$hasDbHistory && $hasInitMeter) {
+            $rItem['last_electric'] = (int)$initMeters[$rKey]['electric'];
+            $rItem['last_water'] = (int)$initMeters[$rKey]['water'];
+            $rItem['last_period'] = 'Đầu vào';
+        }
+        // Người mới chưa ghi số điện nước lúc vào ở: chưa có lịch sử chốt kỳ trước và chưa ghi số đầu vào
+        $rItem['is_new_uninitialized'] = (!$hasDbHistory && !$hasInitMeter);
+    }
+    unset($rItem);
 
     $rentedRooms = array_values(array_filter($allRooms, fn($r) => $r['status'] === 'rented'));
 
@@ -517,9 +577,11 @@ try {
     }
     $progressPercent = $totalRentedCount > 0 ? round(($recordedRentedCount / $totalRentedCount) * 100) : 0;
 
-    // Nếu lọc "Chưa chốt", nạp danh sách các phòng chưa ghi số điện nước kỳ này
-    if ($selectedInvStatus === 'pending') {
-        $readings = [];
+    // Nạp danh sách các phòng chưa ghi số điện nước kỳ này (khi lọc "Chưa chốt" hoặc xem kỳ chưa chốt như Kỳ 10-2026)
+    if ($selectedInvStatus === 'pending' || ($selectedInvStatus === '' && $selectedPeriod !== 'all')) {
+        if ($selectedInvStatus === 'pending') {
+            $readings = [];
+        }
         foreach ($unrecordedRooms as $urm) {
             if ($selectedRoomFilter !== '' && is_numeric($selectedRoomFilter) && (int)$urm['id'] !== (int)$selectedRoomFilter) {
                 continue;
@@ -539,7 +601,8 @@ try {
                 'invoice_id' => null,
                 'invoice_status' => null,
                 'invoice_total' => 0,
-                'is_pending_unrecorded' => true
+                'is_pending_unrecorded' => true,
+                'is_new_uninitialized' => !empty($urm['is_new_uninitialized'])
             ];
         }
     }
@@ -552,6 +615,9 @@ try {
     $invoicesPendingCount = 0;
 
     foreach ($readings as $rRow) {
+        if (!empty($rRow['is_pending_unrecorded'])) {
+            continue;
+        }
         $eUsed = max(0, (int)$rRow['electric_new'] - (int)$rRow['electric_old']);
         $wUsed = max(0, (int)$rRow['water_new'] - (int)$rRow['water_old']);
         $totalElecKwh += $eUsed;
@@ -1191,8 +1257,8 @@ try {
     <!-- ================= MAIN CONTAINER ================= -->
     <div class="container-fluid px-4 px-xl-5 py-4 position-relative">
 
-        <div class="d-flex flex-wrap justify-content-end align-items-center mb-2 no-print">
-            <!-- Danh mục chọn Kỳ đang xem (Thu gọn thành Dropdown bấm vào mới xổ ra) -->
+        <div class="d-flex flex-wrap justify-content-end align-items-center gap-2 mb-2 no-print">
+            <!-- Danh mục chọn Kỳ đang xem (Thu gọn thành Dropdown bấm vào mới xổ ra + Nút Thêm kỳ) -->
             <div class="dropdown">
                 <button class="period-dropdown-btn" type="button" data-bs-toggle="dropdown" aria-expanded="false">
                     <span><i class="fa-regular fa-calendar-check me-1 text-teal-main"></i> Kỳ đang xem:</span>
@@ -1202,6 +1268,11 @@ try {
                     <i class="fa-solid fa-chevron-down text-muted small"></i>
                 </button>
                 <ul class="dropdown-menu dropdown-menu-end period-dropdown-menu">
+                    <li>
+                        <button type="button" class="dropdown-item text-teal-main fw-black" style="background:#f0fdfa;border:1.5px dashed #308f86;margin-bottom:6px;" data-bs-toggle="modal" data-bs-target="#addPeriodModal">
+                            <span><i class="fa-solid fa-calendar-plus me-2"></i>+ Thêm kỳ mới</span>
+                        </button>
+                    </li>
                     <li>
                         <a class="dropdown-item <?= $selectedPeriod === 'all' ? 'active' : '' ?>" href="index.php?route=utilities&period=all">
                             <span><i class="fa-solid fa-layer-group me-2"></i>Tất cả các kỳ</span>
@@ -1219,6 +1290,9 @@ try {
                     <?php endforeach; ?>
                 </ul>
             </div>
+            <button type="button" class="period-dropdown-btn text-teal-main" data-bs-toggle="modal" data-bs-target="#addPeriodModal" title="Thêm kỳ mới vào mục Kỳ đang xem">
+                <i class="fa-solid fa-plus-circle"></i> Thêm kỳ
+            </button>
         </div>
 
         <!-- HEADER GIỐNG TRANG TỔNG QUAN -->
@@ -1386,23 +1460,37 @@ try {
                             <button type="button" class="btn btn-sm btn-outline-teal w-100 mt-2 py-1 fw-bold rounded-pill" onclick="checkRoomDetails('<?= htmlspecialchars($rm['room_number']) ?>')">
                                 <i class="fa-solid fa-magnifying-glass me-1"></i> Kiểm tra
                             </button>
-                        <?php else: ?>
+                        <?php else: 
+                            $isNewUninitCard = !empty($rm['is_new_uninitialized']);
+                        ?>
                             <div class="d-flex justify-content-between align-items-center pt-2 border-top border-warning-subtle">
                                 <span class="text-muted" style="font-size: 0.78rem; font-weight: 700;">
                                     Số cũ: Đ <?= (int)($rm['last_electric'] ?? 0) ?> | N <?= (int)($rm['last_water'] ?? 0) ?>
+                                    <?php if ($isNewUninitCard): ?>
+                                        <span class="text-danger fw-bold">(Người mới)</span>
+                                    <?php endif; ?>
                                 </span>
                             </div>
                             <div class="d-flex gap-2 mt-2">
-                                <button type="button" class="btn btn-sm rounded-pill fw-bold px-3 py-1 flex-grow-1" 
-                                        style="background: #f59e0b; color: white; font-size: 0.8rem;"
-                                        onclick="openAddModalForRoom(<?= $rId ?>, '<?= htmlspecialchars($activeCheckPeriod) ?>')">
-                                    <i class="fa-solid fa-pen-nib me-1"></i> Ghi số
-                                </button>
-                                <button type="button" class="btn btn-sm btn-outline-teal rounded-pill fw-bold py-1 px-3" 
-                                        title="Kiểm tra lịch sử phòng <?= htmlspecialchars($rm['room_number']) ?>" 
-                                        onclick="checkRoomDetails('<?= htmlspecialchars($rm['room_number']) ?>')">
-                                    <i class="fa-solid fa-magnifying-glass"></i>
-                                </button>
+                                <?php if ($isNewUninitCard): ?>
+                                    <button type="button" class="btn btn-sm rounded-pill fw-bold px-3 py-1 flex-grow-1" 
+                                            style="background: #f59e0b; color: white; font-size: 0.8rem;"
+                                            title="Ghi chỉ số điện nước lúc người mới nhận phòng"
+                                            onclick="openInitMeterModal(<?= $rId ?>, '<?= htmlspecialchars($rm['room_number']) ?>', '<?= htmlspecialchars($rm['tenant_name'] ?? 'Khách mới') ?>')">
+                                        <i class="fa-solid fa-pen-nib me-1"></i> Ghi số
+                                    </button>
+                                    <button type="button" class="btn btn-sm btn-outline-teal rounded-pill fw-bold py-1 px-3" 
+                                            title="Kiểm tra lịch sử phòng <?= htmlspecialchars($rm['room_number']) ?>" 
+                                            onclick="checkRoomDetails('<?= htmlspecialchars($rm['room_number']) ?>')">
+                                        <i class="fa-solid fa-magnifying-glass"></i>
+                                    </button>
+                                <?php else: ?>
+                                    <button type="button" class="btn btn-sm btn-outline-teal w-100 py-1 fw-bold rounded-pill" 
+                                            title="Kiểm tra chi tiết phòng <?= htmlspecialchars($rm['room_number']) ?>" 
+                                            onclick="checkRoomDetails('<?= htmlspecialchars($rm['room_number']) ?>')">
+                                        <i class="fa-solid fa-magnifying-glass me-1"></i> Kiểm tra
+                                    </button>
+                                <?php endif; ?>
                             </div>
                         <?php endif; ?>
                     </div>
@@ -1534,20 +1622,24 @@ try {
                                 </td>
 
                                 <td>
-                                    <?php if ($isPendingUnrecorded): ?>
+                                    <?php if ($isPendingUnrecorded): 
+                                        $isRowNewUninit = !empty($row['is_new_uninitialized']);
+                                    ?>
                                         <div class="p-2 rounded-3 bg-warning-subtle border border-warning d-flex flex-wrap align-items-center justify-content-between gap-2">
                                             <div>
                                                 <span class="badge rounded-pill bg-warning text-dark fw-bold px-2 py-1">
-                                                    <i class="fa-regular fa-clock me-1"></i> Chưa chốt số kỳ <?= htmlspecialchars($periodVal) ?>
+                                                    <i class="fa-regular fa-clock me-1"></i> <?= $isRowNewUninit ? 'Người mới vào (Chưa ghi số đầu vào)' : 'Chưa chốt số kỳ ' . htmlspecialchars($periodVal) ?>
                                                 </span>
                                                 <div class="text-muted small fw-bold mt-1">
                                                     Số cũ: Đ <?= (int)$row['electric_old'] ?> | N <?= (int)$row['water_old'] ?>
                                                 </div>
                                             </div>
-                                            <button type="button" class="btn btn-sm btn-teal-custom rounded-pill px-3 py-1 fw-bold" 
-                                                    onclick="openAddModalForRoom(<?= (int)$row['room_id'] ?>, '<?= htmlspecialchars($periodVal) ?>')">
-                                                <i class="fa-solid fa-pen-nib me-1"></i> Ghi số ngay
-                                            </button>
+                                            <?php if ($isRowNewUninit): ?>
+                                                <button type="button" class="btn btn-sm rounded-pill px-3 py-1 fw-bold" style="background:#f59e0b;color:#fff;"
+                                                        onclick="openInitMeterModal(<?= (int)$row['room_id'] ?>, '<?= htmlspecialchars($roomNumber) ?>', '<?= htmlspecialchars($tenantName) ?>')">
+                                                    <i class="fa-solid fa-pen-nib me-1"></i> Ghi số người mới
+                                                </button>
+                                            <?php endif; ?>
                                         </div>
                                     <?php else: ?>
                                     <div class="d-flex flex-column gap-2 py-1">
@@ -1658,10 +1750,16 @@ try {
 
                                 <td class="text-center pe-4 no-print">
                                     <?php if ($isPendingUnrecorded): ?>
-                                        <button type="button" class="btn btn-sm btn-teal-custom rounded-pill px-3 py-1 fw-bold" 
-                                                onclick="openAddModalForRoom(<?= (int)$row['room_id'] ?>, '<?= htmlspecialchars($periodVal) ?>')">
-                                            <i class="fa-solid fa-plus me-1"></i> Chốt số
-                                        </button>
+                                        <?php if (!empty($row['is_new_uninitialized'])): ?>
+                                            <button type="button" class="btn btn-sm rounded-pill px-3 py-1 fw-bold" style="background:#f59e0b;color:#fff;"
+                                                    onclick="openInitMeterModal(<?= (int)$row['room_id'] ?>, '<?= htmlspecialchars($roomNumber) ?>', '<?= htmlspecialchars($tenantName) ?>')">
+                                                <i class="fa-solid fa-pen-nib me-1"></i> Ghi số
+                                            </button>
+                                        <?php else: ?>
+                                            <span class="badge rounded-pill bg-light text-teal-main border px-3 py-1 fw-bold" title="Vui lòng ấn nút '+ Chốt Chỉ Số Mới' ở góc trên bên phải">
+                                                <i class="fa-solid fa-arrow-up me-1"></i> Ấn "+ Chốt Chỉ Số Mới"
+                                            </span>
+                                        <?php endif; ?>
                                     <?php else: ?>
                                     <div class="d-inline-flex align-items-center gap-2">
                                         <button type="button" class="btn-icon-circle btn-icon-view" title="Xem phiếu tính tiền chi tiết"
@@ -1746,8 +1844,9 @@ try {
                                                 data-tenant="<?= htmlspecialchars($r['tenant_name'] ?? 'Chưa có khách') ?>"
                                                 data-last-elec="<?= (int)($r['last_electric'] ?? 0) ?>"
                                                 data-last-water="<?= (int)($r['last_water'] ?? 0) ?>"
-                                                data-last-period="<?= htmlspecialchars($r['last_period'] ?? 'Chưa có') ?>">
-                                            Phòng <?= htmlspecialchars($r['room_number']) ?> — <?= htmlspecialchars($r['tenant_name'] ?? ($r['status'] === 'rented' ? 'Đang thuê' : 'Phòng trống')) ?> (<?= number_format((float)$r['price'], 0, ',', '.') ?>đ)
+                                                data-last-period="<?= htmlspecialchars($r['last_period'] ?? 'Chưa có') ?>"
+                                                data-is-new-uninit="<?= !empty($r['is_new_uninitialized']) ? '1' : '0' ?>">
+                                            Phòng <?= htmlspecialchars($r['room_number']) ?> — <?= htmlspecialchars($r['tenant_name'] ?? ($r['status'] === 'rented' ? 'Đang thuê' : 'Phòng trống')) ?><?= !empty($r['is_new_uninitialized']) ? ' [Người mới - Chưa ghi số đầu vào]' : '' ?> (<?= number_format((float)$r['price'], 0, ',', '.') ?>đ)
                                         </option>
                                     <?php endforeach; ?>
                                 </select>
@@ -2097,6 +2196,128 @@ try {
         </div>
     </div>
 
+    <!-- ================= MODAL 6: GHI SỐ ĐIỆN NƯỚC CỦA NGƯỜI MỚI VÀO ================= -->
+    <div class="modal fade modal-staymate" id="initMeterModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <div>
+                        <h5 class="modal-title fw-black text-teal-main mb-0" style="font-weight: 900;">
+                            <i class="fa-solid fa-pen-nib me-2 text-warning"></i> Ghi Số Điện Nước Người Mới Vào
+                        </h5>
+                        <div class="text-muted small fw-bold">Ghi nhận chỉ số công tơ Điện &amp; Nước lúc khách mới nhận phòng</div>
+                    </div>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <form method="POST" action="index.php?route=utilities&period=<?= urlencode($selectedPeriod) ?>">
+                    <input type="hidden" name="action" value="save_initial_meter">
+                    <input type="hidden" name="room_id" id="init_meter_room_id">
+                    <div class="modal-body p-4">
+                        <div class="p-3 rounded-4 bg-warning-subtle border border-warning mb-3 d-flex justify-content-between align-items-center">
+                            <div>
+                                <span class="badge-room-pill" id="init_meter_room_badge">Phòng --</span>
+                                <div class="fw-bold text-dark mt-1" id="init_meter_tenant_name">Khách thuê: --</div>
+                            </div>
+                            <span class="badge rounded-pill bg-warning text-dark fw-bold px-3 py-2">
+                                <i class="fa-solid fa-user-plus me-1"></i> Người mới vào
+                            </span>
+                        </div>
+
+                        <div class="row g-3 mb-3">
+                            <div class="col-6">
+                                <div class="meter-input-card elec h-100">
+                                    <label class="form-label fw-black small mb-1" style="color:#b45309;font-weight:900;">
+                                        <i class="fa-solid fa-bolt text-warning me-1"></i> Số Điện lúc vào (kWh) <span class="text-danger">*</span>
+                                    </label>
+                                    <input type="number" name="init_electric" id="init_electric_input" class="form-control rounded-3 fw-black border-warning border-2" min="0" required placeholder="VD: 120">
+                                </div>
+                            </div>
+                            <div class="col-6">
+                                <div class="meter-input-card water h-100">
+                                    <label class="form-label fw-black small text-primary mb-1" style="font-weight:900;">
+                                        <i class="fa-solid fa-droplet text-info me-1"></i> Số Nước lúc vào (m³) <span class="text-danger">*</span>
+                                    </label>
+                                    <input type="number" name="init_water" id="init_water_input" class="form-control rounded-3 fw-black border-info border-2" min="0" required placeholder="VD: 10">
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="p-3 rounded-4 bg-light border small fw-semibold text-secondary">
+                            <i class="fa-solid fa-circle-info text-teal-main me-1"></i>
+                            Chỉ số này sẽ được lưu làm <strong>Số cũ</strong> của người mới vào. Đến cuối kỳ, bạn ấn nút <strong>+ Chốt Chỉ Số Mới</strong> ở góc trên để chốt tiền điện nước.
+                        </div>
+                    </div>
+                    <div class="modal-footer border-0 pt-0 px-4 pb-4">
+                        <button type="button" class="btn-pill-white px-4" data-bs-dismiss="modal">Hủy</button>
+                        <button type="submit" class="btn-teal-custom px-4">
+                            <i class="fa-solid fa-floppy-disk me-1"></i> Lưu Số Điện Nước Đầu Vào
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <?php
+        $topUtilPeriod = $availablePeriods[0] ?? '10-2026';
+        $nextUtilMonth = 11;
+        $nextUtilYear = 2026;
+        if (preg_match('/^(\d{2})-(\d{4})$/', $topUtilPeriod, $mpU)) {
+            $nextUtilMonth = (int)$mpU[1] + 1;
+            $nextUtilYear = (int)$mpU[2];
+            if ($nextUtilMonth > 12) { $nextUtilMonth = 1; $nextUtilYear++; }
+        }
+    ?>
+    <!-- ================= MODAL 7: THÊM KỲ MỚI VÀO MỤC KỲ ĐANG XEM ================= -->
+    <div class="modal fade modal-staymate" id="addPeriodModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <div>
+                        <h5 class="modal-title fw-black text-teal-main mb-0" style="font-weight: 900;">
+                            <i class="fa-solid fa-calendar-plus me-2"></i> Thêm Kỳ Mới
+                        </h5>
+                        <div class="text-muted small fw-bold">Thêm kỳ chốt mới vào mục Kỳ đang xem</div>
+                    </div>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <form method="POST" action="index.php?route=utilities">
+                    <input type="hidden" name="action" value="add_period">
+                    <div class="modal-body p-4">
+                        <div class="row g-3 mb-3">
+                            <div class="col-6">
+                                <label class="form-label fw-bold small text-uppercase text-muted">Chọn Tháng</label>
+                                <select name="new_period_month" class="form-select filter-control rounded-4 py-2" required>
+                                    <?php for ($m = 1; $m <= 12; $m++): $mStr = str_pad((string)$m, 2, '0', STR_PAD_LEFT); ?>
+                                        <option value="<?= $mStr ?>" <?= $m === $nextUtilMonth ? 'selected' : '' ?>>Tháng <?= $mStr ?></option>
+                                    <?php endfor; ?>
+                                </select>
+                            </div>
+                            <div class="col-6">
+                                <label class="form-label fw-bold small text-uppercase text-muted">Chọn Năm</label>
+                                <select name="new_period_year" class="form-select filter-control rounded-4 py-2" required>
+                                    <?php for ($y = 2025; $y <= 2030; $y++): ?>
+                                        <option value="<?= $y ?>" <?= $y === $nextUtilYear ? 'selected' : '' ?>>Năm <?= $y ?></option>
+                                    <?php endfor; ?>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="p-3 rounded-4 bg-light border small fw-semibold text-secondary">
+                            <i class="fa-solid fa-circle-info text-teal-main me-1"></i>
+                            Kỳ mới sẽ được thêm vào danh sách <strong>Kỳ đang xem</strong> và chuyển sang xem kỳ vừa tạo ngay lập tức.
+                        </div>
+                    </div>
+                    <div class="modal-footer border-0 pt-0 px-4 pb-4">
+                        <button type="button" class="btn-pill-white px-4" data-bs-dismiss="modal">Hủy</button>
+                        <button type="submit" class="btn-teal-custom px-4">
+                            <i class="fa-solid fa-plus me-1"></i> Thêm Kỳ &amp; Xem Ngay
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
     <!-- ================= FOOTER CHUẨN TRANG TỔNG QUAN ================= -->
     <footer class="footer-custom container-fluid px-4 px-xl-5 d-flex flex-wrap justify-content-between align-items-center">
         <div><i class="fa-solid fa-building me-1" style="color:var(--teal-main);"></i> © 2026 StayMate - Quản lý Nhà trọ Chuyên nghiệp</div>
@@ -2189,11 +2410,15 @@ try {
             const selectEl = document.getElementById('add_room_id');
             const opt = selectEl.options[selectEl.selectedIndex];
             const hint = document.getElementById('add_room_hint');
+            const eOldEl = document.getElementById('add_elec_old');
+            const wOldEl = document.getElementById('add_water_old');
 
             if (!opt || !opt.value) {
                 if (hint) hint.innerHTML = '';
-                document.getElementById('add_elec_old').value = 0;
-                document.getElementById('add_water_old').value = 0;
+                eOldEl.value = 0;
+                wOldEl.value = 0;
+                eOldEl.readOnly = false;
+                wOldEl.readOnly = false;
                 document.getElementById('add_elec_new').value = '';
                 document.getElementById('add_water_new').value = '';
                 calcLivePreview('add');
@@ -2205,16 +2430,23 @@ try {
             const lastPeriod = opt.getAttribute('data-last-period') || '';
             const tenant = opt.getAttribute('data-tenant') || '';
             const price = parseFloat(opt.getAttribute('data-room-price') || '0');
+            const isNewUninit = opt.getAttribute('data-is-new-uninit') === '1';
 
-            document.getElementById('add_elec_old').value = lastElec;
-            document.getElementById('add_water_old').value = lastWater;
+            eOldEl.value = lastElec;
+            wOldEl.value = lastWater;
+            eOldEl.readOnly = !isNewUninit;
+            wOldEl.readOnly = !isNewUninit;
             document.getElementById('add_elec_new').value = '';
             document.getElementById('add_water_new').value = '';
             document.getElementById('add_elec_new').placeholder = '>= ' + lastElec;
             document.getElementById('add_water_new').placeholder = '>= ' + lastWater;
 
             if (hint) {
-                hint.innerHTML = `<span class="text-teal-main fw-bold"><i class="fa-solid fa-user me-1"></i>${tenant}</span> • Giá phòng: <strong>${formatVND(price)}</strong>` + (lastPeriod ? ` • Kế thừa số cũ kỳ ${lastPeriod}` : '');
+                if (isNewUninit) {
+                    hint.innerHTML = `<span class="text-danger fw-bold"><i class="fa-solid fa-triangle-exclamation me-1"></i>Phòng khách mới chưa ghi số điện nước lúc vào! Hãy bấm nút "Ghi số" ở ô phòng trên Sơ đồ trước.</span>`;
+                } else {
+                    hint.innerHTML = `<span class="text-teal-main fw-bold"><i class="fa-solid fa-user me-1"></i>${tenant}</span> • Giá phòng: <strong>${formatVND(price)}</strong>` + (lastPeriod ? ` • Kế thừa số cũ (${lastPeriod})` : '');
+                }
             }
 
             calcLivePreview('add');
@@ -2265,10 +2497,18 @@ try {
 
             let hasError = false;
             let errMsg = '';
-            if (hasENew && eNew < eOld) {
+            if (!isEdit) {
+                const selectEl = document.getElementById('add_room_id');
+                const opt = selectEl?.options[selectEl.selectedIndex];
+                if (opt && opt.getAttribute('data-is-new-uninit') === '1') {
+                    hasError = true;
+                    errMsg = 'Phòng này là khách mới chưa ghi số điện nước lúc vào. Vui lòng ấn nút "Ghi số" ở ô phòng trên Sơ đồ trước khi chốt chỉ số cuối kỳ!';
+                }
+            }
+            if (!hasError && hasENew && eNew < eOld) {
                 hasError = true;
                 errMsg = `Lỗi: Chỉ số điện mới (${eNew}) không được nhỏ hơn số cũ (${eOld})!`;
-            } else if (hasWNew && wNew < wOld) {
+            } else if (!hasError && hasWNew && wNew < wOld) {
                 hasError = true;
                 errMsg = `Lỗi: Chỉ số nước mới (${wNew}) không được nhỏ hơn số cũ (${wOld})!`;
             }
@@ -2286,14 +2526,28 @@ try {
             }
         }
 
-        // Mở Modal Thêm mới chung
+        // Mở Modal Chốt Chỉ Số Mới (Nút ở góc trên phải)
         function openAddModal() {
             const modalEl = document.getElementById('addUtilityModal');
             bootstrap.Modal.getOrCreateInstance(modalEl).show();
             calcLivePreview('add');
         }
 
-        // Mở Modal Thêm mới khi bấm "Ghi số" ở Sơ đồ phòng
+        // Mở Modal Ghi Số Điện Nước Đầu Vào của Người Mới Vào (Khi ấn "Ghi số" ở ô Sơ đồ)
+        function openInitMeterModal(roomId, roomNumber, tenantName) {
+            document.getElementById('init_meter_room_id').value = String(roomId);
+            document.getElementById('init_meter_room_badge').innerHTML = `<i class="fa-solid fa-door-closed me-1"></i>Phòng ${escapeHtml(roomNumber)}`;
+            document.getElementById('init_meter_tenant_name').textContent = 'Khách mới: ' + (tenantName || 'Đang thuê');
+            document.getElementById('init_electric_input').value = '';
+            document.getElementById('init_water_input').value = '';
+            const modalEl = document.getElementById('initMeterModal');
+            bootstrap.Modal.getOrCreateInstance(modalEl).show();
+            setTimeout(() => {
+                document.getElementById('init_electric_input')?.focus();
+            }, 150);
+        }
+
+        // Mở Modal Thêm mới khi chọn phòng
         function openAddModalForRoom(roomId, periodStr) {
             const sel = document.getElementById('add_room_id');
             if (sel) {

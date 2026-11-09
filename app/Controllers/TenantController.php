@@ -2,6 +2,7 @@
 require_once __DIR__ . '/../Models/TenantModel.php';
 require_once __DIR__ . '/../Models/RoomModel.php';
 require_once __DIR__ . '/../Models/TenantPortalModel.php';
+require_once __DIR__ . '/../Models/ReportModel.php';
 
 class TenantController {
     private TenantModel $model;
@@ -82,6 +83,7 @@ class TenantController {
                         } else {
                             $_SESSION['tenant_flash_success'] = "Đã thêm khách thuê '{$fullName}' thành công! Tài khoản đăng nhập: {$phone} (Mật khẩu: 123)";
                         }
+                        ReportModel::recordActivity("Đã thêm khách thuê '{$fullName}' ({$phone}) vào hệ thống.", 'success');
                     } catch (PDOException $e) {
                         $_SESSION['tenant_flash_error'] = 'Lỗi lưu thông tin: ' . $e->getMessage();
                     }
@@ -140,6 +142,7 @@ class TenantController {
                         }
 
                         $_SESSION['tenant_flash_success'] = "Đã cập nhật thông tin khách thuê '{$fullName}' thành công!";
+                        ReportModel::recordActivity($_SESSION['tenant_flash_success'], 'info');
                     } catch (PDOException $e) {
                         $_SESSION['tenant_flash_error'] = 'Không thể cập nhật: ' . $e->getMessage();
                     }
@@ -152,6 +155,7 @@ class TenantController {
                     try {
                         $this->model->deleteTenant($id);
                         $_SESSION['tenant_flash_success'] = 'Đã xóa khách thuê khỏi hệ thống!';
+                        ReportModel::recordActivity($_SESSION['tenant_flash_success'], 'warning');
                     } catch (PDOException $e) {
                         $_SESSION['tenant_flash_error'] = 'Không thể xóa: Khách thuê này đang có hợp đồng thuê phòng trong CSDL!';
                     }
@@ -163,6 +167,7 @@ class TenantController {
                 $note = trim($_POST['manager_note'] ?? 'Đã xác nhận và cập nhật thông tin.');
                 if ($reqId > 0 && $this->portalModel->approveRequest($reqId, $note)) {
                     $_SESSION['tenant_flash_success'] = 'Đã phê duyệt yêu cầu và tự động cập nhật thông tin khách thuê!';
+                    ReportModel::recordActivity($_SESSION['tenant_flash_success'], 'success');
                 } else {
                     $_SESSION['tenant_flash_error'] = 'Không thể phê duyệt yêu cầu.';
                 }
@@ -173,6 +178,7 @@ class TenantController {
                 $note = trim($_POST['manager_note'] ?? 'Yêu cầu không được phê duyệt.');
                 if ($reqId > 0 && $this->portalModel->rejectRequest($reqId, $note)) {
                     $_SESSION['tenant_flash_success'] = 'Đã từ chối yêu cầu điều chỉnh.';
+                    ReportModel::recordActivity($_SESSION['tenant_flash_success'], 'warning');
                 } else {
                     $_SESSION['tenant_flash_error'] = 'Không thể từ chối yêu cầu.';
                 }
@@ -183,6 +189,7 @@ class TenantController {
                 $custName = trim($_POST['customer_name'] ?? 'khách');
                 if ($leadId > 0 && $this->model->markLeadContacted($leadId)) {
                     $_SESSION['tenant_flash_success'] = "Đã cập nhật: Đã liên hệ với {$custName} thành công! Khách đã chuyển sang bảng Khách Đã Liên Hệ.";
+                    ReportModel::recordActivity("Đã liên hệ khách hàng tiềm năng: {$custName}.", 'info');
                 } else {
                     $_SESSION['tenant_flash_error'] = 'Không thể cập nhật trạng thái liên hệ.';
                 }

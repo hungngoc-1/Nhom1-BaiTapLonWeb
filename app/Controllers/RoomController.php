@@ -1,5 +1,6 @@
 <?php
 require_once __DIR__ . '/../Models/RoomModel.php';
+require_once __DIR__ . '/../Models/ReportModel.php';
 
 class RoomController {
     private RoomModel $model;
@@ -134,6 +135,7 @@ class RoomController {
                             $this->model->saveRoomServices($newId, $servicesToSave);
                         }
                         $_SESSION['room_flash_success'] = "Đã thêm phòng {$room_number} vào hệ thống thành công!";
+                        ReportModel::recordActivity($_SESSION['room_flash_success'], 'success');
                     } catch (PDOException $e) {
                         $_SESSION['room_flash_error'] = "Không thể thêm: Mã phòng '{$room_number}' đã tồn tại trong CSDL!";
                     }
@@ -198,6 +200,7 @@ class RoomController {
                         $this->model->updateRoom($id, $room_number, $price, $status, $description);
                         $this->model->saveRoomServices($id, $servicesToSave);
                         $_SESSION['room_flash_success'] = "Đã cập nhật thông tin phòng {$room_number} thành công!";
+                        ReportModel::recordActivity($_SESSION['room_flash_success'], 'info');
                     } catch (PDOException $e) {
                         $_SESSION['room_flash_error'] = "Không thể cập nhật: Mã phòng '{$room_number}' đã bị trùng với phòng khác!";
                     }
@@ -212,6 +215,7 @@ class RoomController {
                     try {
                         $this->model->deleteRoom($id);
                         $_SESSION['room_flash_success'] = "Đã xóa phòng {$roomLabel} khỏi hệ thống!";
+                        ReportModel::recordActivity($_SESSION['room_flash_success'], 'warning');
                     } catch (PDOException $e) {
                         $_SESSION['room_flash_error'] = "Không thể xóa phòng {$roomLabel}: Phòng đang có hợp đồng, chỉ số điện nước hoặc hóa đơn liên quan trong CSDL!";
                     }

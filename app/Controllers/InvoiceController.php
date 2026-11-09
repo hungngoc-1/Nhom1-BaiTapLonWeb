@@ -15,7 +15,8 @@ class InvoiceController {
 
     private function filters(): array {
         $periods = $this->model->getPeriods();
-        $period = $_GET['period'] ?? ($periods[0] ?? 'all');
+        $defaultPeriod = $this->model->getLatestInvoicePeriod() ?: ($periods[0] ?? 'all');
+        $period = InvoiceModel::normalizePeriod((string)($_GET['period'] ?? $defaultPeriod));
         $status = $_GET['status'] ?? '';
         if (!in_array($status, ['', 'paid', 'unpaid', 'overdue', 'recorded', 'pending'], true)) $status = '';
         return [
@@ -31,6 +32,10 @@ class InvoiceController {
 
     private function flash(array $res): void {
         $_SESSION[$res['ok'] ? 'flash_success' : 'flash_error'] = $res['msg'];
+        if (!empty($res['ok']) && !empty($res['msg'])) {
+            require_once __DIR__ . '/../Models/ReportModel.php';
+            ReportModel::recordActivity((string)$res['msg'], 'success');
+        }
     }
 
     private function back(string $url = 'index.php?route=invoices'): void {
@@ -53,6 +58,16 @@ class InvoiceController {
     }
 
     public function index(): void {
+        if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'add_period') {
+            $rawPeriod = trim($_POST['new_period'] ?? '');
+            if ($rawPeriod === '' && !empty($_POST['new_period_month']) && !empty($_POST['new_period_year'])) {
+                $rawPeriod = str_pad((string)$_POST['new_period_month'], 2, '0', STR_PAD_LEFT) . '-' . trim((string)$_POST['new_period_year']);
+            }
+            $res = InvoiceModel::addCustomPeriod($rawPeriod);
+            $this->flash($res);
+            $targetPeriod = $res['period'] ?? '';
+            $this->back('index.php?route=invoices' . ($targetPeriod ? '&period=' . urlencode($targetPeriod) : ''));
+        }
         $filters = $this->filters();
         $invoices = $this->model->getInvoices($filters);
         $stats = $this->model->getStats($invoices);
